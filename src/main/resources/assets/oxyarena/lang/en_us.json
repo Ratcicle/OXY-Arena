@@ -1,0 +1,13 @@
+{
+  "itemGroup.oxyarena": "Example Mod Tab",
+  "block.oxyarena.example_block": "Example Block",
+  "item.oxyarena.example_item": "Example Item",
+
+  "oxyarena.configuration.title": "OXY Arena Configs",
+  "oxyarena.configuration.section.oxyarena.common.toml": "OXY Arena Configs",
+  "oxyarena.configuration.section.oxyarena.common.toml.title": "OXY Arena Configs",
+  "oxyarena.configuration.items": "Item List",
+  "oxyarena.configuration.logDirtBlock": "Log Dirt Block",
+  "oxyarena.configuration.magicNumberIntroduction": "Magic Number Text",
+  "oxyarena.configuration.magicNumber": "Magic Number"
+}
