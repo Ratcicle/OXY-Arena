@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "#": {
+      "item": "minecraft:string"
+    },
+    "X": {
+      "item": "oxyarena:cobalt_ingot"
+    }
+  },
+  "pattern": [
+    " X#",
+    "X #",
+    " X#"
+  ],
+  "result": {
+    "count": 1,
+    "id": "oxyarena:cobalt_bow"
+  }
+}

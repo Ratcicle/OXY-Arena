@@ -31,9 +31,12 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+desktop.ini
+Thumbs.db
 
 ### Minecraft Modding ###
 run/
+runs/
 !**/src/**/run/
 **/src/generated/**/.cache/
 repo/

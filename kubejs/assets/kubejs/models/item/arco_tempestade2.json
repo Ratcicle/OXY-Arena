@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/bow",
+  "textures": {
+    "layer0": "kubejs:item/arco_tempestade2"
+  }
+}

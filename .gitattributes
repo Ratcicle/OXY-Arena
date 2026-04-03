@@ -1,5 +1,46 @@
-# Disable autocrlf on generated files, they always generate with LF
-# Add any extra files or paths here to make git stop saying they
-# are changed when only line endings change.
+# Keep repository text files normalized with LF by default.
+* text=auto eol=lf
+
+# Windows launcher scripts should stay CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Common source and data files in this NeoForge workspace.
+*.java text eol=lf
+*.kt text eol=lf
+*.gradle text eol=lf
+*.properties text eol=lf
+*.json text eol=lf
+*.mcmeta text eol=lf
+*.toml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.cfg text eol=lf
+*.lang text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+
+# Git metadata and helper files.
+.gitignore text eol=lf
+.gitattributes text eol=lf
+gradlew text eol=lf
+
+# Generated resources that frequently cause line-ending noise.
 src/generated/**/.cache/* text eol=lf
 src/generated/**/*.json text eol=lf
+
+# Binary assets.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.jar binary
+*.zip binary
+*.gz binary
+*.ogg binary
+*.wav binary
+*.mp3 binary
+*.nbt binary

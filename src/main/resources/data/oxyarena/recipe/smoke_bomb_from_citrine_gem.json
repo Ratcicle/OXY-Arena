@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:gunpowder"
+    },
+    {
+      "item": "oxyarena:citrine_gem"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "oxyarena:smoke_bomb"
+  }
+}

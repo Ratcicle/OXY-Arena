@@ -1,31 +1,70 @@
 package com.example.oxyarena;
 
-import net.minecraft.client.Minecraft;
+import com.example.oxyarena.client.renderer.entity.AirdropCrateRenderer;
+import com.example.oxyarena.client.renderer.entity.CitrineThrowingDaggerRenderer;
+import com.example.oxyarena.client.renderer.entity.GrapplingHookRenderer;
+import com.example.oxyarena.client.renderer.entity.ThrownZeusLightningRenderer;
+import com.example.oxyarena.registry.ModEntityTypes;
+import com.example.oxyarena.registry.ModItems;
+
+import net.minecraft.client.renderer.item.ItemProperties;
+import net.minecraft.client.renderer.entity.NoopRenderer;
+import net.minecraft.client.renderer.entity.ThrownItemRenderer;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 
-// This class will not load on dedicated servers. Accessing client side code from here is safe.
 @Mod(value = OXYArena.MODID, dist = Dist.CLIENT)
-// You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
-@EventBusSubscriber(modid = OXYArena.MODID, value = Dist.CLIENT)
 public class OXYArenaClient {
-    public OXYArenaClient(ModContainer container) {
-        // Allows NeoForge to create a config screen for this mod's configs.
-        // The config screen is accessed by going to the Mods screen > clicking on your mod > clicking on config.
-        // Do not forget to add translations for your config options to the en_us.json file.
+    public OXYArenaClient(IEventBus modEventBus, ModContainer container) {
+        modEventBus.addListener(this::registerEntityRenderers);
+        modEventBus.addListener(this::onClientSetup);
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
     }
 
-    @SubscribeEvent
-    static void onClientSetup(FMLClientSetupEvent event) {
-        // Some client setup code
-        OXYArena.LOGGER.info("HELLO FROM CLIENT SETUP");
-        OXYArena.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
+    private void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(
+                ModEntityTypes.CITRINE_THROWING_DAGGER.get(),
+                CitrineThrowingDaggerRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.SMOKE_BOMB.get(), ThrownItemRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.SMOKE_CLOUD.get(), NoopRenderer::new);
+        event.registerEntityRenderer(
+                ModEntityTypes.ZEUS_LIGHTNING.get(),
+                ThrownZeusLightningRenderer::new);
+        event.registerEntityRenderer(
+                ModEntityTypes.GRAPPLING_HOOK.get(),
+                GrapplingHookRenderer::new);
+        event.registerEntityRenderer(
+                ModEntityTypes.AIRDROP_CRATE.get(),
+                AirdropCrateRenderer::new);
+    }
+
+    private void onClientSetup(FMLClientSetupEvent event) {
+        event.enqueueWork(() -> {
+            ItemProperties.register(
+                    ModItems.COBALT_BOW.get(),
+                    ResourceLocation.withDefaultNamespace("pull"),
+                    (stack, level, entity, seed) -> {
+                        if (entity == null || entity.getUseItem() != stack) {
+                            return 0.0F;
+                        }
+
+                        return (float)(stack.getUseDuration(entity) - entity.getUseItemRemainingTicks()) / 20.0F;
+                    });
+            ItemProperties.register(
+                    ModItems.COBALT_BOW.get(),
+                    ResourceLocation.withDefaultNamespace("pulling"),
+                    (stack, level, entity, seed) -> entity != null
+                            && entity.isUsingItem()
+                            && entity.getUseItem() == stack
+                                    ? 1.0F
+                                    : 0.0F);
+        });
     }
 }

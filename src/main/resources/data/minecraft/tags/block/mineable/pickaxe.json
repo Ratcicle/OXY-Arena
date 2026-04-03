@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "oxyarena:citrine_ore",
+    "oxyarena:deepslate_citrine_ore",
+    "oxyarena:cobalt_ore",
+    "oxyarena:deepslate_cobalt_ore"
+  ]
+}

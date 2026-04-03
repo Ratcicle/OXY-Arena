@@ -1,0 +1,6 @@
+{
+  "parent": "oxyarena:item/cobalt_bow",
+  "textures": {
+    "layer0": "oxyarena:item/cobalt_bow_pulling_1"
+  }
+}
