@@ -8,7 +8,8 @@ public record OxyServerEventDefinition(
         String id,
         Supplier<OxyServerEvent> factory,
         EnumSet<ServerEventGroup> groups,
-        int selectionWeight) {
+        int selectionWeight,
+        ServerEventRotationRole rotationRole) {
     public OxyServerEventDefinition {
         groups = groups.isEmpty() ? EnumSet.noneOf(ServerEventGroup.class) : EnumSet.copyOf(groups);
         if (selectionWeight <= 0) {

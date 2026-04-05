@@ -19,12 +19,14 @@ public final class OxyServerEventManager {
 
     private final MinecraftServer server;
     private final Map<String, OxyServerEvent> registeredEvents;
+    private final ServerEventRouletteController rouletteController;
     @Nullable
     private OxyServerEvent activeEvent;
 
     private OxyServerEventManager(MinecraftServer server) {
         this.server = server;
         this.registeredEvents = OxyServerEventRegistry.createEventInstances();
+        this.rouletteController = new ServerEventRouletteController(server, this);
         this.registeredEvents.values().forEach(event -> event.cleanupStaleRuntimeArtifacts(server));
     }
 
@@ -42,6 +44,10 @@ public final class OxyServerEventManager {
 
     public Collection<OxyServerEventDefinition> getRegisteredEventDefinitions() {
         return OxyServerEventRegistry.getRegisteredEventDefinitions();
+    }
+
+    public ServerEventRouletteController getRouletteController() {
+        return this.rouletteController;
     }
 
     @Nullable
@@ -72,6 +78,7 @@ public final class OxyServerEventManager {
             this.activeEvent = event;
         }
 
+        this.rouletteController.onEventStarted(event);
         return true;
     }
 
@@ -120,6 +127,7 @@ public final class OxyServerEventManager {
         event.stop(this.server, reason);
         if (!event.isActive()) {
             this.activeEvent = null;
+            this.rouletteController.onManagedEventEnded(event, reason);
         }
         return true;
     }
@@ -139,19 +147,22 @@ public final class OxyServerEventManager {
         event.stop(this.server, reason);
         if (this.activeEvent == event && !event.isActive()) {
             this.activeEvent = null;
+            this.rouletteController.onManagedEventEnded(event, reason);
         }
         return true;
     }
 
     public void tick() {
-        if (this.activeEvent == null) {
-            return;
+        if (this.activeEvent != null) {
+            OxyServerEvent event = this.activeEvent;
+            event.tick(this.server);
+            if (this.activeEvent == event && !event.isActive()) {
+                this.activeEvent = null;
+                this.rouletteController.onManagedEventEnded(event, ServerEventStopReason.COMPLETED);
+            }
         }
 
-        this.activeEvent.tick(this.server);
-        if (!this.activeEvent.isActive()) {
-            this.activeEvent = null;
-        }
+        this.rouletteController.tick();
     }
 
     public void onLivingDeath(LivingDeathEvent event) {
@@ -159,9 +170,11 @@ public final class OxyServerEventManager {
             return;
         }
 
-        this.activeEvent.onLivingDeath(this.server, event);
-        if (!this.activeEvent.isActive()) {
+        OxyServerEvent activeManagedEvent = this.activeEvent;
+        activeManagedEvent.onLivingDeath(this.server, event);
+        if (this.activeEvent == activeManagedEvent && !activeManagedEvent.isActive()) {
             this.activeEvent = null;
+            this.rouletteController.onManagedEventEnded(activeManagedEvent, ServerEventStopReason.COMPLETED);
         }
     }
 
@@ -178,6 +191,7 @@ public final class OxyServerEventManager {
     }
 
     public void onServerStopping() {
+        this.rouletteController.stop();
         this.stopActiveEvent(ServerEventStopReason.SERVER_SHUTDOWN);
         this.registeredEvents.values().forEach(event -> event.stop(this.server, ServerEventStopReason.SERVER_SHUTDOWN));
         this.activeEvent = null;

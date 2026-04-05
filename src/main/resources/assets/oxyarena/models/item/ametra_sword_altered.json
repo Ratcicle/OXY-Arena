@@ -1,7 +1,7 @@
 {
   "parent": "minecraft:item/handheld",
   "textures": {
-    "layer0": "oxyarena:item/flaming_scythe"
+    "layer0": "oxyarena:item/ametra_sword_altered_1"
   },
   "display": {
     "thirdperson_righthand": {

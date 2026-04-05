@@ -19,6 +19,13 @@ public final class ModToolTiers {
             2.8F,
             11,
             () -> Ingredient.of(ModItems.COBALT_INGOT.get()));
+    public static final SimpleTier AMETRA = new SimpleTier(
+            BlockTags.INCORRECT_FOR_NETHERITE_TOOL,
+            2031,
+            9.0F,
+            4.0F,
+            15,
+            () -> Ingredient.of(ModItems.AMETRA_GEM.get()));
 
     private ModToolTiers() {
     }

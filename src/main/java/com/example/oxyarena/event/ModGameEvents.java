@@ -1,39 +1,50 @@
 package com.example.oxyarena.event;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import com.example.oxyarena.item.CobaltBowItem;
 import com.example.oxyarena.registry.ModItems;
+import com.example.oxyarena.registry.ModMobEffects;
 
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.projectile.Arrow;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.player.SweepAttackEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 public final class ModGameEvents {
     private static final String COBALT_RAIN_ARROW_TAG = "OxyArenaCobaltRainArrow";
     private static final String COBALT_RAIN_TARGET_TAG = "OxyArenaCobaltRainTarget";
+    private static final String COBALT_RAIN_TRIGGERED_TAG = "OxyArenaCobaltRainTriggered";
     private static final int COBALT_ARROW_RAIN_ARROWS_PER_TICK = 3;
     private static final int COBALT_ARROW_RAIN_WAVES = 10; //10
     private static final double COBALT_ARROW_RAIN_RADIUS = 4.5D; //#4.5
     private static final double COBALT_ARROW_RAIN_HEIGHT = 16.0D;
     private static final double COBALT_ARROW_RAIN_DAMAGE = 0.5D;
     private static final float COBALT_ARROW_RAIN_VELOCITY = 2.6F;
+    private static final float AMETRA_SWEEPING_DAMAGE_RATIO = 0.75F;
     private static final List<CobaltArrowRainWave> COBALT_ARROW_RAIN_WAVES_QUEUE = new ArrayList<>();
+    private static final Set<UUID> AMETRA_SWEEP_ATTACKERS = new HashSet<>();
 
     private ModGameEvents() {
     }
@@ -57,9 +68,75 @@ public final class ModGameEvents {
         }
     }
 
+    public static void onLivingDamagePost(LivingDamageEvent.Post event) {
+        if (!(event.getEntity() instanceof LivingEntity target)
+                || !(target.level() instanceof ServerLevel serverLevel)
+                || event.getNewDamage() <= 0.0F
+                || !(event.getSource().getEntity() instanceof Player player)
+                || event.getSource().getDirectEntity() != player
+                || AMETRA_SWEEP_ATTACKERS.contains(player.getUUID())
+                || !isAmetraSwordAwakened(player)) {
+            return;
+        }
+
+        ItemStack weapon = player.getMainHandItem();
+        float sweepDamage = 1.0F + AMETRA_SWEEPING_DAMAGE_RATIO * event.getNewDamage();
+        boolean hitAnySecondaryTarget = false;
+
+        AMETRA_SWEEP_ATTACKERS.add(player.getUUID());
+        try {
+            double entityReachSq = Mth.square(player.entityInteractionRange());
+            for (LivingEntity secondaryTarget : player.level().getEntitiesOfClass(
+                    LivingEntity.class,
+                    weapon.getSweepHitBox(player, target))) {
+                if (secondaryTarget == player
+                        || secondaryTarget == target
+                        || player.isAlliedTo(secondaryTarget)
+                        || secondaryTarget instanceof ArmorStand armorStand && armorStand.isMarker()
+                        || player.distanceToSqr(secondaryTarget) >= entityReachSq) {
+                    continue;
+                }
+
+                secondaryTarget.knockback(
+                        0.4F,
+                        Mth.sin(player.getYRot() * (float)(Math.PI / 180.0)),
+                        -Mth.cos(player.getYRot() * (float)(Math.PI / 180.0)));
+                hitAnySecondaryTarget |= secondaryTarget.hurt(event.getSource(), sweepDamage);
+            }
+        } finally {
+            AMETRA_SWEEP_ATTACKERS.remove(player.getUUID());
+        }
+
+        if (!hitAnySecondaryTarget) {
+            return;
+        }
+
+        serverLevel.playSound(
+                null,
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                SoundEvents.PLAYER_ATTACK_SWEEP,
+                player.getSoundSource(),
+                1.0F,
+                1.0F);
+        player.sweepAttack();
+    }
+
+    public static void onSweepAttack(SweepAttackEvent event) {
+        if (isAmetraSwordAwakened(event.getEntity())) {
+            event.setSweeping(false);
+        }
+    }
+
     private static boolean isHoldingFlamingScythe(Player player) {
         return player.getMainHandItem().is(ModItems.FLAMING_SCYTHE.get())
                 || player.getOffhandItem().is(ModItems.FLAMING_SCYTHE.get());
+    }
+
+    private static boolean isAmetraSwordAwakened(Player player) {
+        return player.hasEffect(ModMobEffects.AMETRA_AWAKENING)
+                && player.getMainHandItem().is(ModItems.AMETRA_SWORD.get());
     }
 
     public static void onProjectileImpact(ProjectileImpactEvent event) {
@@ -75,10 +152,11 @@ public final class ModGameEvents {
             return;
         }
 
-        if (!CobaltBowItem.hasArrowRain(arrow)) {
+        if (!CobaltBowItem.hasArrowRain(arrow) || hasTriggeredCobaltRain(arrow)) {
             return;
         }
 
+        markCobaltRainTriggered(arrow);
         spawnCobaltArrowRain((ServerLevel)arrow.level(), arrow.getOwner(), target);
     }
 
@@ -98,10 +176,18 @@ public final class ModGameEvents {
         return arrow.getPersistentData().getBoolean(COBALT_RAIN_ARROW_TAG);
     }
 
+    private static boolean hasTriggeredCobaltRain(AbstractArrow arrow) {
+        return arrow.getPersistentData().getBoolean(COBALT_RAIN_TRIGGERED_TAG);
+    }
+
     private static void markAsCobaltRainArrow(AbstractArrow arrow, UUID targetUuid) {
         CompoundTag persistentData = arrow.getPersistentData();
         persistentData.putBoolean(COBALT_RAIN_ARROW_TAG, true);
         persistentData.putUUID(COBALT_RAIN_TARGET_TAG, targetUuid);
+    }
+
+    private static void markCobaltRainTriggered(AbstractArrow arrow) {
+        arrow.getPersistentData().putBoolean(COBALT_RAIN_TRIGGERED_TAG, true);
     }
 
     private static void resetInitialTargetIframesIfNeeded(AbstractArrow arrow, LivingEntity target) {

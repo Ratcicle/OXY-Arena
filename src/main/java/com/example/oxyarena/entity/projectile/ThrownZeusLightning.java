@@ -20,6 +20,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -30,9 +31,15 @@ public class ThrownZeusLightning extends AbstractArrow {
     private static final int MAX_OUTBOUND_TICKS = 100;
     private static final double AIR_DRAG_COMPENSATION = 1.0D / 0.99D;
     private static final double RETURN_SPEED = 3.0D;
-    private static final double RETURN_COLLECT_DISTANCE_SQ = 2.25D;
+    private static final double RETURN_COLLECT_DISTANCE_SQ = 4.0D;
+    // TODO: Com simulation distance baixa, o retorno ainda pode dessincronizar em arremessos longos
+    // e so normaliza quando os chunks voltam a ser simulados. Revisitar essa logica depois.
     private boolean returning;
     private boolean returnToOffhand;
+    @Nullable
+    private Long forcedChunk;
+    @Nullable
+    private Long forcedNextChunk;
 
     public ThrownZeusLightning(EntityType<? extends ThrownZeusLightning> entityType, Level level) {
         super(entityType, level);
@@ -67,6 +74,8 @@ public class ThrownZeusLightning extends AbstractArrow {
 
     @Override
     public void tick() {
+        this.updateForcedChunks();
+
         if (this.returning) {
             this.tickReturnToOwner();
             if (this.isRemoved()) {
@@ -173,9 +182,15 @@ public class ThrownZeusLightning extends AbstractArrow {
         compound.putBoolean("ReturnToOffhand", this.returnToOffhand);
     }
 
+    @Override
+    public void remove(RemovalReason reason) {
+        this.releaseForcedChunks();
+        super.remove(reason);
+    }
+
     private void tickReturnToOwner() {
         Entity owner = this.getOwner();
-        if (!(owner instanceof Player player) || !owner.isAlive() || owner.level() != this.level()) {
+        if (!this.isAcceptableReturnOwner(owner)) {
             if (!this.level().isClientSide && this.pickup == AbstractArrow.Pickup.ALLOWED) {
                 this.spawnAtLocation(this.getPickupItem(), 0.1F);
             }
@@ -184,19 +199,22 @@ public class ThrownZeusLightning extends AbstractArrow {
             return;
         }
 
-        Vec3 targetPosition = owner.getEyePosition().subtract(this.position());
-        if (targetPosition.lengthSqr() <= RETURN_COLLECT_DISTANCE_SQ) {
-            if (!this.level().isClientSide) {
-                this.completeReturnToPlayer(player);
+        Vec3 targetPosition = owner.position()
+                .add(0.0D, owner.getBbHeight() * 0.5D, 0.0D)
+                .subtract(this.position());
+        if (owner instanceof Player player && targetPosition.lengthSqr() <= RETURN_COLLECT_DISTANCE_SQ) {
+            if (!this.level().isClientSide && this.tryReturnToPlayer(player)) {
+                this.discard();
             }
 
-            this.discard();
             return;
         }
 
         this.setNoPhysics(true);
         this.inGround = false;
-        this.setDeltaMovement(targetPosition.normalize().scale(RETURN_SPEED));
+        if (targetPosition.lengthSqr() > 1.0E-7D) {
+            this.setDeltaMovement(targetPosition.normalize().scale(RETURN_SPEED));
+        }
     }
 
     private void startReturningToOwner() {
@@ -208,18 +226,103 @@ public class ThrownZeusLightning extends AbstractArrow {
         this.shakeTime = 0;
     }
 
-    private void completeReturnToPlayer(Player player) {
+    @Override
+    protected boolean tryPickup(Player player) {
+        if (this.isNoPhysics() && this.ownedBy(player)) {
+            return this.tryReturnToPlayer(player) || super.tryPickup(player);
+        }
+
+        return super.tryPickup(player);
+    }
+
+    @Override
+    public void playerTouch(Player entity) {
+        if (this.ownedBy(entity) || this.getOwner() == null) {
+            super.playerTouch(entity);
+        }
+    }
+
+    private boolean tryReturnToPlayer(Player player) {
         if (player.hasInfiniteMaterials()) {
-            return;
+            return true;
         }
 
         ItemStack returnedStack = this.getPickupItem();
+        if (returnedStack.isEmpty()) {
+            returnedStack = new ItemStack(ModItems.ZEUS_LIGHTNING.get());
+        }
+
         InteractionHand returnHand = this.returnToOffhand ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
         ItemStack handStack = player.getItemInHand(returnHand);
-        player.setItemInHand(returnHand, returnedStack);
-        if (!handStack.isEmpty() && !player.getInventory().add(handStack)) {
-            player.spawnAtLocation(handStack, 0.1F);
+        if (handStack.isEmpty()) {
+            player.setItemInHand(returnHand, returnedStack);
+            player.getInventory().setChanged();
+            player.containerMenu.broadcastChanges();
+            return true;
         }
+
+        player.getInventory().placeItemBackInInventory(returnedStack);
+        player.getInventory().setChanged();
+        player.containerMenu.broadcastChanges();
+        return true;
+    }
+
+    private boolean isAcceptableReturnOwner(@Nullable Entity owner) {
+        if (owner == null || !owner.isAlive() || owner.level() != this.level()) {
+            return false;
+        }
+
+        return !(owner instanceof ServerPlayer serverPlayer) || !serverPlayer.isSpectator();
+    }
+
+    private void updateForcedChunks() {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        long currentChunk = ChunkPos.asLong(this.chunkPosition().x, this.chunkPosition().z);
+        Vec3 nextPosition = this.position().add(this.getDeltaMovement());
+        long nextChunk = ChunkPos.asLong(
+                net.minecraft.util.Mth.floor(nextPosition.x) >> 4,
+                net.minecraft.util.Mth.floor(nextPosition.z) >> 4);
+
+        if (!Long.valueOf(currentChunk).equals(this.forcedChunk)) {
+            this.setForcedChunk(serverLevel, this.forcedChunk, false);
+            this.forcedChunk = currentChunk;
+            this.setForcedChunk(serverLevel, this.forcedChunk, true);
+        }
+
+        if (nextChunk == currentChunk) {
+            this.setForcedChunk(serverLevel, this.forcedNextChunk, false);
+            this.forcedNextChunk = null;
+            return;
+        }
+
+        if (!Long.valueOf(nextChunk).equals(this.forcedNextChunk)) {
+            this.setForcedChunk(serverLevel, this.forcedNextChunk, false);
+            this.forcedNextChunk = nextChunk;
+            this.setForcedChunk(serverLevel, this.forcedNextChunk, true);
+        }
+    }
+
+    private void releaseForcedChunks() {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        this.setForcedChunk(serverLevel, this.forcedChunk, false);
+        this.setForcedChunk(serverLevel, this.forcedNextChunk, false);
+        this.forcedChunk = null;
+        this.forcedNextChunk = null;
+    }
+
+    private void setForcedChunk(ServerLevel serverLevel, @Nullable Long chunkLong, boolean forced) {
+        if (chunkLong == null) {
+            return;
+        }
+
+        ChunkPos chunkPos = new ChunkPos(chunkLong);
+        serverLevel.setChunkForced(chunkPos.x, chunkPos.z, forced);
     }
 
     private void spawnLightningStrike(ServerLevel serverLevel, Vec3 location) {

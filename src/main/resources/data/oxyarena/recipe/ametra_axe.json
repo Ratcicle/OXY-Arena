@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "#": {
+      "item": "minecraft:stick"
+    },
+    "X": {
+      "item": "oxyarena:ametra_gem"
+    }
+  },
+  "pattern": [
+    "XX",
+    "X#",
+    " #"
+  ],
+  "result": {
+    "count": 1,
+    "id": "oxyarena:ametra_axe"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "oxyarena:item/ametra_sword"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "oxyarena:altered": 1.0
+      },
+      "model": "oxyarena:item/ametra_sword_altered"
+    }
+  ]
+}

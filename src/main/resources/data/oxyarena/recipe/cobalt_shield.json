@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "oxyarena:cobalt_ingot"
+    },
+    "W": {
+      "tag": "minecraft:planks"
+    }
+  },
+  "pattern": [
+    "WCW",
+    "WWW",
+    " W "
+  ],
+  "result": {
+    "count": 1,
+    "id": "oxyarena:cobalt_shield"
+  }
+}

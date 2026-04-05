@@ -32,6 +32,7 @@ public final class EventCommands {
                 .then(Commands.literal("list").executes(context -> listEvents(context.getSource())))
                 .then(Commands.literal("status").executes(context -> showStatus(context.getSource())))
                 .then(buildAreaCommand())
+                .then(buildRouletteCommand())
                 .then(Commands.literal("stop").executes(context -> stopActiveEvent(context.getSource())));
 
         for (String eventId : OxyServerEventRegistry.getRegisteredEventIds()) {
@@ -67,6 +68,14 @@ public final class EventCommands {
                                                                 IntegerArgumentType.getInteger(context, "maxX"),
                                                                 IntegerArgumentType.getInteger(context, "minZ"),
                                                                 IntegerArgumentType.getInteger(context, "maxZ"))))))));
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> buildRouletteCommand() {
+        return Commands.literal("roleta")
+                .executes(context -> showRouletteStatus(context.getSource()))
+                .then(Commands.literal("status").executes(context -> showRouletteStatus(context.getSource())))
+                .then(Commands.literal("iniciar").executes(context -> startRoulette(context.getSource())))
+                .then(Commands.literal("parar").executes(context -> stopRoulette(context.getSource())));
     }
 
     private static int listEvents(CommandSourceStack source) {
@@ -121,6 +130,14 @@ public final class EventCommands {
         OxyServerEventManager eventManager = OxyServerEventManager.get(source.getServer());
         OxyServerEvent activeEvent = eventManager.getActiveEvent();
         if (activeEvent == null) {
+            Component rouletteStatus = eventManager.getRouletteController().getStatusText();
+            if (rouletteStatus != null) {
+                source.sendSuccess(
+                        () -> Component.translatable("commands.oxyarena.event.status.roulette", rouletteStatus),
+                        false);
+                return 1;
+            }
+
             source.sendSuccess(() -> Component.translatable("commands.oxyarena.event.status.inactive"), false);
             return 0;
         }
@@ -141,6 +158,58 @@ public final class EventCommands {
                         "commands.oxyarena.event.status.active",
                         activeEvent.getDisplayName(),
                         formatTicks(activeEvent.getTimeRemainingTicks())),
+                false);
+        return 1;
+    }
+
+    private static int startRoulette(CommandSourceStack source) throws CommandSyntaxException {
+        OxyServerEventManager eventManager = OxyServerEventManager.get(source.getServer());
+        if (eventManager.getRouletteController().isActive()) {
+            source.sendFailure(Component.translatable("commands.oxyarena.event.roulette.start.already_active"));
+            return 0;
+        }
+
+        OxyServerEvent activeEvent = eventManager.getActiveEvent();
+        if (activeEvent != null) {
+            source.sendFailure(Component.translatable(
+                    "commands.oxyarena.event.start.already_active",
+                    activeEvent.getDisplayName()));
+            return 0;
+        }
+
+        if (!eventManager.getRouletteController().start()) {
+            source.sendFailure(Component.translatable("commands.oxyarena.event.roulette.start.failed"));
+            return 0;
+        }
+
+        source.sendSuccess(
+                () -> Component.translatable("commands.oxyarena.event.roulette.start.success"),
+                true);
+        return 1;
+    }
+
+    private static int stopRoulette(CommandSourceStack source) {
+        OxyServerEventManager eventManager = OxyServerEventManager.get(source.getServer());
+        if (!eventManager.getRouletteController().stop()) {
+            source.sendFailure(Component.translatable("commands.oxyarena.event.roulette.stop.inactive"));
+            return 0;
+        }
+
+        source.sendSuccess(
+                () -> Component.translatable("commands.oxyarena.event.roulette.stop.success"),
+                true);
+        return 1;
+    }
+
+    private static int showRouletteStatus(CommandSourceStack source) {
+        Component rouletteStatus = OxyServerEventManager.get(source.getServer()).getRouletteController().getStatusText();
+        if (rouletteStatus == null) {
+            source.sendSuccess(() -> Component.translatable("commands.oxyarena.event.roulette.status.inactive"), false);
+            return 0;
+        }
+
+        source.sendSuccess(
+                () -> Component.translatable("commands.oxyarena.event.roulette.status.active", rouletteStatus),
                 false);
         return 1;
     }

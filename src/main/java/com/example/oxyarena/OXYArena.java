@@ -14,6 +14,7 @@ import com.example.oxyarena.registry.ModEntityTypes;
 import com.example.oxyarena.registry.ModItems;
 import com.example.oxyarena.registry.ModLootModifiers;
 import com.example.oxyarena.registry.ModMobEffects;
+import com.example.oxyarena.registry.ModParticleTypes;
 
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
@@ -36,11 +37,14 @@ public class OXYArena {
         ModMobEffects.register(modEventBus);
         ModItems.register(modEventBus);
         ModLootModifiers.register(modEventBus);
+        ModParticleTypes.register(modEventBus);
         ModCreativeModeTabs.register(modEventBus);
 
         NeoForge.EVENT_BUS.addListener(ModCommands::register);
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onLivingDamagePre);
+        NeoForge.EVENT_BUS.addListener(ModGameEvents::onLivingDamagePost);
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onProjectileImpact);
+        NeoForge.EVENT_BUS.addListener(ModGameEvents::onSweepAttack);
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onServerTickPost);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onServerTickPost);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onLivingDeath);
@@ -49,6 +53,7 @@ public class OXYArena {
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onServerStopping);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onServerStopped);
 
-        modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        modContainer.registerConfig(ModConfig.Type.COMMON, Config.COMMON_SPEC);
+        modContainer.registerConfig(ModConfig.Type.CLIENT, Config.CLIENT_SPEC);
     }
 }

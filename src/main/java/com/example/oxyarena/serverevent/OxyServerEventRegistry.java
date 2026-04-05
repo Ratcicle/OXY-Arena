@@ -16,12 +16,13 @@ public final class OxyServerEventRegistry {
 
     static {
         register("apocalipse", ApocalypseServerEvent::new, 10, ServerEventGroup.MAP_ROTATION);
-        register("airdrop", AirdropServerEvent::new, 10, ServerEventGroup.MAP_ROTATION);
+        register("airdrop", AirdropServerEvent::new, 10, ServerEventRotationRole.COOLDOWN_SPECIAL, ServerEventGroup.MAP_ROTATION);
         register("caca", PlayerHuntServerEvent::new, 10, ServerEventGroup.MAP_ROTATION);
         register("mineracao", MiningFeverServerEvent::new, 10, ServerEventGroup.MAP_ROTATION);
         register("miniboss", MinibossServerEvent::new, 10, ServerEventGroup.MAP_ROTATION);
         register("inundacao", InundacaoServerEvent::new, 10, ServerEventGroup.MAP_ROTATION);
         register("mercador", MercadorServerEvent::new, 10, ServerEventGroup.MAP_ROTATION);
+        register("nevoa", NevoaServerEvent::new, 10, ServerEventGroup.MAP_ROTATION);
     }
 
     private OxyServerEventRegistry() {
@@ -38,6 +39,15 @@ public final class OxyServerEventRegistry {
     public static List<OxyServerEventDefinition> getDefinitionsInGroup(ServerEventGroup group) {
         return EVENT_DEFINITIONS.values().stream()
                 .filter(definition -> definition.isInGroup(group))
+                .toList();
+    }
+
+    public static List<OxyServerEventDefinition> getDefinitionsInGroup(
+            ServerEventGroup group,
+            ServerEventRotationRole rotationRole) {
+        return EVENT_DEFINITIONS.values().stream()
+                .filter(definition -> definition.isInGroup(group))
+                .filter(definition -> definition.rotationRole() == rotationRole)
                 .toList();
     }
 
@@ -85,11 +95,21 @@ public final class OxyServerEventRegistry {
             Supplier<OxyServerEvent> factory,
             int selectionWeight,
             ServerEventGroup... groups) {
+        register(id, factory, selectionWeight, ServerEventRotationRole.PRIMARY, groups);
+    }
+
+    private static void register(
+            String id,
+            Supplier<OxyServerEvent> factory,
+            int selectionWeight,
+            ServerEventRotationRole rotationRole,
+            ServerEventGroup... groups) {
         OxyServerEventDefinition definition = new OxyServerEventDefinition(
                 id,
                 factory,
                 groups.length == 0 ? EnumSet.noneOf(ServerEventGroup.class) : EnumSet.of(groups[0], groups),
-                selectionWeight);
+                selectionWeight,
+                rotationRole);
         if (EVENT_DEFINITIONS.putIfAbsent(id, definition) != null) {
             throw new IllegalStateException("Duplicate server event id: " + id);
         }

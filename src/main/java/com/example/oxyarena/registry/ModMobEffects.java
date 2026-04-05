@@ -29,6 +29,19 @@ public final class ModMobEffects {
             "lifehunt_bloodlust",
             () -> new MobEffect(MobEffectCategory.BENEFICIAL, 0x8B1F3D) {
             });
+    public static final DeferredHolder<MobEffect, MobEffect> AMETRA_AWAKENING = MOB_EFFECTS.register(
+            "ametra_awakening",
+            () -> new MobEffect(MobEffectCategory.BENEFICIAL, 0x8E67FF) {
+            }.addAttributeModifier(
+                    Attributes.ATTACK_DAMAGE,
+                    ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "effect.ametra_awakening.damage"),
+                    3.0D,
+                    AttributeModifier.Operation.ADD_VALUE)
+                    .addAttributeModifier(
+                            Attributes.ATTACK_SPEED,
+                            ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "effect.ametra_awakening.speed"),
+                            -0.3D,
+                            AttributeModifier.Operation.ADD_VALUE));
 
     private ModMobEffects() {
     }

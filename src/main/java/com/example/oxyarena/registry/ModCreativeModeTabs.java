@@ -31,6 +31,7 @@ public final class ModCreativeModeTabs {
                     output.accept(ModItems.COBALT_ORE);
                     output.accept(ModItems.DEEPSLATE_COBALT_ORE);
                     output.accept(ModItems.CITRINE_GEM);
+                    output.accept(ModItems.AMETRA_GEM);
                     output.accept(ModItems.RAW_COBALT);
                     output.accept(ModItems.COBALT_INGOT);
                     output.accept(ModItems.CITRINE_SWORD);
@@ -47,10 +48,15 @@ public final class ModCreativeModeTabs {
                     output.accept(ModItems.FLAMING_SCYTHE);
                     output.accept(ModItems.LIFEHUNT_SCYTHE);
                     output.accept(ModItems.COBALT_SWORD);
+                    output.accept(ModItems.AMETRA_SWORD);
                     output.accept(ModItems.COBALT_PICKAXE);
+                    output.accept(ModItems.AMETRA_PICKAXE);
                     output.accept(ModItems.COBALT_AXE);
+                    output.accept(ModItems.AMETRA_AXE);
                     output.accept(ModItems.COBALT_SHOVEL);
+                    output.accept(ModItems.AMETRA_SHOVEL);
                     output.accept(ModItems.COBALT_BOW);
+                    output.accept(ModItems.COBALT_SHIELD);
                     output.accept(ModItems.GRAPPLING_GUN);
                     output.accept(ModItems.COBALT_HELMET);
                     output.accept(ModItems.COBALT_CHESTPLATE);

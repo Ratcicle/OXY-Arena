@@ -1,10 +1,12 @@
 package com.example.oxyarena.registry;
 
 import com.example.oxyarena.OXYArena;
+import com.example.oxyarena.item.AmetraSwordItem;
 import com.example.oxyarena.item.CitrinePickaxeItem;
 import com.example.oxyarena.item.CitrineSwordItem;
 import com.example.oxyarena.item.CitrineThrowingDaggerItem;
 import com.example.oxyarena.item.CobaltBowItem;
+import com.example.oxyarena.item.CobaltShieldItem;
 import com.example.oxyarena.item.FlamingScytheItem;
 import com.example.oxyarena.item.GrapplingGunItem;
 import com.example.oxyarena.item.LifehuntScytheItem;
@@ -12,15 +14,20 @@ import com.example.oxyarena.item.SmokeBombItem;
 import com.example.oxyarena.item.ZeusLightningItem;
 
 import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.PickaxeItem;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.ShieldItem;
 import net.minecraft.world.item.ShovelItem;
 import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.level.block.entity.BannerPatternLayers;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -32,6 +39,7 @@ public final class ModItems {
     public static final DeferredItem<BlockItem> COBALT_ORE = ITEMS.registerSimpleBlockItem("cobalt_ore", ModBlocks.COBALT_ORE);
     public static final DeferredItem<BlockItem> DEEPSLATE_COBALT_ORE = ITEMS.registerSimpleBlockItem("deepslate_cobalt_ore", ModBlocks.DEEPSLATE_COBALT_ORE);
     public static final DeferredItem<Item> CITRINE_GEM = ITEMS.registerSimpleItem("citrine_gem");
+    public static final DeferredItem<Item> AMETRA_GEM = ITEMS.registerSimpleItem("ametra_gem");
     public static final DeferredItem<Item> RAW_COBALT = ITEMS.registerSimpleItem("raw_cobalt");
     public static final DeferredItem<Item> COBALT_INGOT = ITEMS.registerSimpleItem("cobalt_ingot");
     public static final DeferredItem<CitrineSwordItem> CITRINE_SWORD = ITEMS.registerItem(
@@ -97,27 +105,47 @@ public final class ModItems {
             "lifehunt_scythe",
             properties -> new LifehuntScytheItem(
                     ModToolTiers.COBALT,
-                    properties.attributes(SwordItem.createAttributes(ModToolTiers.COBALT, 7.2F, -3.2F))));
+                    properties.attributes(SwordItem.createAttributes(ModToolTiers.COBALT, 6.2F, -3.2F))));
     public static final DeferredItem<SwordItem> COBALT_SWORD = ITEMS.registerItem(
             "cobalt_sword",
             properties -> new SwordItem(
                     ModToolTiers.COBALT,
                     properties.attributes(SwordItem.createAttributes(ModToolTiers.COBALT, 3.0F, -2.4F))));
+    public static final DeferredItem<AmetraSwordItem> AMETRA_SWORD = ITEMS.registerItem(
+            "ametra_sword",
+            properties -> new AmetraSwordItem(
+                    ModToolTiers.AMETRA,
+                    properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 2.0F, -2.3F))));
     public static final DeferredItem<PickaxeItem> COBALT_PICKAXE = ITEMS.registerItem(
             "cobalt_pickaxe",
             properties -> new PickaxeItem(
                     ModToolTiers.COBALT,
                     properties.attributes(PickaxeItem.createAttributes(ModToolTiers.COBALT, 1.0F, -2.8F))));
+    public static final DeferredItem<PickaxeItem> AMETRA_PICKAXE = ITEMS.registerItem(
+            "ametra_pickaxe",
+            properties -> new PickaxeItem(
+                    ModToolTiers.AMETRA,
+                    properties.attributes(PickaxeItem.createAttributes(ModToolTiers.AMETRA, 1.0F, -2.8F))));
     public static final DeferredItem<AxeItem> COBALT_AXE = ITEMS.registerItem(
             "cobalt_axe",
             properties -> new AxeItem(
                     ModToolTiers.COBALT,
                     properties.attributes(AxeItem.createAttributes(ModToolTiers.COBALT, 5.0F, -3.0F))));
+    public static final DeferredItem<AxeItem> AMETRA_AXE = ITEMS.registerItem(
+            "ametra_axe",
+            properties -> new AxeItem(
+                    ModToolTiers.AMETRA,
+                    properties.attributes(AxeItem.createAttributes(ModToolTiers.AMETRA, 5.0F, -3.0F))));
     public static final DeferredItem<ShovelItem> COBALT_SHOVEL = ITEMS.registerItem(
             "cobalt_shovel",
             properties -> new ShovelItem(
                     ModToolTiers.COBALT,
                     properties.attributes(ShovelItem.createAttributes(ModToolTiers.COBALT, 1.5F, -3.0F))));
+    public static final DeferredItem<ShovelItem> AMETRA_SHOVEL = ITEMS.registerItem(
+            "ametra_shovel",
+            properties -> new ShovelItem(
+                    ModToolTiers.AMETRA,
+                    properties.attributes(ShovelItem.createAttributes(ModToolTiers.AMETRA, 1.5F, -3.0F))));
     public static final DeferredItem<ArmorItem> COBALT_HELMET = registerArmorItem(
             "cobalt_helmet",
             ModArmorMaterials.COBALT,
@@ -142,6 +170,12 @@ public final class ModItems {
             "cobalt_bow",
             CobaltBowItem::new,
             new Item.Properties().durability(768));
+    public static final DeferredItem<ShieldItem> COBALT_SHIELD = ITEMS.registerItem(
+            "cobalt_shield",
+            CobaltShieldItem::new,
+            new Item.Properties()
+                    .durability(750)
+                    .component(DataComponents.BANNER_PATTERNS, BannerPatternLayers.EMPTY));
     public static final DeferredItem<GrapplingGunItem> GRAPPLING_GUN = ITEMS.registerItem(
             "grappling_gun",
             GrapplingGunItem::new,
@@ -153,6 +187,13 @@ public final class ModItems {
 
     public static void register(IEventBus modEventBus) {
         ITEMS.register(modEventBus);
+        modEventBus.addListener(ModItems::modifyDefaultComponents);
+    }
+
+    private static void modifyDefaultComponents(ModifyDefaultComponentsEvent event) {
+        event.modify(Items.SHIELD, builder -> builder
+                .set(DataComponents.MAX_DAMAGE, 20)
+                .set(DataComponents.MAX_STACK_SIZE, 1));
     }
 
     private static DeferredItem<ArmorItem> registerArmorItem(
