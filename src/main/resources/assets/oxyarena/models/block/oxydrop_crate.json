@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "oxyarena:block/oxydrop_bottom",
+    "particle": "oxyarena:block/oxydrop_side",
+    "side": "oxyarena:block/oxydrop_side",
+    "top": "oxyarena:block/oxydrop_top"
+  }
+}

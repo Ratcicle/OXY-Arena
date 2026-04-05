@@ -1,0 +1,40 @@
+{
+  "variants": {
+    "facing=down,open=false": {
+      "model": "oxyarena:block/oxydrop_crate_closed"
+    },
+    "facing=down,open=true": {
+      "model": "oxyarena:block/oxydrop_crate_open"
+    },
+    "facing=east,open=false": {
+      "model": "oxyarena:block/oxydrop_crate_closed"
+    },
+    "facing=east,open=true": {
+      "model": "oxyarena:block/oxydrop_crate_open"
+    },
+    "facing=north,open=false": {
+      "model": "oxyarena:block/oxydrop_crate_closed"
+    },
+    "facing=north,open=true": {
+      "model": "oxyarena:block/oxydrop_crate_open"
+    },
+    "facing=south,open=false": {
+      "model": "oxyarena:block/oxydrop_crate_closed"
+    },
+    "facing=south,open=true": {
+      "model": "oxyarena:block/oxydrop_crate_open"
+    },
+    "facing=up,open=false": {
+      "model": "oxyarena:block/oxydrop_crate_closed"
+    },
+    "facing=up,open=true": {
+      "model": "oxyarena:block/oxydrop_crate_open"
+    },
+    "facing=west,open=false": {
+      "model": "oxyarena:block/oxydrop_crate_closed"
+    },
+    "facing=west,open=true": {
+      "model": "oxyarena:block/oxydrop_crate_open"
+    }
+  }
+}

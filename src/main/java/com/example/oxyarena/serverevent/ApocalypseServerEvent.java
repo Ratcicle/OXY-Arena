@@ -31,7 +31,6 @@ import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 
 public final class ApocalypseServerEvent implements OxyServerEvent {
-    private static final ServerEventArea EVENT_AREA = ServerEventAreas.MAIN_EVENT_AREA;
     private static final int MAX_EVENT_ZOMBIES = 1000;
     private static final int ZOMBIES_PER_WAVE = 10;
     private static final int SPAWN_INTERVAL_TICKS = 20;
@@ -188,9 +187,10 @@ public final class ApocalypseServerEvent implements OxyServerEvent {
         }
 
         int zombiesToSpawn = Math.min(ZOMBIES_PER_WAVE, MAX_EVENT_ZOMBIES - currentZombies);
+        ServerEventArea eventArea = this.getEventArea(server);
         for (int zombieIndex = 0; zombieIndex < zombiesToSpawn; zombieIndex++) {
-            int x = EVENT_AREA.randomX(overworld.random);
-            int z = EVENT_AREA.randomZ(overworld.random);
+            int x = eventArea.randomX(overworld.random);
+            int z = eventArea.randomZ(overworld.random);
             BlockPos spawnPos = new BlockPos(x, overworld.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z), z);
 
             Zombie zombie = EntityType.ZOMBIE.create(
@@ -296,11 +296,15 @@ public final class ApocalypseServerEvent implements OxyServerEvent {
 
     private boolean isPlayerInRewardArea(ServerPlayer player) {
         return player.serverLevel().dimension() == Level.OVERWORLD
-                && EVENT_AREA.contains(player.getX(), player.getZ());
+                && this.getEventArea(player.getServer()).contains(player.getX(), player.getZ());
     }
 
     private AABB getEventArea(ServerLevel level) {
-        return EVENT_AREA.createAabb(level);
+        return this.getEventArea(level.getServer()).createAabb(level);
+    }
+
+    private ServerEventArea getEventArea(MinecraftServer server) {
+        return ServerEventAreas.getArea(server, ServerEventGroup.MAP_ROTATION);
     }
 
     private AABB getLoadedWorldBounds(ServerLevel level) {

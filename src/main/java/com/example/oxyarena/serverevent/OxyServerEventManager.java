@@ -1,11 +1,15 @@
 package com.example.oxyarena.serverevent;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.WeakHashMap;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.util.RandomSource;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -36,18 +40,70 @@ public final class OxyServerEventManager {
         return this.registeredEvents.keySet();
     }
 
+    public Collection<OxyServerEventDefinition> getRegisteredEventDefinitions() {
+        return OxyServerEventRegistry.getRegisteredEventDefinitions();
+    }
+
     @Nullable
     public OxyServerEvent getActiveEvent() {
         return this.activeEvent;
     }
 
+    @Nullable
+    public OxyServerEvent getRegisteredEvent(String eventId) {
+        return this.registeredEvents.get(eventId);
+    }
+
     public boolean startEvent(String eventId) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
-        if (this.activeEvent != null) {
+        OxyServerEvent event = this.registeredEvents.get(eventId);
+        if (event == null) {
             return false;
         }
 
+        if (event.blocksEventQueue() && this.activeEvent != null) {
+            return false;
+        }
+
+        if (!event.start(this.server)) {
+            return false;
+        }
+
+        if (event.blocksEventQueue()) {
+            this.activeEvent = event;
+        }
+
+        return true;
+    }
+
+    public Optional<String> startRandomEvent(ServerEventGroup group)
+            throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        if (this.activeEvent != null) {
+            return Optional.empty();
+        }
+
+        RandomSource random = this.server.overworld() != null ? this.server.overworld().random : RandomSource.create();
+        Set<String> attemptedIds = new HashSet<>();
+        while (attemptedIds.size() < OxyServerEventRegistry.getDefinitionsInGroup(group).size()) {
+            Optional<OxyServerEventDefinition> definition = OxyServerEventRegistry.pickRandomDefinition(
+                    group,
+                    random,
+                    attemptedIds);
+            if (definition.isEmpty()) {
+                return Optional.empty();
+            }
+
+            attemptedIds.add(definition.get().id());
+            if (this.startEvent(definition.get().id())) {
+                return Optional.of(definition.get().id());
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    public boolean activateExistingEvent(String eventId) {
         OxyServerEvent event = this.registeredEvents.get(eventId);
-        if (event == null || !event.start(this.server)) {
+        if (event == null || !event.blocksEventQueue() || !event.isActive() || this.activeEvent != null) {
             return false;
         }
 
@@ -61,19 +117,29 @@ public final class OxyServerEventManager {
         }
 
         OxyServerEvent event = this.activeEvent;
-        this.activeEvent = null;
         event.stop(this.server, reason);
+        if (!event.isActive()) {
+            this.activeEvent = null;
+        }
         return true;
     }
 
     public boolean stopEvent(String eventId, ServerEventStopReason reason) {
         OxyServerEvent event = this.registeredEvents.get(eventId);
-        if (event == null || this.activeEvent != event) {
+        if (event == null) {
             return false;
         }
 
-        this.activeEvent = null;
+        if (event.blocksEventQueue()) {
+            if (this.activeEvent != event) {
+                return false;
+            }
+        }
+
         event.stop(this.server, reason);
+        if (this.activeEvent == event && !event.isActive()) {
+            this.activeEvent = null;
+        }
         return true;
     }
 
@@ -113,5 +179,7 @@ public final class OxyServerEventManager {
 
     public void onServerStopping() {
         this.stopActiveEvent(ServerEventStopReason.SERVER_SHUTDOWN);
+        this.registeredEvents.values().forEach(event -> event.stop(this.server, ServerEventStopReason.SERVER_SHUTDOWN));
+        this.activeEvent = null;
     }
 }

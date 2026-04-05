@@ -3,6 +3,7 @@ package com.example.oxyarena.registry;
 import java.util.function.Supplier;
 
 import com.example.oxyarena.OXYArena;
+import com.example.oxyarena.block.OxydropCrateBlock;
 
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -27,11 +28,14 @@ public final class ModBlocks {
     public static final DeferredBlock<Block> DEEPSLATE_COBALT_ORE = register(
             "deepslate_cobalt_ore",
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.DEEPSLATE).requiresCorrectToolForDrops().strength(5.0F, 6.0F).sound(SoundType.DEEPSLATE)));
+    public static final DeferredBlock<OxydropCrateBlock> OXYDROP_CRATE = register(
+            "oxydrop_crate",
+            () -> new OxydropCrateBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.BARREL).strength(2.5F, 6.0F)));
 
     private ModBlocks() {
     }
 
-    private static DeferredBlock<Block> register(String name, Supplier<Block> block) {
+    private static <T extends Block> DeferredBlock<T> register(String name, Supplier<T> block) {
         return BLOCKS.register(name, block);
     }
 

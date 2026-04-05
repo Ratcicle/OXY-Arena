@@ -10,6 +10,7 @@ import com.example.oxyarena.registry.ModItems;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
+import net.minecraft.client.renderer.entity.ZombieRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -43,6 +44,9 @@ public class OXYArenaClient {
         event.registerEntityRenderer(
                 ModEntityTypes.AIRDROP_CRATE.get(),
                 AirdropCrateRenderer::new);
+        event.registerEntityRenderer(
+                ModEntityTypes.BOB_BOSS.get(),
+                ZombieRenderer::new);
     }
 
     private void onClientSetup(FMLClientSetupEvent event) {

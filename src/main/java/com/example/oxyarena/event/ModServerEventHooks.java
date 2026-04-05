@@ -1,6 +1,7 @@
 package com.example.oxyarena.event;
 
 import com.example.oxyarena.serverevent.OxyServerEventManager;
+import com.example.oxyarena.serverevent.PlayerHuntServerEvent;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -16,6 +17,7 @@ public final class ModServerEventHooks {
 
     public static void onServerTickPost(ServerTickEvent.Post event) {
         OxyServerEventManager.get(event.getServer()).tick();
+        PlayerHuntServerEvent.tickPersistentPlayerEffects(event.getServer());
     }
 
     public static void onLivingDeath(LivingDeathEvent event) {
@@ -29,12 +31,14 @@ public final class ModServerEventHooks {
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && player.getServer() != null) {
             OxyServerEventManager.get(player.getServer()).onPlayerLoggedIn(player);
+            PlayerHuntServerEvent.refreshPersistentPlayerState(player.getServer(), player);
         }
     }
 
     public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && player.getServer() != null) {
             OxyServerEventManager.get(player.getServer()).onPlayerChangedDimension(player);
+            PlayerHuntServerEvent.refreshPersistentPlayerState(player.getServer(), player);
         }
     }
 

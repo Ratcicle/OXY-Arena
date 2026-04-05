@@ -5,6 +5,7 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 import com.example.oxyarena.entity.event.AirdropCrateEntity;
+import com.example.oxyarena.registry.ModBlocks;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -16,27 +17,19 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 
 public final class AirdropServerEvent implements OxyServerEvent {
-    private static final ServerEventArea EVENT_AREA = ServerEventAreas.MAIN_EVENT_AREA;
-    private static final int DROP_STEP_INTERVAL_TICKS = 20;
     private static final int MIN_START_HEIGHT = 120;
     private static final int MIN_DROP_HEIGHT_ABOVE_GROUND = 24;
     private static final int MAX_GROUND_SCAN_Y = 300;
 
     private boolean active;
     private int timeRemainingTicks;
-    private int dropStepCooldownTicks;
     @Nullable
     private BlockPos landingPos;
     @Nullable
@@ -84,7 +77,8 @@ public final class AirdropServerEvent implements OxyServerEvent {
                 overworld,
                 selectedLandingPos.getX() + 0.5D,
                 spawnY,
-                selectedLandingPos.getZ() + 0.5D);
+                selectedLandingPos.getZ() + 0.5D,
+                selectedLandingPos.getY());
         if (!overworld.addFreshEntity(crate)) {
             return false;
         }
@@ -92,10 +86,11 @@ public final class AirdropServerEvent implements OxyServerEvent {
         this.active = true;
         this.landingPos = selectedLandingPos.immutable();
         this.crateUuid = crate.getUUID();
-        this.dropStepCooldownTicks = DROP_STEP_INTERVAL_TICKS;
         this.timeRemainingTicks = Math.max(
                 1,
-                (int)Math.ceil((spawnY - selectedLandingPos.getY()) * DROP_STEP_INTERVAL_TICKS));
+                (int)Math.ceil(
+                        (spawnY - selectedLandingPos.getY())
+                                / AirdropCrateEntity.DESCENT_SPEED_BLOCKS_PER_TICK));
         this.setForcedChunk(overworld, selectedLandingPos);
         this.broadcastStart(server, selectedLandingPos);
         return true;
@@ -119,7 +114,6 @@ public final class AirdropServerEvent implements OxyServerEvent {
 
         this.active = false;
         this.timeRemainingTicks = 0;
-        this.dropStepCooldownTicks = 0;
         this.landingPos = null;
         this.crateUuid = null;
     }
@@ -139,22 +133,12 @@ public final class AirdropServerEvent implements OxyServerEvent {
         this.timeRemainingTicks = Math.max(0, this.timeRemainingTicks - 1);
         AirdropCrateEntity crate = this.getCrate(overworld);
         if (crate == null) {
-            this.stop(server, ServerEventStopReason.MANUAL);
+            this.stop(
+                    server,
+                    this.landingPos != null && overworld.getBlockState(this.landingPos).is(ModBlocks.OXYDROP_CRATE.get())
+                            ? ServerEventStopReason.COMPLETED
+                            : ServerEventStopReason.MANUAL);
             return;
-        }
-
-        if (--this.dropStepCooldownTicks > 0) {
-            return;
-        }
-
-        this.dropStepCooldownTicks = DROP_STEP_INTERVAL_TICKS;
-        double nextY = Math.max(this.landingPos.getY(), crate.getY() - 1.0D);
-        crate.setPos(crate.getX(), nextY, crate.getZ());
-        crate.hasImpulse = true;
-
-        if (nextY <= this.landingPos.getY()) {
-            this.finishDrop(server, overworld, crate, this.landingPos);
-            this.stop(server, ServerEventStopReason.COMPLETED);
         }
     }
 
@@ -171,7 +155,6 @@ public final class AirdropServerEvent implements OxyServerEvent {
     public void cleanupStaleRuntimeArtifacts(MinecraftServer server) {
         this.active = false;
         this.timeRemainingTicks = 0;
-        this.dropStepCooldownTicks = 0;
         this.landingPos = null;
         this.crateUuid = null;
 
@@ -192,42 +175,14 @@ public final class AirdropServerEvent implements OxyServerEvent {
         this.releaseForcedChunk(overworld);
     }
 
-    private void finishDrop(
-            MinecraftServer server,
-            ServerLevel level,
-            AirdropCrateEntity crate,
-            BlockPos chestPos) {
-        crate.discard();
-        level.setBlockAndUpdate(chestPos, Blocks.CHEST.defaultBlockState());
-
-        BlockEntity blockEntity = level.getBlockEntity(chestPos);
-        if (blockEntity instanceof ChestBlockEntity chestBlockEntity) {
-            AirdropLootPool.fillChest(level.random, chestBlockEntity);
-            chestBlockEntity.setChanged();
-        }
-
-        LightningBolt lightningBolt = EntityType.LIGHTNING_BOLT.create(level);
-        if (lightningBolt != null) {
-            lightningBolt.moveTo(chestPos.getX() + 0.5D, chestPos.getY(), chestPos.getZ() + 0.5D);
-            level.addFreshEntity(lightningBolt);
-        }
-
-        server.getPlayerList().broadcastSystemMessage(
-                Component.translatable(
-                        "event.oxyarena.airdrop.landed",
-                        chestPos.getX(),
-                        chestPos.getY(),
-                        chestPos.getZ()).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
-                false);
-    }
-
     @Nullable
     private BlockPos findLandingPos(ServerLevel level) {
+        ServerEventArea eventArea = this.getEventArea(level.getServer());
         int startY = Math.min(MAX_GROUND_SCAN_Y, level.getMaxBuildHeight() - 1);
 
         for (int attempt = 0; attempt < 24; attempt++) {
-            int x = EVENT_AREA.randomX(level.random);
-            int z = EVENT_AREA.randomZ(level.random);
+            int x = eventArea.randomX(level.random);
+            int z = eventArea.randomZ(level.random);
 
             for (int y = startY; y > level.getMinBuildHeight(); y--) {
                 BlockPos groundPos = new BlockPos(x, y, z);
@@ -246,6 +201,10 @@ public final class AirdropServerEvent implements OxyServerEvent {
         }
 
         return null;
+    }
+
+    private ServerEventArea getEventArea(MinecraftServer server) {
+        return ServerEventAreas.getArea(server, ServerEventGroup.MAP_ROTATION);
     }
 
     private boolean isValidLandingSupport(BlockState blockState) {

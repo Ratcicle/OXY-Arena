@@ -92,7 +92,7 @@ public final class ModItems {
             "flaming_scythe",
             properties -> new FlamingScytheItem(
                     ModToolTiers.COBALT,
-                    properties.attributes(SwordItem.createAttributes(ModToolTiers.COBALT, 6.2F, -2.8F))));
+                    properties.attributes(SwordItem.createAttributes(ModToolTiers.COBALT, 5.2F, -2.8F))));
     public static final DeferredItem<LifehuntScytheItem> LIFEHUNT_SCYTHE = ITEMS.registerItem(
             "lifehunt_scythe",
             properties -> new LifehuntScytheItem(

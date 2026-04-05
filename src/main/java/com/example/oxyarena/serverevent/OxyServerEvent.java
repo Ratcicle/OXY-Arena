@@ -32,6 +32,14 @@ public interface OxyServerEvent {
         return 0;
     }
 
+    default Component getStatusText() {
+        return null;
+    }
+
+    default boolean blocksEventQueue() {
+        return true;
+    }
+
     default void cleanupStaleRuntimeArtifacts(MinecraftServer server) {
     }
 }

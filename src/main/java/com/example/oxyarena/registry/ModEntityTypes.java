@@ -2,6 +2,7 @@ package com.example.oxyarena.registry;
 
 import com.example.oxyarena.OXYArena;
 import com.example.oxyarena.entity.event.AirdropCrateEntity;
+import com.example.oxyarena.entity.event.BobBossEntity;
 import com.example.oxyarena.entity.effect.SmokeCloud;
 import com.example.oxyarena.entity.projectile.CitrineThrowingDagger;
 import com.example.oxyarena.entity.projectile.GrapplingHook;
@@ -11,6 +12,7 @@ import com.example.oxyarena.entity.projectile.ThrownZeusLightning;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -68,13 +70,26 @@ public final class ModEntityTypes {
                     () -> EntityType.Builder.<AirdropCrateEntity>of(AirdropCrateEntity::new, MobCategory.MISC)
                             .sized(1.0F, 1.0F)
                             .clientTrackingRange(64)
-                            .updateInterval(20)
+                            .updateInterval(1)
                             .build("airdrop_crate"));
+    public static final DeferredHolder<EntityType<?>, EntityType<BobBossEntity>> BOB_BOSS =
+            ENTITY_TYPES.register(
+                    "bob_boss",
+                    () -> EntityType.Builder.<BobBossEntity>of(BobBossEntity::new, MobCategory.MONSTER)
+                            .noSave()
+                            .sized(0.6F, 1.95F)
+                            .clientTrackingRange(4)
+                            .build("bob_boss"));
 
     private ModEntityTypes() {
     }
 
     public static void register(IEventBus modEventBus) {
         ENTITY_TYPES.register(modEventBus);
+        modEventBus.addListener(ModEntityTypes::registerAttributes);
+    }
+
+    private static void registerAttributes(EntityAttributeCreationEvent event) {
+        event.put(BOB_BOSS.get(), BobBossEntity.createAttributes().build());
     }
 }

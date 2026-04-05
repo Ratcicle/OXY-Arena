@@ -18,7 +18,7 @@ import net.minecraft.world.item.ProjectileItem;
 import net.minecraft.world.level.Level;
 
 public class CitrineThrowingDaggerItem extends Item implements ProjectileItem {
-    private static final int COOLDOWN_TICKS = 15;
+    private static final int COOLDOWN_TICKS = 10;
     private static final float SHOOT_POWER = 2.0F;
     private static final float SHOOT_INACCURACY = 0.5F;
 

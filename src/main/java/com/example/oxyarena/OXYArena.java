@@ -7,10 +7,12 @@ import com.example.oxyarena.command.ModCommands;
 import com.example.oxyarena.event.ModGameEvents;
 import com.example.oxyarena.event.ModServerEventHooks;
 import com.example.oxyarena.registry.ModArmorMaterials;
+import com.example.oxyarena.registry.ModBlockEntityTypes;
 import com.example.oxyarena.registry.ModBlocks;
 import com.example.oxyarena.registry.ModCreativeModeTabs;
 import com.example.oxyarena.registry.ModEntityTypes;
 import com.example.oxyarena.registry.ModItems;
+import com.example.oxyarena.registry.ModLootModifiers;
 import com.example.oxyarena.registry.ModMobEffects;
 
 import net.neoforged.bus.api.IEventBus;
@@ -28,10 +30,12 @@ public class OXYArena {
         LOGGER.debug("Initializing {}", MODID);
 
         ModArmorMaterials.register(modEventBus);
+        ModBlockEntityTypes.register(modEventBus);
         ModBlocks.register(modEventBus);
         ModEntityTypes.register(modEventBus);
         ModMobEffects.register(modEventBus);
         ModItems.register(modEventBus);
+        ModLootModifiers.register(modEventBus);
         ModCreativeModeTabs.register(modEventBus);
 
         NeoForge.EVENT_BUS.addListener(ModCommands::register);

@@ -5,6 +5,20 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.AABB;
 
 public record ServerEventArea(int minX, int maxX, int minZ, int maxZ) {
+    public ServerEventArea {
+        if (minX > maxX) {
+            int swappedMinX = maxX;
+            maxX = minX;
+            minX = swappedMinX;
+        }
+
+        if (minZ > maxZ) {
+            int swappedMinZ = maxZ;
+            maxZ = minZ;
+            minZ = swappedMinZ;
+        }
+    }
+
     public boolean contains(double x, double z) {
         return x >= this.minX && x <= this.maxX && z >= this.minZ && z <= this.maxZ;
     }

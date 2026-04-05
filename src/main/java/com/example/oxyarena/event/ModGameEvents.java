@@ -3,10 +3,12 @@ package com.example.oxyarena.event;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 
 import com.example.oxyarena.item.CobaltBowItem;
 import com.example.oxyarena.registry.ModItems;
 
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.RandomSource;
@@ -23,11 +25,13 @@ import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 public final class ModGameEvents {
+    private static final String COBALT_RAIN_ARROW_TAG = "OxyArenaCobaltRainArrow";
+    private static final String COBALT_RAIN_TARGET_TAG = "OxyArenaCobaltRainTarget";
     private static final int COBALT_ARROW_RAIN_ARROWS_PER_TICK = 3;
-    private static final int COBALT_ARROW_RAIN_WAVES = 10;
-    private static final double COBALT_ARROW_RAIN_RADIUS = 4.5D;
+    private static final int COBALT_ARROW_RAIN_WAVES = 10; //10
+    private static final double COBALT_ARROW_RAIN_RADIUS = 4.5D; //#4.5
     private static final double COBALT_ARROW_RAIN_HEIGHT = 16.0D;
-    private static final double COBALT_ARROW_RAIN_DAMAGE = 1.5D;
+    private static final double COBALT_ARROW_RAIN_DAMAGE = 0.5D;
     private static final float COBALT_ARROW_RAIN_VELOCITY = 2.6F;
     private static final List<CobaltArrowRainWave> COBALT_ARROW_RAIN_WAVES_QUEUE = new ArrayList<>();
 
@@ -61,9 +65,17 @@ public final class ModGameEvents {
     public static void onProjectileImpact(ProjectileImpactEvent event) {
         if (!(event.getProjectile() instanceof AbstractArrow arrow)
                 || arrow.level().isClientSide()
-                || !CobaltBowItem.hasArrowRain(arrow)
                 || !(event.getRayTraceResult() instanceof EntityHitResult entityHitResult)
                 || !(entityHitResult.getEntity() instanceof LivingEntity target)) {
+            return;
+        }
+
+        if (isCobaltRainArrow(arrow)) {
+            resetInitialTargetIframesIfNeeded(arrow, target);
+            return;
+        }
+
+        if (!CobaltBowItem.hasArrowRain(arrow)) {
             return;
         }
 
@@ -75,10 +87,35 @@ public final class ModGameEvents {
         COBALT_ARROW_RAIN_WAVES_QUEUE.add(new CobaltArrowRainWave(
                 level,
                 owner,
+                target.getUUID(),
                 targetCenter.x,
                 target.getY() + target.getBbHeight() + COBALT_ARROW_RAIN_HEIGHT,
                 targetCenter.z,
                 COBALT_ARROW_RAIN_WAVES));
+    }
+
+    private static boolean isCobaltRainArrow(AbstractArrow arrow) {
+        return arrow.getPersistentData().getBoolean(COBALT_RAIN_ARROW_TAG);
+    }
+
+    private static void markAsCobaltRainArrow(AbstractArrow arrow, UUID targetUuid) {
+        CompoundTag persistentData = arrow.getPersistentData();
+        persistentData.putBoolean(COBALT_RAIN_ARROW_TAG, true);
+        persistentData.putUUID(COBALT_RAIN_TARGET_TAG, targetUuid);
+    }
+
+    private static void resetInitialTargetIframesIfNeeded(AbstractArrow arrow, LivingEntity target) {
+        CompoundTag persistentData = arrow.getPersistentData();
+        if (!persistentData.hasUUID(COBALT_RAIN_TARGET_TAG)) {
+            return;
+        }
+
+        if (!target.getUUID().equals(persistentData.getUUID(COBALT_RAIN_TARGET_TAG))) {
+            return;
+        }
+
+        target.invulnerableTime = 0;
+        target.hurtTime = 0;
     }
 
     public static void onServerTickPost(ServerTickEvent.Post event) {
@@ -104,6 +141,7 @@ public final class ModGameEvents {
     private static final class CobaltArrowRainWave {
         private final ServerLevel level;
         private final Entity owner;
+        private final UUID targetUuid;
         private final double centerX;
         private final double spawnY;
         private final double centerZ;
@@ -112,12 +150,14 @@ public final class ModGameEvents {
         private CobaltArrowRainWave(
                 ServerLevel level,
                 Entity owner,
+                UUID targetUuid,
                 double centerX,
                 double spawnY,
                 double centerZ,
                 int remainingWaves) {
             this.level = level;
             this.owner = owner;
+            this.targetUuid = targetUuid;
             this.centerX = centerX;
             this.spawnY = spawnY;
             this.centerZ = centerZ;
@@ -147,6 +187,7 @@ public final class ModGameEvents {
                 rainArrow.setOwner(this.owner);
                 rainArrow.pickup = AbstractArrow.Pickup.DISALLOWED;
                 rainArrow.setBaseDamage(COBALT_ARROW_RAIN_DAMAGE);
+                markAsCobaltRainArrow(rainArrow, this.targetUuid);
                 rainArrow.shoot(0.0D, -1.0D, 0.0D, COBALT_ARROW_RAIN_VELOCITY, 0.0F);
 
                 this.level.addFreshEntity(rainArrow);
