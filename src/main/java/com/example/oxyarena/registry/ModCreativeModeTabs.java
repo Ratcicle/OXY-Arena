@@ -30,6 +30,8 @@ public final class ModCreativeModeTabs {
                     output.accept(ModItems.DEEPSLATE_CITRINE_ORE);
                     output.accept(ModItems.COBALT_ORE);
                     output.accept(ModItems.DEEPSLATE_COBALT_ORE);
+                    output.accept(ModItems.AMETRA_ORE);
+                    output.accept(ModItems.DEEPSLATE_AMETRA_ORE);
                     output.accept(ModItems.CITRINE_GEM);
                     output.accept(ModItems.AMETRA_GEM);
                     output.accept(ModItems.RAW_COBALT);

@@ -1,11 +1,13 @@
 package com.example.oxyarena;
 
 import com.example.oxyarena.client.ImmersiveHudController;
+import com.example.oxyarena.client.PickupNotifierController;
 import com.example.oxyarena.client.particle.NevoaBorderParticle;
 import com.example.oxyarena.client.renderer.entity.AirdropCrateRenderer;
 import com.example.oxyarena.client.renderer.entity.CitrineThrowingDaggerRenderer;
 import com.example.oxyarena.client.renderer.entity.GrapplingHookRenderer;
 import com.example.oxyarena.client.renderer.entity.ThrownZeusLightningRenderer;
+import com.example.oxyarena.network.ItemPickupNotificationPayload;
 import com.example.oxyarena.registry.ModEntityTypes;
 import com.example.oxyarena.registry.ModItems;
 import com.example.oxyarena.registry.ModMobEffects;
@@ -33,6 +35,8 @@ public class OXYArenaClient {
         modEventBus.addListener(this::registerParticleProviders);
         modEventBus.addListener(this::onClientSetup);
         ImmersiveHudController.register();
+        PickupNotifierController.register();
+        ItemPickupNotificationPayload.setClientReceiver(PickupNotifierController::handlePickup);
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
     }
 

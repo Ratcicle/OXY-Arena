@@ -28,6 +28,12 @@ public final class ModBlocks {
     public static final DeferredBlock<Block> DEEPSLATE_COBALT_ORE = register(
             "deepslate_cobalt_ore",
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.DEEPSLATE).requiresCorrectToolForDrops().strength(5.0F, 6.0F).sound(SoundType.DEEPSLATE)));
+    public static final DeferredBlock<Block> AMETRA_ORE = register(
+            "ametra_ore",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.DIAMOND_ORE).requiresCorrectToolForDrops()));
+    public static final DeferredBlock<Block> DEEPSLATE_AMETRA_ORE = register(
+            "deepslate_ametra_ore",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.DEEPSLATE_DIAMOND_ORE).requiresCorrectToolForDrops().sound(SoundType.DEEPSLATE)));
     public static final DeferredBlock<OxydropCrateBlock> OXYDROP_CRATE = register(
             "oxydrop_crate",
             () -> new OxydropCrateBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.BARREL).strength(2.5F, 6.0F)));

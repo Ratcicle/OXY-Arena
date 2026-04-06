@@ -38,6 +38,8 @@ public final class ModItems {
     public static final DeferredItem<BlockItem> DEEPSLATE_CITRINE_ORE = ITEMS.registerSimpleBlockItem("deepslate_citrine_ore", ModBlocks.DEEPSLATE_CITRINE_ORE);
     public static final DeferredItem<BlockItem> COBALT_ORE = ITEMS.registerSimpleBlockItem("cobalt_ore", ModBlocks.COBALT_ORE);
     public static final DeferredItem<BlockItem> DEEPSLATE_COBALT_ORE = ITEMS.registerSimpleBlockItem("deepslate_cobalt_ore", ModBlocks.DEEPSLATE_COBALT_ORE);
+    public static final DeferredItem<BlockItem> AMETRA_ORE = ITEMS.registerSimpleBlockItem("ametra_ore", ModBlocks.AMETRA_ORE);
+    public static final DeferredItem<BlockItem> DEEPSLATE_AMETRA_ORE = ITEMS.registerSimpleBlockItem("deepslate_ametra_ore", ModBlocks.DEEPSLATE_AMETRA_ORE);
     public static final DeferredItem<Item> CITRINE_GEM = ITEMS.registerSimpleItem("citrine_gem");
     public static final DeferredItem<Item> AMETRA_GEM = ITEMS.registerSimpleItem("ametra_gem");
     public static final DeferredItem<Item> RAW_COBALT = ITEMS.registerSimpleItem("raw_cobalt");

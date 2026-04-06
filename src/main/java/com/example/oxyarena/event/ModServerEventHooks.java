@@ -1,12 +1,17 @@
 package com.example.oxyarena.event;
 
+import com.example.oxyarena.network.ItemPickupNotificationPayload;
 import com.example.oxyarena.serverevent.OxyServerEventManager;
 import com.example.oxyarena.serverevent.PlayerHuntServerEvent;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -40,6 +45,26 @@ public final class ModServerEventHooks {
             OxyServerEventManager.get(player.getServer()).onPlayerChangedDimension(player);
             PlayerHuntServerEvent.refreshPersistentPlayerState(player.getServer(), player);
         }
+    }
+
+    public static void onItemEntityPickup(ItemEntityPickupEvent.Post event) {
+        if (!(event.getPlayer() instanceof ServerPlayer player)) {
+            return;
+        }
+
+        ItemStack originalStack = event.getOriginalStack();
+        int pickedUpCount = originalStack.getCount() - event.getCurrentStack().getCount();
+        if (pickedUpCount <= 0) {
+            return;
+        }
+
+        ItemStack pickedUpStack = originalStack.copy();
+        pickedUpStack.setCount(pickedUpCount);
+        PacketDistributor.sendToPlayer(player, new ItemPickupNotificationPayload(pickedUpStack));
+    }
+
+    public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+        RightClickHarvestHelper.onRightClickBlock(event);
     }
 
     public static void onServerStopping(ServerStoppingEvent event) {
