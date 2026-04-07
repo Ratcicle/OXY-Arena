@@ -15,5 +15,17 @@ public final class ModPayloads {
                 ItemPickupNotificationPayload.TYPE,
                 ItemPickupNotificationPayload.STREAM_CODEC,
                 ItemPickupNotificationPayload::handle);
+        registrar.playToClient(
+                PingLocationSyncPayload.TYPE,
+                PingLocationSyncPayload.STREAM_CODEC,
+                PingLocationSyncPayload::handle);
+        registrar.playToServer(
+                InventorySortRequestPayload.TYPE,
+                InventorySortRequestPayload.STREAM_CODEC,
+                InventorySortRequestPayload::handle);
+        registrar.playToServer(
+                PingLocationRequestPayload.TYPE,
+                PingLocationRequestPayload.STREAM_CODEC,
+                PingLocationRequestPayload::handle);
     }
 }

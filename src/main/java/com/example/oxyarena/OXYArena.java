@@ -17,6 +17,7 @@ import com.example.oxyarena.registry.ModItems;
 import com.example.oxyarena.registry.ModLootModifiers;
 import com.example.oxyarena.registry.ModMobEffects;
 import com.example.oxyarena.registry.ModParticleTypes;
+import com.example.oxyarena.registry.ModSoundEvents;
 
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
@@ -41,6 +42,7 @@ public class OXYArena {
         ModItems.register(modEventBus);
         ModLootModifiers.register(modEventBus);
         ModParticleTypes.register(modEventBus);
+        ModSoundEvents.register(modEventBus);
         ModCreativeModeTabs.register(modEventBus);
         modEventBus.addListener(ModPayloads::register);
 
@@ -56,6 +58,7 @@ public class OXYArena {
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onPlayerChangedDimension);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onItemEntityPickup);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onRightClickBlock);
+        NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onBlockBreak);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onServerStopping);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onServerStopped);
 

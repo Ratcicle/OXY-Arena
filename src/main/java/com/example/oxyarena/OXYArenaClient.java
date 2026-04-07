@@ -1,13 +1,17 @@
 package com.example.oxyarena;
 
 import com.example.oxyarena.client.ImmersiveHudController;
+import com.example.oxyarena.client.InventoryInteractionController;
+import com.example.oxyarena.client.PingLocationController;
 import com.example.oxyarena.client.PickupNotifierController;
+import com.example.oxyarena.client.ToolTooltipStatsController;
 import com.example.oxyarena.client.particle.NevoaBorderParticle;
 import com.example.oxyarena.client.renderer.entity.AirdropCrateRenderer;
 import com.example.oxyarena.client.renderer.entity.CitrineThrowingDaggerRenderer;
 import com.example.oxyarena.client.renderer.entity.GrapplingHookRenderer;
 import com.example.oxyarena.client.renderer.entity.ThrownZeusLightningRenderer;
 import com.example.oxyarena.network.ItemPickupNotificationPayload;
+import com.example.oxyarena.network.PingLocationSyncPayload;
 import com.example.oxyarena.registry.ModEntityTypes;
 import com.example.oxyarena.registry.ModItems;
 import com.example.oxyarena.registry.ModMobEffects;
@@ -24,6 +28,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
@@ -33,10 +38,15 @@ public class OXYArenaClient {
     public OXYArenaClient(IEventBus modEventBus, ModContainer container) {
         modEventBus.addListener(this::registerEntityRenderers);
         modEventBus.addListener(this::registerParticleProviders);
+        modEventBus.addListener(this::registerKeyMappings);
         modEventBus.addListener(this::onClientSetup);
         ImmersiveHudController.register();
+        InventoryInteractionController.register();
+        PingLocationController.register();
         PickupNotifierController.register();
+        ToolTooltipStatsController.register();
         ItemPickupNotificationPayload.setClientReceiver(PickupNotifierController::handlePickup);
+        PingLocationSyncPayload.setClientReceiver(PingLocationController::handlePing);
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
     }
 
@@ -64,6 +74,10 @@ public class OXYArenaClient {
         event.registerSpriteSet(
                 ModParticleTypes.NEVOA_BORDER.get(),
                 NevoaBorderParticle.Provider::new);
+    }
+
+    private void registerKeyMappings(RegisterKeyMappingsEvent event) {
+        PingLocationController.registerKeyMappings(event);
     }
 
     private void onClientSetup(FMLClientSetupEvent event) {

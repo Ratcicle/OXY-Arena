@@ -42,3 +42,4 @@ runs/
 repo/
 !**/src/**/repo/
 kubejs/
+Ping-Wheel-1.12.1-neoforge-1.21.1/

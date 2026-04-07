@@ -12,6 +12,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -23,6 +24,7 @@ public final class ModServerEventHooks {
     public static void onServerTickPost(ServerTickEvent.Post event) {
         OxyServerEventManager.get(event.getServer()).tick();
         PlayerHuntServerEvent.tickPersistentPlayerEffects(event.getServer());
+        FallingTreeHelper.onServerTickPost(event);
     }
 
     public static void onLivingDeath(LivingDeathEvent event) {
@@ -67,11 +69,17 @@ public final class ModServerEventHooks {
         RightClickHarvestHelper.onRightClickBlock(event);
     }
 
+    public static void onBlockBreak(BlockEvent.BreakEvent event) {
+        FallingTreeHelper.onBlockBreak(event);
+    }
+
     public static void onServerStopping(ServerStoppingEvent event) {
+        FallingTreeHelper.onServerStopping(event);
         OxyServerEventManager.get(event.getServer()).onServerStopping();
     }
 
     public static void onServerStopped(ServerStoppedEvent event) {
+        FallingTreeHelper.onServerStopped(event);
         OxyServerEventManager.remove(event.getServer());
     }
 }

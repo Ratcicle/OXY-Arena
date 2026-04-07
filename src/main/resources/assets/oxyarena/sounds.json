@@ -1,0 +1,10 @@
+{
+  "ping": {
+    "subtitle": "subtitles.oxyarena.ping",
+    "sounds": [
+      {
+        "name": "minecraft:entity/experience_orb/pickup"
+      }
+    ]
+  }
+}
