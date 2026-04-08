@@ -1,9 +1,11 @@
 package com.example.oxyarena.event;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -43,13 +45,18 @@ public final class ModGameEvents {
     private static final double COBALT_ARROW_RAIN_DAMAGE = 0.5D;
     private static final float COBALT_ARROW_RAIN_VELOCITY = 2.6F;
     private static final float AMETRA_SWEEPING_DAMAGE_RATIO = 0.75F;
+    private static final float MURASAMA_CRIT_DAMAGE_MULTIPLIER = 1.5F;
     private static final List<CobaltArrowRainWave> COBALT_ARROW_RAIN_WAVES_QUEUE = new ArrayList<>();
     private static final Set<UUID> AMETRA_SWEEP_ATTACKERS = new HashSet<>();
+    private static final Map<UUID, Integer> MURASAMA_COMBO_COUNTS = new HashMap<>();
+    private static final Set<UUID> MURASAMA_CRIT_ATTACKERS = new HashSet<>();
 
     private ModGameEvents() {
     }
 
     public static void onLivingDamagePre(LivingDamageEvent.Pre event) {
+        handleMurasamaDamagePre(event);
+
         if (!(event.getEntity() instanceof Player player)
                 || !event.getSource().is(DamageTypeTags.IS_FIRE)
                 || !isHoldingFlamingScythe(player)) {
@@ -69,6 +76,8 @@ public final class ModGameEvents {
     }
 
     public static void onLivingDamagePost(LivingDamageEvent.Post event) {
+        handleMurasamaDamagePost(event);
+
         if (!(event.getEntity() instanceof LivingEntity target)
                 || !(target.level() instanceof ServerLevel serverLevel)
                 || event.getNewDamage() <= 0.0F
@@ -134,9 +143,63 @@ public final class ModGameEvents {
                 || player.getOffhandItem().is(ModItems.FLAMING_SCYTHE.get());
     }
 
+    private static void handleMurasamaDamagePre(LivingDamageEvent.Pre event) {
+        if (!(event.getEntity() instanceof LivingEntity)
+                || event.getNewDamage() <= 0.0F
+                || !(event.getSource().getEntity() instanceof Player player)
+                || event.getSource().getDirectEntity() != player) {
+            return;
+        }
+
+        UUID playerId = player.getUUID();
+        if (!player.getMainHandItem().is(ModItems.MURASAMA.get())) {
+            MURASAMA_COMBO_COUNTS.remove(playerId);
+            MURASAMA_CRIT_ATTACKERS.remove(playerId);
+            return;
+        }
+
+        int comboCount = MURASAMA_COMBO_COUNTS.getOrDefault(playerId, 0) + 1;
+        if (comboCount >= 3) {
+            event.setNewDamage(event.getNewDamage() * MURASAMA_CRIT_DAMAGE_MULTIPLIER);
+            MURASAMA_COMBO_COUNTS.put(playerId, 0);
+            MURASAMA_CRIT_ATTACKERS.add(playerId);
+        } else {
+            MURASAMA_COMBO_COUNTS.put(playerId, comboCount);
+        }
+    }
+
+    private static void handleMurasamaDamagePost(LivingDamageEvent.Post event) {
+        if (!(event.getEntity() instanceof LivingEntity target)
+                || event.getNewDamage() <= 0.0F
+                || !(event.getSource().getEntity() instanceof Player player)
+                || event.getSource().getDirectEntity() != player
+                || !MURASAMA_CRIT_ATTACKERS.remove(player.getUUID())) {
+            return;
+        }
+
+        player.crit(target);
+        if (player.level() instanceof ServerLevel serverLevel) {
+            serverLevel.playSound(
+                    null,
+                    player.getX(),
+                    player.getY(),
+                    player.getZ(),
+                    SoundEvents.PLAYER_ATTACK_CRIT,
+                    player.getSoundSource(),
+                    1.0F,
+                    1.0F);
+        }
+    }
+
     private static boolean isAmetraSwordAwakened(Player player) {
         return player.hasEffect(ModMobEffects.AMETRA_AWAKENING)
                 && player.getMainHandItem().is(ModItems.AMETRA_SWORD.get());
+    }
+
+    public static void clearMurasamaState(Player player) {
+        UUID playerId = player.getUUID();
+        MURASAMA_COMBO_COUNTS.remove(playerId);
+        MURASAMA_CRIT_ATTACKERS.remove(playerId);
     }
 
     public static void onProjectileImpact(ProjectileImpactEvent event) {

@@ -1,0 +1,14 @@
+{
+  "replace": false,
+  "values": [
+    "oxyarena:citrine_pickaxe",
+    "oxyarena:ametra_pickaxe",
+    "oxyarena:cobalt_pickaxe",
+    "oxyarena:citrine_axe",
+    "oxyarena:ametra_axe",
+    "oxyarena:cobalt_axe",
+    "oxyarena:citrine_shovel",
+    "oxyarena:ametra_shovel",
+    "oxyarena:cobalt_shovel"
+  ]
+}

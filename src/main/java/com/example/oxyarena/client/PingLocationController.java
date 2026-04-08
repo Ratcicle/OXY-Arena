@@ -9,20 +9,23 @@ import java.util.UUID;
 import org.joml.Vector4f;
 import org.lwjgl.glfw.GLFW;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.example.oxyarena.Config;
+import com.example.oxyarena.OXYArena;
 import com.example.oxyarena.network.PingLocationRequestPayload;
 import com.example.oxyarena.network.PingLocationSyncPayload;
 import com.example.oxyarena.registry.ModSoundEvents;
+import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.PlayerInfo;
-import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
@@ -39,10 +42,11 @@ import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
-import com.mojang.blaze3d.platform.InputConstants;
 
 public final class PingLocationController {
     private static final boolean DEBUG_FEEDBACK = false;
+    private static final ResourceLocation PING_MARKER_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "textures/gui/ping_marker.png");
     private static final KeyMapping PING_KEY = new KeyMapping(
             "key.oxyarena.ping",
             InputConstants.Type.MOUSE,
@@ -213,7 +217,8 @@ public final class PingLocationController {
 
         PoseStack poseStack = event.getPoseStack();
         Vec3 cameraPos = event.getCamera().getPosition();
-        VertexConsumer consumer = minecraft.renderBuffers().bufferSource().getBuffer(RenderType.lines());
+        RenderType markerRenderType = RenderType.entityTranslucentEmissive(PING_MARKER_TEXTURE);
+        VertexConsumer consumer = minecraft.renderBuffers().bufferSource().getBuffer(markerRenderType);
         boolean rendered = false;
 
         for (ActivePing ping : ACTIVE_PINGS.values()) {
@@ -235,7 +240,7 @@ public final class PingLocationController {
             ping.screenX = projection.x();
             ping.screenY = projection.y();
 
-            double size = Mth.clamp(ping.distance * 0.012D, 0.18D, 0.45D);
+            double size = Mth.clamp(ping.distance * 0.006D, 0.42D, 0.95D);
             AABB markerBounds = new AABB(
                     worldPos.x - size,
                     worldPos.y,
@@ -249,39 +254,21 @@ public final class PingLocationController {
 
             poseStack.pushPose();
             Vec3 offset = worldPos.subtract(cameraPos);
-            poseStack.translate(offset.x, offset.y, offset.z);
-            LevelRenderer.renderLineBox(
-                    poseStack,
-                    consumer,
-                    -size,
-                    0.0D,
-                    -size,
-                    size,
-                    size * 1.1D,
-                    size,
-                    0.25F,
-                    0.85F,
-                    1.0F,
-                    0.95F);
-            LevelRenderer.renderLineBox(
-                    poseStack,
-                    consumer,
-                    -size * 0.15D,
-                    size * 1.1D,
-                    -size * 0.15D,
-                    size * 0.15D,
-                    size * 2.7D,
-                    size * 0.15D,
-                    1.0F,
-                    1.0F,
-                    1.0F,
-                    0.9F);
+            poseStack.translate(offset.x, offset.y + size * 1.15D, offset.z);
+            poseStack.mulPose(event.getCamera().rotation());
+            poseStack.scale((float)-size, (float)-size, (float)size);
+
+            PoseStack.Pose pose = poseStack.last();
+            addMarkerVertex(consumer, pose, -0.5F, 0.5F, 0.0F, 0.0F, 1.0F);
+            addMarkerVertex(consumer, pose, 0.5F, 0.5F, 0.0F, 1.0F, 1.0F);
+            addMarkerVertex(consumer, pose, 0.5F, -0.5F, 0.0F, 1.0F, 0.0F);
+            addMarkerVertex(consumer, pose, -0.5F, -0.5F, 0.0F, 0.0F, 0.0F);
             poseStack.popPose();
             rendered = true;
         }
 
         if (rendered) {
-            minecraft.renderBuffers().bufferSource().endBatch(RenderType.lines());
+            minecraft.renderBuffers().bufferSource().endBatch(markerRenderType);
         }
     }
 
@@ -356,6 +343,15 @@ public final class PingLocationController {
         if (minecraft.player != null) {
             minecraft.player.displayClientMessage(Component.literal(message), true);
         }
+    }
+
+    private static void addMarkerVertex(VertexConsumer consumer, PoseStack.Pose pose, float x, float y, float z, float u, float v) {
+        consumer.addVertex(pose, x, y, z)
+                .setColor(1.0F, 1.0F, 1.0F, 0.98F)
+                .setUv(u, v)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(LightTexture.FULL_BRIGHT)
+                .setNormal(pose, 0.0F, 0.0F, 1.0F);
     }
 
     private static ProjectionResult projectToScreen(Vec3 worldPos, RenderLevelStageEvent event, Minecraft minecraft) {

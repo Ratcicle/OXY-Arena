@@ -4,6 +4,7 @@ import com.example.oxyarena.client.ImmersiveHudController;
 import com.example.oxyarena.client.InventoryInteractionController;
 import com.example.oxyarena.client.PingLocationController;
 import com.example.oxyarena.client.PickupNotifierController;
+import com.example.oxyarena.client.BridgingAssistController;
 import com.example.oxyarena.client.ToolTooltipStatsController;
 import com.example.oxyarena.client.particle.NevoaBorderParticle;
 import com.example.oxyarena.client.renderer.entity.AirdropCrateRenderer;
@@ -44,6 +45,7 @@ public class OXYArenaClient {
         InventoryInteractionController.register();
         PingLocationController.register();
         PickupNotifierController.register();
+        BridgingAssistController.register();
         ToolTooltipStatsController.register();
         ItemPickupNotificationPayload.setClientReceiver(PickupNotifierController::handlePickup);
         PingLocationSyncPayload.setClientReceiver(PingLocationController::handlePing);

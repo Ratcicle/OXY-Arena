@@ -3,7 +3,7 @@
     "subtitle": "subtitles.oxyarena.ping",
     "sounds": [
       {
-        "name": "minecraft:entity/experience_orb/pickup"
+        "name": "oxyarena:ping_marker"
       }
     ]
   }

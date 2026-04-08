@@ -10,6 +10,7 @@ import com.example.oxyarena.item.CobaltShieldItem;
 import com.example.oxyarena.item.FlamingScytheItem;
 import com.example.oxyarena.item.GrapplingGunItem;
 import com.example.oxyarena.item.LifehuntScytheItem;
+import com.example.oxyarena.item.MurasamaItem;
 import com.example.oxyarena.item.SmokeBombItem;
 import com.example.oxyarena.item.ZeusLightningItem;
 
@@ -118,6 +119,11 @@ public final class ModItems {
             properties -> new AmetraSwordItem(
                     ModToolTiers.AMETRA,
                     properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 2.0F, -2.3F))));
+    public static final DeferredItem<MurasamaItem> MURASAMA = ITEMS.registerItem(
+            "murasama",
+            properties -> new MurasamaItem(
+                    ModToolTiers.AMETRA,
+                    properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 2.0F, -2.1F))));
     public static final DeferredItem<PickaxeItem> COBALT_PICKAXE = ITEMS.registerItem(
             "cobalt_pickaxe",
             properties -> new PickaxeItem(

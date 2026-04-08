@@ -4,9 +4,19 @@ import com.example.oxyarena.network.ItemPickupNotificationPayload;
 import com.example.oxyarena.serverevent.OxyServerEventManager;
 import com.example.oxyarena.serverevent.PlayerHuntServerEvent;
 
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BowItem;
+import net.minecraft.world.item.Items;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.event.entity.living.LivingGetProjectileEvent;
+import net.neoforged.neoforge.event.entity.player.ArrowNockEvent;
 import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -32,6 +42,10 @@ public final class ModServerEventHooks {
             return;
         }
 
+        if (event.getEntity() instanceof ServerPlayer player) {
+            ModGameEvents.clearMurasamaState(player);
+        }
+
         OxyServerEventManager.get(level.getServer()).onLivingDeath(event);
     }
 
@@ -44,8 +58,15 @@ public final class ModServerEventHooks {
 
     public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && player.getServer() != null) {
+            ModGameEvents.clearMurasamaState(player);
             OxyServerEventManager.get(player.getServer()).onPlayerChangedDimension(player);
             PlayerHuntServerEvent.refreshPersistentPlayerState(player.getServer(), player);
+        }
+    }
+
+    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            ModGameEvents.clearMurasamaState(player);
         }
     }
 
@@ -69,6 +90,25 @@ public final class ModServerEventHooks {
         RightClickHarvestHelper.onRightClickBlock(event);
     }
 
+    public static void onArrowNock(ArrowNockEvent event) {
+        if (event.hasAmmo() || !hasInfinityBow(event.getEntity(), event.getBow())) {
+            return;
+        }
+
+        event.getEntity().startUsingItem(event.getHand());
+        event.setAction(InteractionResultHolder.consume(event.getBow()));
+    }
+
+    public static void onLivingGetProjectile(LivingGetProjectileEvent event) {
+        if (!(event.getEntity() instanceof Player player)
+                || !event.getProjectileItemStack().isEmpty()
+                || !hasInfinityBow(player, event.getProjectileWeaponItemStack())) {
+            return;
+        }
+
+        event.setProjectileItemStack(Items.ARROW.getDefaultInstance().copy());
+    }
+
     public static void onBlockBreak(BlockEvent.BreakEvent event) {
         FallingTreeHelper.onBlockBreak(event);
     }
@@ -81,5 +121,16 @@ public final class ModServerEventHooks {
     public static void onServerStopped(ServerStoppedEvent event) {
         FallingTreeHelper.onServerStopped(event);
         OxyServerEventManager.remove(event.getServer());
+    }
+
+    private static boolean hasInfinityBow(Player player, ItemStack weaponStack) {
+        if (weaponStack.isEmpty() || !(weaponStack.getItem() instanceof BowItem)) {
+            return false;
+        }
+
+        Holder<Enchantment> infinity = player.registryAccess()
+                .lookupOrThrow(Registries.ENCHANTMENT)
+                .getOrThrow(Enchantments.INFINITY);
+        return weaponStack.getEnchantmentLevel(infinity) > 0;
     }
 }

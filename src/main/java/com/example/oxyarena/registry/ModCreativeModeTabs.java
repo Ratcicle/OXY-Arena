@@ -51,6 +51,7 @@ public final class ModCreativeModeTabs {
                     output.accept(ModItems.LIFEHUNT_SCYTHE);
                     output.accept(ModItems.COBALT_SWORD);
                     output.accept(ModItems.AMETRA_SWORD);
+                    output.accept(ModItems.MURASAMA);
                     output.accept(ModItems.COBALT_PICKAXE);
                     output.accept(ModItems.AMETRA_PICKAXE);
                     output.accept(ModItems.COBALT_AXE);

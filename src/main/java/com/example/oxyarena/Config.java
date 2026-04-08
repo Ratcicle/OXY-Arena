@@ -106,6 +106,18 @@ public final class Config {
         return CLIENT.pingShowDistance.get();
     }
 
+    public static boolean bridgingAssistEnabled() {
+        return CLIENT.bridgingAssistEnabled.get();
+    }
+
+    public static boolean bridgingAssistShowOutline() {
+        return CLIENT.bridgingAssistShowOutline.get();
+    }
+
+    public static boolean bridgingAssistVerticalEnabled() {
+        return CLIENT.bridgingAssistVerticalEnabled.get();
+    }
+
     public static boolean rightClickHarvestEnabled() {
         return COMMON.rightClickHarvestEnabled.get();
     }
@@ -300,6 +312,9 @@ public final class Config {
         private final ModConfigSpec.DoubleValue pingRaycastDistance;
         private final ModConfigSpec.BooleanValue pingShowAuthorName;
         private final ModConfigSpec.BooleanValue pingShowDistance;
+        private final ModConfigSpec.BooleanValue bridgingAssistEnabled;
+        private final ModConfigSpec.BooleanValue bridgingAssistShowOutline;
+        private final ModConfigSpec.BooleanValue bridgingAssistVerticalEnabled;
 
         private Client(ModConfigSpec.Builder builder) {
             builder.push("immersive_hud");
@@ -407,6 +422,22 @@ public final class Config {
             pingShowDistance = builder.comment("Show the ping distance in the HUD overlay.")
                     .translation("config.oxyarena.ping.show_distance")
                     .define("show_distance", true);
+
+            builder.pop();
+
+            builder.push("bridging");
+
+            bridgingAssistEnabled = builder.comment("Enable horizontal bridging assist when a block use would otherwise miss.")
+                    .translation("config.oxyarena.bridging.enabled")
+                    .define("enabled", true);
+
+            bridgingAssistShowOutline = builder.comment("Show an outline on the assisted placement target while bridging assist is active.")
+                    .translation("config.oxyarena.bridging.show_outline")
+                    .define("show_outline", true);
+
+            bridgingAssistVerticalEnabled = builder.comment("Allow assisted vertical placement above and below when no horizontal target is found.")
+                    .translation("config.oxyarena.bridging.vertical_enabled")
+                    .define("vertical_enabled", true);
 
             builder.pop();
         }
