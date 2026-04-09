@@ -8,6 +8,7 @@ import com.example.oxyarena.client.BridgingAssistController;
 import com.example.oxyarena.client.ToolTooltipStatsController;
 import com.example.oxyarena.client.particle.NevoaBorderParticle;
 import com.example.oxyarena.client.renderer.entity.AirdropCrateRenderer;
+import com.example.oxyarena.client.renderer.entity.CloneThiefRenderer;
 import com.example.oxyarena.client.renderer.entity.CitrineThrowingDaggerRenderer;
 import com.example.oxyarena.client.renderer.entity.GrapplingHookRenderer;
 import com.example.oxyarena.client.renderer.entity.ThrownZeusLightningRenderer;
@@ -74,6 +75,9 @@ public class OXYArenaClient {
         event.registerEntityRenderer(
                 ModEntityTypes.BOB_BOSS.get(),
                 ZombieRenderer::new);
+        event.registerEntityRenderer(
+                ModEntityTypes.CLONE_THIEF.get(),
+                CloneThiefRenderer::new);
     }
 
     private void registerParticleProviders(RegisterParticleProvidersEvent event) {

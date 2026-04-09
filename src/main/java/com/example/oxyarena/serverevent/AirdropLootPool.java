@@ -34,7 +34,10 @@ public final class AirdropLootPool {
             AirdropLootEntry.of(ModItems.GRAPPLING_GUN, 1, 1, 5),
             AirdropLootEntry.of(ModItems.ZEUS_LIGHTNING, 1, 1, 1),
             AirdropLootEntry.of(ModItems.FLAMING_SCYTHE, 1, 1, 1),
-            AirdropLootEntry.of(ModItems.LIFEHUNT_SCYTHE, 1, 1, 1));
+            AirdropLootEntry.of(ModItems.LIFEHUNT_SCYTHE, 1, 1, 1),
+            AirdropLootEntry.of(ModItems.MURASAMA, 1, 1, 1),
+            AirdropLootEntry.of(ModItems.KUSABIMARU, 1, 1, 1),
+            AirdropLootEntry.of(ModItems.SOUL_REAPER, 1, 1, 1));
 
     private AirdropLootPool() {
     }

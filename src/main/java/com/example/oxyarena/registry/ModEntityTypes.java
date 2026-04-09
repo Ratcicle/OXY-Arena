@@ -3,6 +3,7 @@ package com.example.oxyarena.registry;
 import com.example.oxyarena.OXYArena;
 import com.example.oxyarena.entity.event.AirdropCrateEntity;
 import com.example.oxyarena.entity.event.BobBossEntity;
+import com.example.oxyarena.entity.event.CloneThiefEntity;
 import com.example.oxyarena.entity.effect.SmokeCloud;
 import com.example.oxyarena.entity.projectile.CitrineThrowingDagger;
 import com.example.oxyarena.entity.projectile.GrapplingHook;
@@ -80,6 +81,13 @@ public final class ModEntityTypes {
                             .sized(0.6F, 1.95F)
                             .clientTrackingRange(4)
                             .build("bob_boss"));
+    public static final DeferredHolder<EntityType<?>, EntityType<CloneThiefEntity>> CLONE_THIEF =
+            ENTITY_TYPES.register(
+                    "clone_thief",
+                    () -> EntityType.Builder.<CloneThiefEntity>of(CloneThiefEntity::new, MobCategory.MONSTER)
+                            .sized(0.6F, 1.8F)
+                            .clientTrackingRange(8)
+                            .build("clone_thief"));
 
     private ModEntityTypes() {
     }
@@ -91,5 +99,6 @@ public final class ModEntityTypes {
 
     private static void registerAttributes(EntityAttributeCreationEvent event) {
         event.put(BOB_BOSS.get(), BobBossEntity.createAttributes().build());
+        event.put(CLONE_THIEF.get(), CloneThiefEntity.createAttributes().build());
     }
 }
