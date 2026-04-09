@@ -7,6 +7,7 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.HumanoidArmorModel;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelLayers;
@@ -15,8 +16,11 @@ import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
+import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.BowItem;
 
 public final class CloneThiefRenderer extends LivingEntityRenderer<CloneThiefEntity, PlayerModel<CloneThiefEntity>> {
     private final PlayerModel<CloneThiefEntity> wideModel;
@@ -26,6 +30,12 @@ public final class CloneThiefRenderer extends LivingEntityRenderer<CloneThiefEnt
         super(context, new PlayerModel<>(context.bakeLayer(ModelLayers.PLAYER), false), 0.5F);
         this.wideModel = this.getModel();
         this.slimModel = new PlayerModel<>(context.bakeLayer(ModelLayers.PLAYER_SLIM), true);
+        this.addLayer(new HumanoidArmorLayer<>(
+                this,
+                new HumanoidArmorModel<>(context.bakeLayer(ModelLayers.PLAYER_INNER_ARMOR)),
+                new HumanoidArmorModel<>(context.bakeLayer(ModelLayers.PLAYER_OUTER_ARMOR)),
+                context.getModelManager()));
+        this.addLayer(new ItemInHandLayer<>(this, context.getItemInHandRenderer()));
     }
 
     @Override
@@ -58,6 +68,9 @@ public final class CloneThiefRenderer extends LivingEntityRenderer<CloneThiefEnt
         model.swimAmount = 0.0F;
         model.leftArmPose = HumanoidModel.ArmPose.EMPTY;
         model.rightArmPose = HumanoidModel.ArmPose.EMPTY;
+        if (entity.getMainHandItem().getItem() instanceof BowItem && entity.isAggressive()) {
+            model.rightArmPose = HumanoidModel.ArmPose.BOW_AND_ARROW;
+        }
     }
 
     private PlayerSkin resolveSkin(CloneThiefEntity entity) {

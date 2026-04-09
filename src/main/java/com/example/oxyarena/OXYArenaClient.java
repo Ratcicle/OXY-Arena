@@ -10,6 +10,7 @@ import com.example.oxyarena.client.particle.NevoaBorderParticle;
 import com.example.oxyarena.client.renderer.entity.AirdropCrateRenderer;
 import com.example.oxyarena.client.renderer.entity.CloneThiefRenderer;
 import com.example.oxyarena.client.renderer.entity.CitrineThrowingDaggerRenderer;
+import com.example.oxyarena.client.renderer.entity.EruptionTntRenderer;
 import com.example.oxyarena.client.renderer.entity.GrapplingHookRenderer;
 import com.example.oxyarena.client.renderer.entity.ThrownZeusLightningRenderer;
 import com.example.oxyarena.item.SoulReaperItem;
@@ -78,6 +79,9 @@ public class OXYArenaClient {
         event.registerEntityRenderer(
                 ModEntityTypes.CLONE_THIEF.get(),
                 CloneThiefRenderer::new);
+        event.registerEntityRenderer(
+                ModEntityTypes.ERUPTION_TNT.get(),
+                EruptionTntRenderer::new);
     }
 
     private void registerParticleProviders(RegisterParticleProvidersEvent event) {

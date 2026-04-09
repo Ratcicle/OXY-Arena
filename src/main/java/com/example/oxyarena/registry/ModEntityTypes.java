@@ -4,6 +4,7 @@ import com.example.oxyarena.OXYArena;
 import com.example.oxyarena.entity.event.AirdropCrateEntity;
 import com.example.oxyarena.entity.event.BobBossEntity;
 import com.example.oxyarena.entity.event.CloneThiefEntity;
+import com.example.oxyarena.entity.event.EruptionTntEntity;
 import com.example.oxyarena.entity.effect.SmokeCloud;
 import com.example.oxyarena.entity.projectile.CitrineThrowingDagger;
 import com.example.oxyarena.entity.projectile.GrapplingHook;
@@ -88,6 +89,16 @@ public final class ModEntityTypes {
                             .sized(0.6F, 1.8F)
                             .clientTrackingRange(8)
                             .build("clone_thief"));
+    public static final DeferredHolder<EntityType<?>, EntityType<EruptionTntEntity>> ERUPTION_TNT =
+            ENTITY_TYPES.register(
+                    "eruption_tnt",
+                    () -> EntityType.Builder.<EruptionTntEntity>of(EruptionTntEntity::new, MobCategory.MISC)
+                            .noSave()
+                            .noSummon()
+                            .sized(0.98F, 0.98F)
+                            .clientTrackingRange(10)
+                            .updateInterval(10)
+                            .build("eruption_tnt"));
 
     private ModEntityTypes() {
     }

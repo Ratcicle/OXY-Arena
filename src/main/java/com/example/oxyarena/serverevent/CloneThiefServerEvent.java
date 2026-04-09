@@ -114,6 +114,11 @@ public final class CloneThiefServerEvent implements OxyServerEvent {
 
         this.timeRemainingTicks--;
         this.pruneMissingClones(server);
+        if (this.cloneUuidsByOwner.isEmpty()) {
+            this.stop(server, ServerEventStopReason.COMPLETED);
+            return;
+        }
+
         if (this.timeRemainingTicks <= 0) {
             this.stop(server, ServerEventStopReason.COMPLETED);
             return;
@@ -134,6 +139,10 @@ public final class CloneThiefServerEvent implements OxyServerEvent {
         clone.getOwnerUuid().ifPresentOrElse(
                 ownerUuid -> this.cloneUuidsByOwner.remove(ownerUuid, cloneUuid),
                 () -> this.cloneUuidsByOwner.values().removeIf(cloneUuid::equals));
+
+        if (this.active && this.cloneUuidsByOwner.isEmpty()) {
+            this.stop(server, ServerEventStopReason.COMPLETED);
+        }
     }
 
     @Override

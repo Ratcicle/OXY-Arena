@@ -24,6 +24,7 @@ public final class OxyServerEventRegistry {
         register("clones", CloneThiefServerEvent::new, 10, ServerEventGroup.MAP_ROTATION);
         register("mercador", MercadorServerEvent::new, 10, ServerEventGroup.MAP_ROTATION);
         register("nevoa", NevoaServerEvent::new, 10, ServerEventGroup.MAP_ROTATION);
+        register("tnt", EruptionTntServerEvent::new, 10, ServerEventGroup.MAP_ROTATION);
     }
 
     private OxyServerEventRegistry() {

@@ -59,6 +59,8 @@ public final class ModGameEvents {
     private static final float COBALT_ARROW_RAIN_VELOCITY = 2.6F;
     private static final float AMETRA_SWEEPING_DAMAGE_RATIO = 0.75F;
     private static final float MURASAMA_CRIT_DAMAGE_MULTIPLIER = 1.5F;
+    private static final int BLACK_DIAMOND_EXTRA_ARMOR_DURABILITY_DAMAGE = 9;
+    private static final int BLACK_DIAMOND_WEAPON_DURABILITY_DAMAGE = 10;
     private static final int KUSABIMARU_DEFLECT_WINDOW_TICKS = 4;
     private static final int KUSABIMARU_STUN_TICKS = 15;
     private static final int KUSABIMARU_DEFLECT_SOUND_CHAIN_WINDOW_TICKS = 30;
@@ -132,6 +134,7 @@ public final class ModGameEvents {
     public static void onLivingDamagePost(LivingDamageEvent.Post event) {
         handleMurasamaDamagePost(event);
         handleSoulReaperDamagePost(event);
+        handleBlackDiamondSwordDamagePost(event);
 
         if (!(event.getEntity() instanceof LivingEntity target)
                 || !(target.level() instanceof ServerLevel serverLevel)
@@ -575,6 +578,57 @@ public final class ModGameEvents {
                 player.getUUID(),
                 target.getUUID(),
                 serverLevel.getServer().getTickCount() + SOUL_REAPER_WEAKNESS_TICKS);
+    }
+
+    private static void handleBlackDiamondSwordDamagePost(LivingDamageEvent.Post event) {
+        if (!(event.getEntity() instanceof LivingEntity target)
+                || event.getNewDamage() <= 0.0F
+                || !(event.getSource().getEntity() instanceof Player attacker)
+                || event.getSource().getDirectEntity() != attacker
+                || !attacker.getMainHandItem().is(ModItems.BLACK_DIAMOND_SWORD.get())
+                || attacker == target) {
+            return;
+        }
+
+        applyBlackDiamondArmorDurabilityDamage(target);
+        if (target instanceof Player defendingPlayer) {
+            applyBlackDiamondWeaponDurabilityDamage(defendingPlayer);
+        }
+    }
+
+    private static void applyBlackDiamondArmorDurabilityDamage(LivingEntity target) {
+        for (EquipmentSlot armorSlot : new EquipmentSlot[] {
+                EquipmentSlot.HEAD,
+                EquipmentSlot.CHEST,
+                EquipmentSlot.LEGS,
+                EquipmentSlot.FEET }) {
+            ItemStack armorPiece = target.getItemBySlot(armorSlot);
+            if (armorPiece.isEmpty() || !armorPiece.isDamageableItem()) {
+                continue;
+            }
+
+            armorPiece.hurtAndBreak(BLACK_DIAMOND_EXTRA_ARMOR_DURABILITY_DAMAGE, target, armorSlot);
+        }
+    }
+
+    private static void applyBlackDiamondWeaponDurabilityDamage(Player target) {
+        ItemStack targetWeapon = target.getMainHandItem();
+        if (targetWeapon.isEmpty() || !targetWeapon.isDamageableItem()) {
+            applyBlackDiamondOffhandDurabilityDamage(target);
+            return;
+        }
+
+        targetWeapon.hurtAndBreak(BLACK_DIAMOND_WEAPON_DURABILITY_DAMAGE, target, EquipmentSlot.MAINHAND);
+        applyBlackDiamondOffhandDurabilityDamage(target);
+    }
+
+    private static void applyBlackDiamondOffhandDurabilityDamage(Player target) {
+        ItemStack offhandItem = target.getOffhandItem();
+        if (offhandItem.isEmpty() || !offhandItem.isDamageableItem()) {
+            return;
+        }
+
+        offhandItem.hurtAndBreak(BLACK_DIAMOND_WEAPON_DURABILITY_DAMAGE, target, EquipmentSlot.OFFHAND);
     }
 
     private static void trackSoulReaperWeakness(UUID playerId, UUID targetId, int expiryTick) {
