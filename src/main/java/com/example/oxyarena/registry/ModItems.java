@@ -9,8 +9,10 @@ import com.example.oxyarena.item.CobaltBowItem;
 import com.example.oxyarena.item.CobaltShieldItem;
 import com.example.oxyarena.item.FlamingScytheItem;
 import com.example.oxyarena.item.GrapplingGunItem;
+import com.example.oxyarena.item.KusabimaruItem;
 import com.example.oxyarena.item.LifehuntScytheItem;
 import com.example.oxyarena.item.MurasamaItem;
+import com.example.oxyarena.item.SoulReaperItem;
 import com.example.oxyarena.item.SmokeBombItem;
 import com.example.oxyarena.item.ZeusLightningItem;
 
@@ -26,6 +28,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ShieldItem;
 import net.minecraft.world.item.ShovelItem;
 import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.item.Tiers;
 import net.minecraft.world.level.block.entity.BannerPatternLayers;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
@@ -124,6 +127,21 @@ public final class ModItems {
             properties -> new MurasamaItem(
                     ModToolTiers.AMETRA,
                     properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 2.0F, -2.1F))));
+    public static final DeferredItem<KusabimaruItem> KUSABIMARU = ITEMS.registerItem(
+            "kusabimaru",
+            properties -> new KusabimaruItem(
+                    ModToolTiers.AMETRA,
+                    properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 1.5F, -2.3F))));
+    public static final DeferredItem<SoulReaperItem> SOUL_REAPER = ITEMS.registerItem(
+            "soul_reaper",
+            properties -> new SoulReaperItem(
+                    ModToolTiers.AMETRA,
+                    properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 2.0F, -3.0F))));
+    public static final DeferredItem<SwordItem> BLACK_DIAMOND_SWORD = ITEMS.registerItem(
+            "black_diamond_sword",
+            properties -> new SwordItem(
+                    Tiers.DIAMOND,
+                    properties.attributes(SwordItem.createAttributes(Tiers.DIAMOND, 5.0F, -2.4F))));
     public static final DeferredItem<PickaxeItem> COBALT_PICKAXE = ITEMS.registerItem(
             "cobalt_pickaxe",
             properties -> new PickaxeItem(

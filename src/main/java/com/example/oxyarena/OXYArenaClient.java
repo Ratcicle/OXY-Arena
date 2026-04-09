@@ -11,6 +11,8 @@ import com.example.oxyarena.client.renderer.entity.AirdropCrateRenderer;
 import com.example.oxyarena.client.renderer.entity.CitrineThrowingDaggerRenderer;
 import com.example.oxyarena.client.renderer.entity.GrapplingHookRenderer;
 import com.example.oxyarena.client.renderer.entity.ThrownZeusLightningRenderer;
+import com.example.oxyarena.item.SoulReaperItem;
+import com.example.oxyarena.registry.ModBlocks;
 import com.example.oxyarena.network.ItemPickupNotificationPayload;
 import com.example.oxyarena.network.PingLocationSyncPayload;
 import com.example.oxyarena.registry.ModEntityTypes;
@@ -18,6 +20,8 @@ import com.example.oxyarena.registry.ModItems;
 import com.example.oxyarena.registry.ModMobEffects;
 import com.example.oxyarena.registry.ModParticleTypes;
 
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
@@ -84,6 +88,8 @@ public class OXYArenaClient {
 
     private void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.SOUL_REAPER_FIRE.get(), RenderType.cutout());
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.SOUL_REAPER_SOUL_FIRE.get(), RenderType.cutout());
             ItemProperties.register(
                     ModItems.AMETRA_SWORD.get(),
                     ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "altered"),
@@ -92,6 +98,10 @@ public class OXYArenaClient {
                             && entity.getMainHandItem() == stack
                                     ? 1.0F
                                     : 0.0F);
+            ItemProperties.register(
+                    ModItems.SOUL_REAPER.get(),
+                    ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "altered"),
+                    (stack, level, entity, seed) -> SoulReaperItem.isAltered(stack) ? 1.0F : 0.0F);
             ItemProperties.register(
                     ModItems.COBALT_BOW.get(),
                     ResourceLocation.withDefaultNamespace("pull"),
@@ -112,6 +122,14 @@ public class OXYArenaClient {
                                     : 0.0F);
             ItemProperties.register(
                     ModItems.COBALT_SHIELD.get(),
+                    ResourceLocation.withDefaultNamespace("blocking"),
+                    (stack, level, entity, seed) -> entity != null
+                            && entity.isUsingItem()
+                            && entity.getUseItem() == stack
+                                    ? 1.0F
+                                    : 0.0F);
+            ItemProperties.register(
+                    ModItems.KUSABIMARU.get(),
                     ResourceLocation.withDefaultNamespace("blocking"),
                     (stack, level, entity, seed) -> entity != null
                             && entity.isUsingItem()

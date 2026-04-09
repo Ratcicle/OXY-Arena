@@ -6,35 +6,48 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
 import com.example.oxyarena.item.CobaltBowItem;
+import com.example.oxyarena.item.SoulReaperItem;
 import com.example.oxyarena.registry.ModItems;
 import com.example.oxyarena.registry.ModMobEffects;
+import com.example.oxyarena.registry.ModSoundEvents;
 
+import net.minecraft.core.Holder;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.ProjectileDeflection;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.projectile.Arrow;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.SweepAttackEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 public final class ModGameEvents {
+    private static final boolean SOUL_REAPER_LEGACY_ABILITY_ENABLED = false;
     private static final String COBALT_RAIN_ARROW_TAG = "OxyArenaCobaltRainArrow";
     private static final String COBALT_RAIN_TARGET_TAG = "OxyArenaCobaltRainTarget";
     private static final String COBALT_RAIN_TRIGGERED_TAG = "OxyArenaCobaltRainTriggered";
@@ -46,16 +59,38 @@ public final class ModGameEvents {
     private static final float COBALT_ARROW_RAIN_VELOCITY = 2.6F;
     private static final float AMETRA_SWEEPING_DAMAGE_RATIO = 0.75F;
     private static final float MURASAMA_CRIT_DAMAGE_MULTIPLIER = 1.5F;
+    private static final int KUSABIMARU_DEFLECT_WINDOW_TICKS = 4;
+    private static final int KUSABIMARU_STUN_TICKS = 15;
+    private static final int KUSABIMARU_DEFLECT_SOUND_CHAIN_WINDOW_TICKS = 30;
+    private static final int KUSABIMARU_DEFLECT_SOUND_COUNT = 6;
+    private static final int SOUL_REAPER_WEAKNESS_TICKS = 100;
+    private static final int SOUL_REAPER_SELF_DAMAGE_INTERVAL_TICKS = 100;
+    private static final float SOUL_REAPER_SELF_DAMAGE = 2.0F;
     private static final List<CobaltArrowRainWave> COBALT_ARROW_RAIN_WAVES_QUEUE = new ArrayList<>();
     private static final Set<UUID> AMETRA_SWEEP_ATTACKERS = new HashSet<>();
     private static final Map<UUID, Integer> MURASAMA_COMBO_COUNTS = new HashMap<>();
     private static final Set<UUID> MURASAMA_CRIT_ATTACKERS = new HashSet<>();
+    private static final Map<UUID, Integer> KUSABIMARU_DEFLECT_ACTIVE_UNTIL = new HashMap<>();
+    private static final Map<UUID, Integer> KUSABIMARU_DEFLECT_SOUND_INDEX = new HashMap<>();
+    private static final Map<UUID, Integer> KUSABIMARU_DEFLECT_LAST_SOUND_TICK = new HashMap<>();
+    private static final Map<UUID, Map<UUID, Integer>> SOUL_REAPER_MARKED_TARGETS = new HashMap<>();
+    private static final Map<UUID, UUID> SOUL_REAPER_TARGET_OWNERS = new HashMap<>();
+    private static final Map<UUID, Integer> SOUL_REAPER_SELF_DAMAGE_AT = new HashMap<>();
 
     private ModGameEvents() {
     }
 
     public static void onLivingDamagePre(LivingDamageEvent.Pre event) {
         handleMurasamaDamagePre(event);
+        if (event.getEntity() instanceof LivingEntity livingEntity
+                && event.getSource().is(DamageTypeTags.IS_FIRE)
+                && livingEntity.level() instanceof ServerLevel serverLevel) {
+            SoulReaperFireHelper.adjustFireTickDamage(
+                    livingEntity,
+                    serverLevel.getServer().getTickCount(),
+                    event.getNewDamage(),
+                    event::setNewDamage);
+        }
 
         if (!(event.getEntity() instanceof Player player)
                 || !event.getSource().is(DamageTypeTags.IS_FIRE)
@@ -75,8 +110,28 @@ public final class ModGameEvents {
         }
     }
 
+    public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
+        if (!(event.getEntity() instanceof Player defender) || !isKusabimaruDeflectActive(defender)) {
+            return;
+        }
+
+        LivingEntity attacker = getKusabimaruAttacker(event.getSource().getDirectEntity());
+        if (attacker == null) {
+            return;
+        }
+
+        event.setCanceled(true);
+        if (event.getSource().getDirectEntity() instanceof Projectile projectile) {
+            handleSuccessfulKusabimaruDeflect(defender, attacker, projectile);
+            return;
+        }
+
+        handleSuccessfulKusabimaruDeflect(defender, attacker, null);
+    }
+
     public static void onLivingDamagePost(LivingDamageEvent.Post event) {
         handleMurasamaDamagePost(event);
+        handleSoulReaperDamagePost(event);
 
         if (!(event.getEntity() instanceof LivingEntity target)
                 || !(target.level() instanceof ServerLevel serverLevel)
@@ -202,7 +257,83 @@ public final class ModGameEvents {
         MURASAMA_CRIT_ATTACKERS.remove(playerId);
     }
 
+    public static void onSoulReaperActivated(Player player) {
+        if (player.getServer() == null) {
+            return;
+        }
+
+        consumeSoulReaperWeakness(player);
+        SOUL_REAPER_SELF_DAMAGE_AT.put(
+                player.getUUID(),
+                player.getServer().getTickCount() + SOUL_REAPER_SELF_DAMAGE_INTERVAL_TICKS);
+    }
+
+    public static void onSoulReaperDeactivated(Player player) {
+        SOUL_REAPER_SELF_DAMAGE_AT.remove(player.getUUID());
+    }
+
+    public static void clearSoulReaperState(Player player) {
+        UUID playerId = player.getUUID();
+        SOUL_REAPER_SELF_DAMAGE_AT.remove(playerId);
+
+        Map<UUID, Integer> trackedTargets = SOUL_REAPER_MARKED_TARGETS.remove(playerId);
+        if (trackedTargets == null) {
+            return;
+        }
+
+        for (UUID targetId : trackedTargets.keySet()) {
+            SOUL_REAPER_TARGET_OWNERS.remove(targetId, playerId);
+        }
+    }
+
+    public static void clearSoulReaperTarget(LivingEntity target) {
+        UUID targetId = target.getUUID();
+        UUID ownerId = SOUL_REAPER_TARGET_OWNERS.remove(targetId);
+        if (ownerId != null) {
+            Map<UUID, Integer> ownerTargets = SOUL_REAPER_MARKED_TARGETS.get(ownerId);
+            if (ownerTargets != null) {
+                ownerTargets.remove(targetId);
+                if (ownerTargets.isEmpty()) {
+                    SOUL_REAPER_MARKED_TARGETS.remove(ownerId);
+                }
+            }
+        }
+
+        for (Iterator<Entry<UUID, Map<UUID, Integer>>> iterator = SOUL_REAPER_MARKED_TARGETS.entrySet().iterator();
+                iterator.hasNext();) {
+            Entry<UUID, Map<UUID, Integer>> entry = iterator.next();
+            entry.getValue().remove(targetId);
+            if (entry.getValue().isEmpty()) {
+                iterator.remove();
+            }
+        }
+    }
+
+    public static void activateKusabimaruDeflect(Player player) {
+        if (player.getServer() == null) {
+            return;
+        }
+
+        KUSABIMARU_DEFLECT_ACTIVE_UNTIL.put(
+                player.getUUID(),
+                player.getServer().getTickCount() + KUSABIMARU_DEFLECT_WINDOW_TICKS);
+    }
+
+    public static void clearKusabimaruState(Player player) {
+        KUSABIMARU_DEFLECT_ACTIVE_UNTIL.remove(player.getUUID());
+        KUSABIMARU_DEFLECT_SOUND_INDEX.remove(player.getUUID());
+        KUSABIMARU_DEFLECT_LAST_SOUND_TICK.remove(player.getUUID());
+    }
+
+    public static boolean isKusabimaruStunned(Player player) {
+        return player.hasEffect(ModMobEffects.KUSABIMARU_STUN);
+    }
+
     public static void onProjectileImpact(ProjectileImpactEvent event) {
+        if (handleKusabimaruProjectileImpact(event)) {
+            return;
+        }
+
         if (!(event.getProjectile() instanceof AbstractArrow arrow)
                 || arrow.level().isClientSide()
                 || !(event.getRayTraceResult() instanceof EntityHitResult entityHitResult)
@@ -268,6 +399,10 @@ public final class ModGameEvents {
     }
 
     public static void onServerTickPost(ServerTickEvent.Post event) {
+        tickKusabimaruStunnedPlayers(event);
+        tickSoulReaperAlteredPlayers(event);
+        SoulReaperFireHelper.onServerTickPost(event);
+
         if (COBALT_ARROW_RAIN_WAVES_QUEUE.isEmpty()) {
             return;
         }
@@ -283,6 +418,331 @@ public final class ModGameEvents {
             arrowRainWave.spawnWave();
             if (arrowRainWave.isFinished()) {
                 iterator.remove();
+            }
+        }
+    }
+
+    private static boolean handleKusabimaruProjectileImpact(ProjectileImpactEvent event) {
+        if (event.getProjectile().level().isClientSide()
+                || !(event.getRayTraceResult() instanceof EntityHitResult entityHitResult)
+                || !(entityHitResult.getEntity() instanceof Player defender)
+                || !isKusabimaruDeflectActive(defender)) {
+            return false;
+        }
+
+        LivingEntity attacker = getKusabimaruAttacker(event.getProjectile());
+        if (attacker == null) {
+            return false;
+        }
+
+        event.setCanceled(true);
+        handleSuccessfulKusabimaruDeflect(defender, attacker, event.getProjectile());
+        return true;
+    }
+
+    private static boolean isKusabimaruDeflectActive(Player player) {
+        if (player.getServer() == null || !player.getMainHandItem().is(ModItems.KUSABIMARU.get())) {
+            KUSABIMARU_DEFLECT_ACTIVE_UNTIL.remove(player.getUUID());
+            return false;
+        }
+
+        Integer activeUntilTick = KUSABIMARU_DEFLECT_ACTIVE_UNTIL.get(player.getUUID());
+        if (activeUntilTick == null) {
+            return false;
+        }
+
+        if (player.getServer().getTickCount() >= activeUntilTick.intValue()) {
+            KUSABIMARU_DEFLECT_ACTIVE_UNTIL.remove(player.getUUID());
+            return false;
+        }
+
+        return true;
+    }
+
+    private static LivingEntity getKusabimaruAttacker(Entity directEntity) {
+        if (directEntity instanceof Projectile projectile) {
+            return projectile.getOwner() instanceof LivingEntity livingOwner ? livingOwner : null;
+        }
+
+        return directEntity instanceof LivingEntity livingAttacker ? livingAttacker : null;
+    }
+
+    private static void handleSuccessfulKusabimaruDeflect(Player defender, LivingEntity attacker, Projectile projectile) {
+        if (projectile != null && !projectile.isRemoved()) {
+            projectile.deflect(ProjectileDeflection.AIM_DEFLECT, defender, defender, true);
+            Vec3 look = defender.getLookAngle().normalize();
+            Vec3 origin = defender.getEyePosition().add(look.scale(0.75D));
+            projectile.setPos(origin.x, origin.y, origin.z);
+        } else if (!(attacker instanceof Player)) {
+            double knockbackX = defender.getX() - attacker.getX();
+            double knockbackZ = defender.getZ() - attacker.getZ();
+            if (Mth.equal((float)knockbackX, 0.0F) && Mth.equal((float)knockbackZ, 0.0F)) {
+                Vec3 look = defender.getLookAngle();
+                knockbackX = look.x;
+                knockbackZ = look.z;
+            }
+
+            attacker.knockback(0.9F, knockbackX, knockbackZ);
+        }
+
+        ItemStack weapon = defender.getMainHandItem();
+        if (!weapon.isEmpty()) {
+            weapon.hurtAndBreak(1, defender, EquipmentSlot.MAINHAND);
+        }
+        defender.getCooldowns().removeCooldown(ModItems.KUSABIMARU.get());
+
+        if (defender.level() instanceof ServerLevel serverLevel) {
+            Holder<SoundEvent> deflectSound = getNextKusabimaruDeflectSound(defender, serverLevel.getServer().getTickCount());
+            serverLevel.playSound(
+                    null,
+                    defender.getX(),
+                    defender.getY(),
+                    defender.getZ(),
+                    deflectSound.value(),
+                    defender.getSoundSource(),
+                    1.0F,
+                    1.0F);
+        }
+
+        if (attacker instanceof Player attackingPlayer && attackingPlayer != defender) {
+            attackingPlayer.addEffect(new MobEffectInstance(
+                    ModMobEffects.KUSABIMARU_STUN,
+                    KUSABIMARU_STUN_TICKS,
+                    0,
+                    false,
+                    false,
+                    true));
+        }
+    }
+
+    private static void tickKusabimaruStunnedPlayers(ServerTickEvent.Post event) {
+        for (Player player : event.getServer().getPlayerList().getPlayers()) {
+            if (!isKusabimaruStunned(player)) {
+                continue;
+            }
+
+            Vec3 movement = player.getDeltaMovement();
+            player.stopUsingItem();
+            player.setSprinting(false);
+            player.setDeltaMovement(0.0D, Math.min(movement.y, 0.0D), 0.0D);
+            player.hurtMarked = true;
+        }
+    }
+
+    private static Holder<SoundEvent> getNextKusabimaruDeflectSound(Player defender, int currentTick) {
+        UUID playerId = defender.getUUID();
+        int nextIndex = 0;
+        Integer lastTick = KUSABIMARU_DEFLECT_LAST_SOUND_TICK.get(playerId);
+        if (lastTick != null && currentTick - lastTick.intValue() <= KUSABIMARU_DEFLECT_SOUND_CHAIN_WINDOW_TICKS) {
+            nextIndex = (KUSABIMARU_DEFLECT_SOUND_INDEX.getOrDefault(playerId, -1) + 1) % KUSABIMARU_DEFLECT_SOUND_COUNT;
+        }
+
+        KUSABIMARU_DEFLECT_SOUND_INDEX.put(playerId, nextIndex);
+        KUSABIMARU_DEFLECT_LAST_SOUND_TICK.put(playerId, currentTick);
+
+        return switch (nextIndex) {
+            case 1 -> ModSoundEvents.DEFLECT2;
+            case 2 -> ModSoundEvents.DEFLECT3;
+            case 3 -> ModSoundEvents.DEFLECT4;
+            case 4 -> ModSoundEvents.DEFLECT5;
+            case 5 -> ModSoundEvents.DEFLECT6;
+            default -> ModSoundEvents.DEFLECT;
+        };
+    }
+
+    private static void handleSoulReaperDamagePost(LivingDamageEvent.Post event) {
+        if (!SOUL_REAPER_LEGACY_ABILITY_ENABLED) {
+            return;
+        }
+
+        if (!(event.getEntity() instanceof LivingEntity target)
+                || !(target.level() instanceof ServerLevel serverLevel)
+                || event.getNewDamage() <= 0.0F
+                || !(event.getSource().getEntity() instanceof Player player)
+                || event.getSource().getDirectEntity() != player
+                || !player.getMainHandItem().is(ModItems.SOUL_REAPER.get())) {
+            return;
+        }
+
+        target.addEffect(new MobEffectInstance(
+                MobEffects.WEAKNESS,
+                SOUL_REAPER_WEAKNESS_TICKS,
+                0,
+                false,
+                true,
+                true));
+        trackSoulReaperWeakness(
+                player.getUUID(),
+                target.getUUID(),
+                serverLevel.getServer().getTickCount() + SOUL_REAPER_WEAKNESS_TICKS);
+    }
+
+    private static void trackSoulReaperWeakness(UUID playerId, UUID targetId, int expiryTick) {
+        UUID previousOwnerId = SOUL_REAPER_TARGET_OWNERS.put(targetId, playerId);
+        if (previousOwnerId != null && !previousOwnerId.equals(playerId)) {
+            Map<UUID, Integer> previousOwnerTargets = SOUL_REAPER_MARKED_TARGETS.get(previousOwnerId);
+            if (previousOwnerTargets != null) {
+                previousOwnerTargets.remove(targetId);
+                if (previousOwnerTargets.isEmpty()) {
+                    SOUL_REAPER_MARKED_TARGETS.remove(previousOwnerId);
+                }
+            }
+        }
+
+        SOUL_REAPER_MARKED_TARGETS
+                .computeIfAbsent(playerId, ignored -> new HashMap<>())
+                .put(targetId, expiryTick);
+    }
+
+    private static void consumeSoulReaperWeakness(Player player) {
+        if (player.getServer() == null) {
+            return;
+        }
+
+        UUID playerId = player.getUUID();
+        Map<UUID, Integer> trackedTargets = SOUL_REAPER_MARKED_TARGETS.get(playerId);
+        if (trackedTargets == null || trackedTargets.isEmpty()) {
+            return;
+        }
+
+        int currentTick = player.getServer().getTickCount();
+        int totalStrengthTicks = 0;
+        Iterator<Entry<UUID, Integer>> iterator = trackedTargets.entrySet().iterator();
+
+        while (iterator.hasNext()) {
+            Entry<UUID, Integer> entry = iterator.next();
+            UUID targetId = entry.getKey();
+            Integer trackedExpiryTick = entry.getValue();
+            if (!playerId.equals(SOUL_REAPER_TARGET_OWNERS.get(targetId))) {
+                iterator.remove();
+                continue;
+            }
+
+            int trackedRemainingTicks = trackedExpiryTick.intValue() - currentTick;
+            if (trackedRemainingTicks <= 0) {
+                SOUL_REAPER_TARGET_OWNERS.remove(targetId, playerId);
+                iterator.remove();
+                continue;
+            }
+
+            LivingEntity target = findLoadedLivingEntity(player.getServer(), targetId);
+            if (target == null) {
+                continue;
+            }
+
+            MobEffectInstance weakness = target.getEffect(MobEffects.WEAKNESS);
+            if (weakness == null) {
+                SOUL_REAPER_TARGET_OWNERS.remove(targetId, playerId);
+                iterator.remove();
+                continue;
+            }
+
+            int grantedTicks = Math.min(weakness.getDuration(), trackedRemainingTicks);
+            if (grantedTicks <= 0) {
+                SOUL_REAPER_TARGET_OWNERS.remove(targetId, playerId);
+                iterator.remove();
+                continue;
+            }
+
+            totalStrengthTicks += grantedTicks;
+            target.removeEffect(MobEffects.WEAKNESS);
+            SOUL_REAPER_TARGET_OWNERS.remove(targetId, playerId);
+            iterator.remove();
+        }
+
+        if (trackedTargets.isEmpty()) {
+            SOUL_REAPER_MARKED_TARGETS.remove(playerId);
+        }
+
+        if (totalStrengthTicks <= 0) {
+            return;
+        }
+
+        MobEffectInstance currentStrength = player.getEffect(MobEffects.DAMAGE_BOOST);
+        int totalDuration = totalStrengthTicks;
+        int amplifier = 0;
+        if (currentStrength != null) {
+            totalDuration += currentStrength.getDuration();
+            amplifier = Math.max(amplifier, currentStrength.getAmplifier());
+        }
+
+        player.addEffect(new MobEffectInstance(
+                MobEffects.DAMAGE_BOOST,
+                totalDuration,
+                amplifier,
+                false,
+                true,
+                true));
+    }
+
+    private static LivingEntity findLoadedLivingEntity(MinecraftServer server, UUID entityId) {
+        for (ServerLevel level : server.getAllLevels()) {
+            Entity entity = level.getEntity(entityId);
+            if (entity instanceof LivingEntity livingEntity && livingEntity.isAlive()) {
+                return livingEntity;
+            }
+        }
+
+        return null;
+    }
+
+    private static void tickSoulReaperAlteredPlayers(ServerTickEvent.Post event) {
+        if (!SOUL_REAPER_LEGACY_ABILITY_ENABLED) {
+            return;
+        }
+
+        int currentTick = event.getServer().getTickCount();
+        if (currentTick % 20 == 0) {
+            cleanupSoulReaperWeaknessTracking(currentTick);
+        }
+
+        for (Player player : event.getServer().getPlayerList().getPlayers()) {
+            UUID playerId = player.getUUID();
+            ItemStack mainHandItem = player.getMainHandItem();
+            if (!mainHandItem.is(ModItems.SOUL_REAPER.get()) || !SoulReaperItem.isAltered(mainHandItem)) {
+                SOUL_REAPER_SELF_DAMAGE_AT.remove(playerId);
+                continue;
+            }
+
+            Integer nextDamageTick = SOUL_REAPER_SELF_DAMAGE_AT.get(playerId);
+            if (nextDamageTick == null) {
+                SOUL_REAPER_SELF_DAMAGE_AT.put(playerId, currentTick + SOUL_REAPER_SELF_DAMAGE_INTERVAL_TICKS);
+                continue;
+            }
+
+            if (currentTick < nextDamageTick.intValue()) {
+                continue;
+            }
+
+            player.hurt(player.damageSources().magic(), SOUL_REAPER_SELF_DAMAGE);
+            SOUL_REAPER_SELF_DAMAGE_AT.put(playerId, currentTick + SOUL_REAPER_SELF_DAMAGE_INTERVAL_TICKS);
+        }
+    }
+
+    private static void cleanupSoulReaperWeaknessTracking(int currentTick) {
+        Iterator<Entry<UUID, Map<UUID, Integer>>> playerIterator = SOUL_REAPER_MARKED_TARGETS.entrySet().iterator();
+        while (playerIterator.hasNext()) {
+            Entry<UUID, Map<UUID, Integer>> playerEntry = playerIterator.next();
+            UUID playerId = playerEntry.getKey();
+            Iterator<Entry<UUID, Integer>> targetIterator = playerEntry.getValue().entrySet().iterator();
+            while (targetIterator.hasNext()) {
+                Entry<UUID, Integer> targetEntry = targetIterator.next();
+                UUID targetId = targetEntry.getKey();
+                boolean expired = targetEntry.getValue().intValue() <= currentTick;
+                boolean ownerChanged = !playerId.equals(SOUL_REAPER_TARGET_OWNERS.get(targetId));
+                if (!expired && !ownerChanged) {
+                    continue;
+                }
+
+                if (expired) {
+                    SOUL_REAPER_TARGET_OWNERS.remove(targetId, playerId);
+                }
+
+                targetIterator.remove();
+            }
+
+            if (playerEntry.getValue().isEmpty()) {
+                playerIterator.remove();
             }
         }
     }

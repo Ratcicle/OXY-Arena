@@ -7,6 +7,7 @@ import com.example.oxyarena.serverevent.PlayerHuntServerEvent;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.Items;
@@ -17,6 +18,7 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.event.entity.living.LivingGetProjectileEvent;
 import net.neoforged.neoforge.event.entity.player.ArrowNockEvent;
+import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -42,8 +44,14 @@ public final class ModServerEventHooks {
             return;
         }
 
+        if (event.getEntity() instanceof LivingEntity livingEntity) {
+            ModGameEvents.clearSoulReaperTarget(livingEntity);
+        }
+
         if (event.getEntity() instanceof ServerPlayer player) {
             ModGameEvents.clearMurasamaState(player);
+            ModGameEvents.clearKusabimaruState(player);
+            ModGameEvents.clearSoulReaperState(player);
         }
 
         OxyServerEventManager.get(level.getServer()).onLivingDeath(event);
@@ -59,6 +67,9 @@ public final class ModServerEventHooks {
     public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && player.getServer() != null) {
             ModGameEvents.clearMurasamaState(player);
+            ModGameEvents.clearKusabimaruState(player);
+            ModGameEvents.clearSoulReaperState(player);
+            ModGameEvents.clearSoulReaperTarget(player);
             OxyServerEventManager.get(player.getServer()).onPlayerChangedDimension(player);
             PlayerHuntServerEvent.refreshPersistentPlayerState(player.getServer(), player);
         }
@@ -67,6 +78,9 @@ public final class ModServerEventHooks {
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             ModGameEvents.clearMurasamaState(player);
+            ModGameEvents.clearKusabimaruState(player);
+            ModGameEvents.clearSoulReaperState(player);
+            ModGameEvents.clearSoulReaperTarget(player);
         }
     }
 
@@ -87,7 +101,34 @@ public final class ModServerEventHooks {
     }
 
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+        if (cancelIfKusabimaruStunned(event.getEntity())) {
+            event.setCancellationResult(net.minecraft.world.InteractionResult.FAIL);
+            event.setCanceled(true);
+            return;
+        }
+
         RightClickHarvestHelper.onRightClickBlock(event);
+    }
+
+    public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
+        if (!cancelIfKusabimaruStunned(event.getEntity())) {
+            return;
+        }
+
+        event.setCancellationResult(net.minecraft.world.InteractionResult.FAIL);
+        event.setCanceled(true);
+    }
+
+    public static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
+        if (cancelIfKusabimaruStunned(event.getEntity())) {
+            event.setCanceled(true);
+        }
+    }
+
+    public static void onAttackEntity(AttackEntityEvent event) {
+        if (cancelIfKusabimaruStunned(event.getEntity())) {
+            event.setCanceled(true);
+        }
     }
 
     public static void onArrowNock(ArrowNockEvent event) {
@@ -115,11 +156,13 @@ public final class ModServerEventHooks {
 
     public static void onServerStopping(ServerStoppingEvent event) {
         FallingTreeHelper.onServerStopping(event);
+        SoulReaperFireHelper.onServerStopping(event);
         OxyServerEventManager.get(event.getServer()).onServerStopping();
     }
 
     public static void onServerStopped(ServerStoppedEvent event) {
         FallingTreeHelper.onServerStopped(event);
+        SoulReaperFireHelper.onServerStopped(event);
         OxyServerEventManager.remove(event.getServer());
     }
 
@@ -132,5 +175,9 @@ public final class ModServerEventHooks {
                 .lookupOrThrow(Registries.ENCHANTMENT)
                 .getOrThrow(Enchantments.INFINITY);
         return weaponStack.getEnchantmentLevel(infinity) > 0;
+    }
+
+    private static boolean cancelIfKusabimaruStunned(Player player) {
+        return ModGameEvents.isKusabimaruStunned(player);
     }
 }

@@ -1,0 +1,22 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "oxyarena:item/kusabimaru"
+  },
+  "display": {
+    "thirdperson_righthand": {
+      "rotation": [0, 90, 45],
+      "translation": [0, 6, 1]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [0, 0, 0]
+    },
+    "firstperson_righthand": {
+      "rotation": [0, 135, -35],
+      "translation": [-6, 6, -2]
+    },
+    "firstperson_lefthand": {
+      "rotation": [0, 0, 0]
+    }
+  }
+}

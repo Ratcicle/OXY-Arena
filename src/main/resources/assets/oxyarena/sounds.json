@@ -6,5 +6,53 @@
         "name": "oxyarena:ping_marker"
       }
     ]
+  },
+  "deflect": {
+    "subtitle": "subtitles.oxyarena.deflect",
+    "sounds": [
+      {
+        "name": "oxyarena:deflect"
+      }
+    ]
+  },
+  "deflect2": {
+    "subtitle": "subtitles.oxyarena.deflect",
+    "sounds": [
+      {
+        "name": "oxyarena:deflect2"
+      }
+    ]
+  },
+  "deflect3": {
+    "subtitle": "subtitles.oxyarena.deflect",
+    "sounds": [
+      {
+        "name": "oxyarena:deflect3"
+      }
+    ]
+  },
+  "deflect4": {
+    "subtitle": "subtitles.oxyarena.deflect",
+    "sounds": [
+      {
+        "name": "oxyarena:deflect4"
+      }
+    ]
+  },
+  "deflect5": {
+    "subtitle": "subtitles.oxyarena.deflect",
+    "sounds": [
+      {
+        "name": "oxyarena:deflect5"
+      }
+    ]
+  },
+  "deflect6": {
+    "subtitle": "subtitles.oxyarena.deflect",
+    "sounds": [
+      {
+        "name": "oxyarena:deflect6"
+      }
+    ]
   }
 }

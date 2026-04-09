@@ -4,6 +4,8 @@ import java.util.function.Supplier;
 
 import com.example.oxyarena.OXYArena;
 import com.example.oxyarena.block.OxydropCrateBlock;
+import com.example.oxyarena.block.SoulReaperFireBlock;
+import com.example.oxyarena.block.SoulReaperSoulFireBlock;
 
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -37,6 +39,22 @@ public final class ModBlocks {
     public static final DeferredBlock<OxydropCrateBlock> OXYDROP_CRATE = register(
             "oxydrop_crate",
             () -> new OxydropCrateBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.BARREL).strength(2.5F, 6.0F)));
+    public static final DeferredBlock<SoulReaperFireBlock> SOUL_REAPER_FIRE = register(
+            "soul_reaper_fire",
+            () -> new SoulReaperFireBlock(
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.FIRE)
+                            .replaceable()
+                            .instabreak()
+                            .noLootTable()
+                            .noCollission()));
+    public static final DeferredBlock<SoulReaperSoulFireBlock> SOUL_REAPER_SOUL_FIRE = register(
+            "soul_reaper_soul_fire",
+            () -> new SoulReaperSoulFireBlock(
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.SOUL_FIRE)
+                            .replaceable()
+                            .instabreak()
+                            .noLootTable()
+                            .noCollission()));
 
     private ModBlocks() {
     }

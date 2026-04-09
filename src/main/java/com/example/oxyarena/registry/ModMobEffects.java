@@ -42,6 +42,19 @@ public final class ModMobEffects {
                             ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "effect.ametra_awakening.speed"),
                             -0.3D,
                             AttributeModifier.Operation.ADD_VALUE));
+    public static final DeferredHolder<MobEffect, MobEffect> KUSABIMARU_STUN = MOB_EFFECTS.register(
+            "kusabimaru_stun",
+            () -> new MobEffect(MobEffectCategory.HARMFUL, 0xC89A4D) {
+            }.addAttributeModifier(
+                    Attributes.MOVEMENT_SPEED,
+                    ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "effect.kusabimaru_stun.speed"),
+                    -1.0D,
+                    AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
+                    .addAttributeModifier(
+                            Attributes.ATTACK_SPEED,
+                            ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "effect.kusabimaru_stun.attack_speed"),
+                            -1.0D,
+                            AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
 
     private ModMobEffects() {
     }

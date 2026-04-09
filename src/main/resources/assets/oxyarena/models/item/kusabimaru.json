@@ -1,0 +1,30 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "oxyarena:item/kusabimaru"
+  },
+  "display": {
+    "thirdperson_righthand": {
+      "rotation": [0, 90, 45],
+      "translation": [0, 6, 1]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [0, 0, 0]
+    },
+    "firstperson_righthand": {
+      "rotation": [0, 90, 0],
+      "translation": [0, 3, 0]
+    },
+    "firstperson_lefthand": {
+      "rotation": [0, 0, 0]
+    }
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "blocking": 1
+      },
+      "model": "oxyarena:item/kusabimaru_blocking"
+    }
+  ]
+}
