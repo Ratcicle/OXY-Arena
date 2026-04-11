@@ -21,7 +21,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public class CitrineThrowingDagger extends AbstractArrow {
-    private static final double BASE_DAMAGE = 2.0D;
+    private static final double BASE_DAMAGE = 3.0D;
     private static final double GRAVITY = 0.025D;
     private boolean dealtDamage;
 

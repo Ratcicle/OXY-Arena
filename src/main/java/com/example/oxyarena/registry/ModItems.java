@@ -2,7 +2,9 @@ package com.example.oxyarena.registry;
 
 import com.example.oxyarena.OXYArena;
 import com.example.oxyarena.item.AmetraSwordItem;
+import com.example.oxyarena.item.BlackDiamondSwordItem;
 import com.example.oxyarena.item.ChocolateSwordItem;
+import com.example.oxyarena.item.CobaltSwordItem;
 import com.example.oxyarena.item.CitrinePickaxeItem;
 import com.example.oxyarena.item.CitrineSwordItem;
 import com.example.oxyarena.item.CitrineThrowingDaggerItem;
@@ -114,9 +116,9 @@ public final class ModItems {
             properties -> new LifehuntScytheItem(
                     ModToolTiers.COBALT,
                     properties.attributes(SwordItem.createAttributes(ModToolTiers.COBALT, 6.2F, -3.2F))));
-    public static final DeferredItem<SwordItem> COBALT_SWORD = ITEMS.registerItem(
+    public static final DeferredItem<CobaltSwordItem> COBALT_SWORD = ITEMS.registerItem(
             "cobalt_sword",
-            properties -> new SwordItem(
+            properties -> new CobaltSwordItem(
                     ModToolTiers.COBALT,
                     properties.attributes(SwordItem.createAttributes(ModToolTiers.COBALT, 3.0F, -2.4F))));
     public static final DeferredItem<AmetraSwordItem> AMETRA_SWORD = ITEMS.registerItem(
@@ -139,11 +141,11 @@ public final class ModItems {
             properties -> new SoulReaperItem(
                     ModToolTiers.AMETRA,
                     properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 2.0F, -3.0F))));
-    public static final DeferredItem<SwordItem> BLACK_DIAMOND_SWORD = ITEMS.registerItem(
+    public static final DeferredItem<BlackDiamondSwordItem> BLACK_DIAMOND_SWORD = ITEMS.registerItem(
             "black_diamond_sword",
-            properties -> new SwordItem(
+            properties -> new BlackDiamondSwordItem(
                     Tiers.DIAMOND,
-                    properties.attributes(SwordItem.createAttributes(Tiers.DIAMOND, 5.0F, -2.4F))));
+                    properties.attributes(SwordItem.createAttributes(Tiers.DIAMOND, 4.0F, -2.4F))));
     public static final DeferredItem<ChocolateSwordItem> CHOCOLATE_SWORD = ITEMS.registerItem(
             "chocolate_sword",
             properties -> new ChocolateSwordItem(

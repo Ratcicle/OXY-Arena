@@ -18,7 +18,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 
 public final class ZenithItem extends SwordItem {
-    private static final int COOLDOWN_TICKS = 200;
+    private static final int COOLDOWN_TICKS = 350;
 
     public ZenithItem(Tier tier, Properties properties) {
         super(tier, properties);

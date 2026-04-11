@@ -30,7 +30,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 public final class SoulReaperFireHelper {
     private static final int MAX_RANGE = 8;
-    private static final int COOLDOWN_TICKS = 40;
+    private static final int COOLDOWN_TICKS = 100;
     private static final int FIRE_DURATION_TICKS = MAX_RANGE;
     private static final float VANILLA_FIRE_CONTACT_SECONDS = 8.0F;
     private static final float IMMEDIATE_DAMAGE = 4.0F;

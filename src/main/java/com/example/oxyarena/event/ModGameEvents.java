@@ -23,12 +23,14 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.damagesource.CombatRules;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -40,6 +42,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.damagesource.DamageContainer;
 import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
@@ -59,10 +62,12 @@ public final class ModGameEvents {
     private static final float COBALT_ARROW_RAIN_VELOCITY = 2.6F;
     private static final float AMETRA_SWEEPING_DAMAGE_RATIO = 0.75F;
     private static final float MURASAMA_CRIT_DAMAGE_MULTIPLIER = 1.5F;
+    private static final float COBALT_SWORD_ARMOR_IGNORE_RATIO = 0.25F;
     private static final int BLACK_DIAMOND_EXTRA_ARMOR_DURABILITY_DAMAGE = 9;
     private static final int BLACK_DIAMOND_WEAPON_DURABILITY_DAMAGE = 10;
     private static final double COBALT_SHIELD_SHOCKWAVE_RADIUS = 4.5D;
     private static final float COBALT_SHIELD_SHOCKWAVE_KNOCKBACK = 1.1F;
+    private static final float FLAMING_SCYTHE_HIT_BURN_SECONDS = 4.0F;
     private static final int KUSABIMARU_DEFLECT_WINDOW_TICKS = 4;
     private static final int KUSABIMARU_STUN_TICKS = 15;
     private static final int KUSABIMARU_DEFLECT_SOUND_CHAIN_WINDOW_TICKS = 30;
@@ -115,6 +120,7 @@ public final class ModGameEvents {
     }
 
     public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
+        handleCobaltSwordArmorPenetration(event);
         handleCobaltShieldShockwave(event);
 
         if (!(event.getEntity() instanceof Player defender) || !isKusabimaruDeflectActive(defender)) {
@@ -139,6 +145,7 @@ public final class ModGameEvents {
         handleMurasamaDamagePost(event);
         handleSoulReaperDamagePost(event);
         handleBlackDiamondSwordDamagePost(event);
+        handleFlamingScytheDamagePost(event);
 
         if (!(event.getEntity() instanceof LivingEntity target)
                 || !(target.level() instanceof ServerLevel serverLevel)
@@ -598,6 +605,48 @@ public final class ModGameEvents {
         if (target instanceof Player defendingPlayer) {
             applyBlackDiamondWeaponDurabilityDamage(defendingPlayer);
         }
+    }
+
+    private static void handleFlamingScytheDamagePost(LivingDamageEvent.Post event) {
+        if (!(event.getEntity() instanceof LivingEntity target)
+                || event.getNewDamage() <= 0.0F
+                || !(event.getSource().getEntity() instanceof Player attacker)
+                || event.getSource().getDirectEntity() != attacker
+                || !attacker.getMainHandItem().is(ModItems.FLAMING_SCYTHE.get())
+                || !attacker.isOnFire()
+                || attacker == target) {
+            return;
+        }
+
+        target.igniteForSeconds(FLAMING_SCYTHE_HIT_BURN_SECONDS);
+    }
+
+    private static void handleCobaltSwordArmorPenetration(LivingIncomingDamageEvent event) {
+        if (!(event.getEntity() instanceof LivingEntity target)
+                || event.getSource().is(DamageTypeTags.BYPASSES_ARMOR)
+                || !(event.getSource().getEntity() instanceof Player attacker)
+                || event.getSource().getDirectEntity() != attacker
+                || !attacker.getMainHandItem().is(ModItems.COBALT_SWORD.get())) {
+            return;
+        }
+
+        event.getContainer().addModifier(DamageContainer.Reduction.ARMOR, (container, currentReduction) -> {
+            float incomingDamage = container.getNewDamage();
+            float armor = (float)target.getAttributeValue(Attributes.ARMOR);
+            float armorToughness = (float)target.getAttributeValue(Attributes.ARMOR_TOUGHNESS);
+            if (incomingDamage <= 0.0F || armor <= 0.0F) {
+                return currentReduction;
+            }
+
+            float reducedArmor = armor * (1.0F - COBALT_SWORD_ARMOR_IGNORE_RATIO);
+            float reducedArmorDamage = CombatRules.getDamageAfterAbsorb(
+                    target,
+                    incomingDamage,
+                    container.getSource(),
+                    reducedArmor,
+                    armorToughness);
+            return Mth.clamp(incomingDamage - reducedArmorDamage, 0.0F, incomingDamage);
+        });
     }
 
     private static void handleCobaltShieldShockwave(LivingIncomingDamageEvent event) {
