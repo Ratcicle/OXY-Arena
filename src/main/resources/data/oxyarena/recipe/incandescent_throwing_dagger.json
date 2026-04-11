@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "oxyarena:incandescent_ingot"
+    },
+    {
+      "item": "oxyarena:incandescent_ingot"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "oxyarena:incandescent_throwing_dagger"
+  }
+}

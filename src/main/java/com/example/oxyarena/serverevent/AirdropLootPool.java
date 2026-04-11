@@ -9,7 +9,7 @@ import net.minecraft.world.Container;
 import net.minecraft.world.item.Items;
 
 public final class AirdropLootPool {
-    public static final int ROLLS = 3;
+    public static final int ROLLS = 4;
 
     private static final List<AirdropLootEntry> ENTRIES = List.of(
             AirdropLootEntry.of(() -> Items.COAL, 10, 30, 60),
@@ -30,6 +30,8 @@ public final class AirdropLootPool {
             AirdropLootEntry.of(ModItems.RAW_COBALT, 5, 12, 20),
             AirdropLootEntry.of(ModItems.COBALT_INGOT, 2, 6, 12),
             AirdropLootEntry.of(ModItems.SMOKE_BOMB, 2, 6, 16),
+            AirdropLootEntry.of(ModItems.ESTUS_FLASK, 3, 7, 12),
+            AirdropLootEntry.of(ModItems.STORM_CHARGE, 2, 4, 10),
             AirdropLootEntry.of(ModItems.CITRINE_THROWING_DAGGER, 4, 10, 16),
             AirdropLootEntry.of(ModItems.GRAPPLING_GUN, 1, 1, 5),
             AirdropLootEntry.of(ModItems.CHOCOLATE_SWORD, 1, 1, 5),

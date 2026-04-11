@@ -55,6 +55,7 @@ public final class ModServerEventHooks {
             ModGameEvents.clearMurasamaState(player);
             ModGameEvents.clearKusabimaruState(player);
             ModGameEvents.clearSoulReaperState(player);
+            ModGameEvents.clearStormChargeState(player);
             ZenithOrbitSwordEntity.discardOwnedOrbitSwords(player);
         }
 
@@ -74,6 +75,7 @@ public final class ModServerEventHooks {
             ModGameEvents.clearMurasamaState(player);
             ModGameEvents.clearKusabimaruState(player);
             ModGameEvents.clearSoulReaperState(player);
+            ModGameEvents.clearStormChargeState(player);
             ModGameEvents.clearSoulReaperTarget(player);
             ZenithOrbitSwordEntity.discardOwnedOrbitSwords(player);
             OxyServerEventManager.get(player.getServer()).onPlayerChangedDimension(player);
@@ -87,6 +89,7 @@ public final class ModServerEventHooks {
             ModGameEvents.clearMurasamaState(player);
             ModGameEvents.clearKusabimaruState(player);
             ModGameEvents.clearSoulReaperState(player);
+            ModGameEvents.clearStormChargeState(player);
             ModGameEvents.clearSoulReaperTarget(player);
             ZenithOrbitSwordEntity.discardOwnedOrbitSwords(player);
         }

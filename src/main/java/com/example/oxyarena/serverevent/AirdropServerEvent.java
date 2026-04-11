@@ -1,11 +1,8 @@
 package com.example.oxyarena.serverevent;
 
-import java.util.UUID;
-
 import javax.annotation.Nullable;
 
 import com.example.oxyarena.entity.event.AirdropCrateEntity;
-import com.example.oxyarena.registry.ModBlocks;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -16,7 +13,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
@@ -27,17 +23,6 @@ public final class AirdropServerEvent implements OxyServerEvent {
     private static final int MIN_START_HEIGHT = 120;
     private static final int MIN_DROP_HEIGHT_ABOVE_GROUND = 24;
     private static final int MAX_GROUND_SCAN_Y = 300;
-
-    private boolean active;
-    private int timeRemainingTicks;
-    @Nullable
-    private BlockPos landingPos;
-    @Nullable
-    private UUID crateUuid;
-    @Nullable
-    private Integer forcedChunkX;
-    @Nullable
-    private Integer forcedChunkZ;
 
     @Override
     public String getId() {
@@ -51,21 +36,15 @@ public final class AirdropServerEvent implements OxyServerEvent {
 
     @Override
     public boolean isActive() {
-        return this.active;
+        return false;
     }
 
     @Override
     public boolean start(MinecraftServer server) {
-        if (this.active) {
-            return false;
-        }
-
         ServerLevel overworld = server.getLevel(Level.OVERWORLD);
         if (overworld == null) {
             return false;
         }
-
-        this.cleanupStaleRuntimeArtifacts(server);
 
         BlockPos selectedLandingPos = this.findLandingPos(overworld);
         if (selectedLandingPos == null) {
@@ -83,63 +62,22 @@ public final class AirdropServerEvent implements OxyServerEvent {
             return false;
         }
 
-        this.active = true;
-        this.landingPos = selectedLandingPos.immutable();
-        this.crateUuid = crate.getUUID();
-        this.timeRemainingTicks = Math.max(
-                1,
-                (int)Math.ceil(
-                        (spawnY - selectedLandingPos.getY())
-                                / AirdropCrateEntity.DESCENT_SPEED_BLOCKS_PER_TICK));
-        this.setForcedChunk(overworld, selectedLandingPos);
         this.broadcastStart(server, selectedLandingPos);
         return true;
     }
 
     @Override
     public void stop(MinecraftServer server, ServerEventStopReason reason) {
-        if (!this.active && reason != ServerEventStopReason.SERVER_SHUTDOWN) {
-            return;
-        }
-
-        ServerLevel overworld = server.getLevel(Level.OVERWORLD);
-        if (overworld != null) {
-            AirdropCrateEntity crate = this.getCrate(overworld);
-            if (crate != null) {
-                crate.discard();
-            }
-
-            this.releaseForcedChunk(overworld);
-        }
-
-        this.active = false;
-        this.timeRemainingTicks = 0;
-        this.landingPos = null;
-        this.crateUuid = null;
+        stopAllAirdrops(server);
     }
 
     @Override
     public void tick(MinecraftServer server) {
-        if (!this.active) {
-            return;
-        }
+    }
 
-        ServerLevel overworld = server.getLevel(Level.OVERWORLD);
-        if (overworld == null || this.landingPos == null) {
-            this.stop(server, ServerEventStopReason.MANUAL);
-            return;
-        }
-
-        this.timeRemainingTicks = Math.max(0, this.timeRemainingTicks - 1);
-        AirdropCrateEntity crate = this.getCrate(overworld);
-        if (crate == null) {
-            this.stop(
-                    server,
-                    this.landingPos != null && overworld.getBlockState(this.landingPos).is(ModBlocks.OXYDROP_CRATE.get())
-                            ? ServerEventStopReason.COMPLETED
-                            : ServerEventStopReason.MANUAL);
-            return;
-        }
+    @Override
+    public boolean blocksEventQueue() {
+        return false;
     }
 
     @Override
@@ -148,31 +86,29 @@ public final class AirdropServerEvent implements OxyServerEvent {
 
     @Override
     public int getTimeRemainingTicks() {
-        return this.timeRemainingTicks;
+        return 0;
     }
 
     @Override
     public void cleanupStaleRuntimeArtifacts(MinecraftServer server) {
-        this.active = false;
-        this.timeRemainingTicks = 0;
-        this.landingPos = null;
-        this.crateUuid = null;
+        stopAllAirdrops(server);
+    }
 
+    public static int stopAllAirdrops(MinecraftServer server) {
         ServerLevel overworld = server.getLevel(Level.OVERWORLD);
         if (overworld == null) {
-            this.forcedChunkX = null;
-            this.forcedChunkZ = null;
-            return;
+            return 0;
         }
 
+        int removed = 0;
         for (AirdropCrateEntity crate : overworld.getEntitiesOfClass(
                 AirdropCrateEntity.class,
-                this.getLoadedWorldBounds(overworld))) {
-            overworld.setChunkForced(crate.chunkPosition().x, crate.chunkPosition().z, false);
+                getLoadedWorldBounds(overworld))) {
             crate.discard();
+            removed++;
         }
 
-        this.releaseForcedChunk(overworld);
+        return removed;
     }
 
     @Nullable
@@ -232,33 +168,7 @@ public final class AirdropServerEvent implements OxyServerEvent {
         }
     }
 
-    @Nullable
-    private AirdropCrateEntity getCrate(ServerLevel level) {
-        if (this.crateUuid == null) {
-            return null;
-        }
-
-        Entity entity = level.getEntity(this.crateUuid);
-        return entity instanceof AirdropCrateEntity crate ? crate : null;
-    }
-
-    private void setForcedChunk(ServerLevel level, BlockPos pos) {
-        this.releaseForcedChunk(level);
-        this.forcedChunkX = pos.getX() >> 4;
-        this.forcedChunkZ = pos.getZ() >> 4;
-        level.setChunkForced(this.forcedChunkX, this.forcedChunkZ, true);
-    }
-
-    private void releaseForcedChunk(ServerLevel level) {
-        if (this.forcedChunkX != null && this.forcedChunkZ != null) {
-            level.setChunkForced(this.forcedChunkX, this.forcedChunkZ, false);
-        }
-
-        this.forcedChunkX = null;
-        this.forcedChunkZ = null;
-    }
-
-    private AABB getLoadedWorldBounds(ServerLevel level) {
+    private static AABB getLoadedWorldBounds(ServerLevel level) {
         return new AABB(
                 level.getWorldBorder().getMinX(),
                 level.getMinBuildHeight(),

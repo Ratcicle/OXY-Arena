@@ -11,12 +11,19 @@ import com.example.oxyarena.item.CitrineThrowingDaggerItem;
 import com.example.oxyarena.item.CobaltBowItem;
 import com.example.oxyarena.item.CobaltShieldItem;
 import com.example.oxyarena.item.FlamingScytheItem;
+import com.example.oxyarena.item.EstusFlaskItem;
 import com.example.oxyarena.item.GrapplingGunItem;
+import com.example.oxyarena.item.IncandescentAxeItem;
+import com.example.oxyarena.item.IncandescentIngotItem;
+import com.example.oxyarena.item.IncandescentPickaxeItem;
+import com.example.oxyarena.item.IncandescentSwordItem;
+import com.example.oxyarena.item.IncandescentThrowingDaggerItem;
 import com.example.oxyarena.item.KusabimaruItem;
 import com.example.oxyarena.item.LifehuntScytheItem;
 import com.example.oxyarena.item.MurasamaItem;
 import com.example.oxyarena.item.SoulReaperItem;
 import com.example.oxyarena.item.SmokeBombItem;
+import com.example.oxyarena.item.StormChargeItem;
 import com.example.oxyarena.item.ZenithItem;
 import com.example.oxyarena.item.ZeusLightningItem;
 
@@ -48,10 +55,16 @@ public final class ModItems {
     public static final DeferredItem<BlockItem> DEEPSLATE_COBALT_ORE = ITEMS.registerSimpleBlockItem("deepslate_cobalt_ore", ModBlocks.DEEPSLATE_COBALT_ORE);
     public static final DeferredItem<BlockItem> AMETRA_ORE = ITEMS.registerSimpleBlockItem("ametra_ore", ModBlocks.AMETRA_ORE);
     public static final DeferredItem<BlockItem> DEEPSLATE_AMETRA_ORE = ITEMS.registerSimpleBlockItem("deepslate_ametra_ore", ModBlocks.DEEPSLATE_AMETRA_ORE);
+    public static final DeferredItem<BlockItem> INCANDESCENT_ORE = ITEMS.registerSimpleBlockItem("incandescent_ore", ModBlocks.INCANDESCENT_ORE);
+    public static final DeferredItem<BlockItem> DEEPSLATE_INCANDESCENT_ORE = ITEMS.registerSimpleBlockItem("deepslate_incandescent_ore", ModBlocks.DEEPSLATE_INCANDESCENT_ORE);
     public static final DeferredItem<Item> CITRINE_GEM = ITEMS.registerSimpleItem("citrine_gem");
     public static final DeferredItem<Item> AMETRA_GEM = ITEMS.registerSimpleItem("ametra_gem");
     public static final DeferredItem<Item> RAW_COBALT = ITEMS.registerSimpleItem("raw_cobalt");
     public static final DeferredItem<Item> COBALT_INGOT = ITEMS.registerSimpleItem("cobalt_ingot");
+    public static final DeferredItem<IncandescentIngotItem> INCANDESCENT_INGOT = ITEMS.registerItem(
+            "incandescent_ingot",
+            IncandescentIngotItem::new,
+            new Item.Properties());
     public static final DeferredItem<CitrineSwordItem> CITRINE_SWORD = ITEMS.registerItem(
             "citrine_sword",
             properties -> new CitrineSwordItem(
@@ -96,10 +109,22 @@ public final class ModItems {
             "citrine_throwing_dagger",
             CitrineThrowingDaggerItem::new,
             new Item.Properties().stacksTo(16));
+    public static final DeferredItem<IncandescentThrowingDaggerItem> INCANDESCENT_THROWING_DAGGER = ITEMS.registerItem(
+            "incandescent_throwing_dagger",
+            IncandescentThrowingDaggerItem::new,
+            new Item.Properties().stacksTo(16));
     public static final DeferredItem<SmokeBombItem> SMOKE_BOMB = ITEMS.registerItem(
             "smoke_bomb",
             SmokeBombItem::new,
             new Item.Properties().stacksTo(16));
+    public static final DeferredItem<EstusFlaskItem> ESTUS_FLASK = ITEMS.registerItem(
+            "estus_flask",
+            EstusFlaskItem::new,
+            new Item.Properties().stacksTo(16));
+    public static final DeferredItem<StormChargeItem> STORM_CHARGE = ITEMS.registerItem(
+            "storm_charge",
+            StormChargeItem::new,
+            new Item.Properties());
     public static final DeferredItem<ZeusLightningItem> ZEUS_LIGHTNING = ITEMS.registerItem(
             "zeus_lightning",
             ZeusLightningItem::new,
@@ -121,6 +146,11 @@ public final class ModItems {
             properties -> new CobaltSwordItem(
                     ModToolTiers.COBALT,
                     properties.attributes(SwordItem.createAttributes(ModToolTiers.COBALT, 3.0F, -2.4F))));
+    public static final DeferredItem<IncandescentSwordItem> INCANDESCENT_SWORD = ITEMS.registerItem(
+            "incandescent_sword",
+            properties -> new IncandescentSwordItem(
+                    ModToolTiers.INCANDESCENT,
+                    properties.attributes(SwordItem.createAttributes(ModToolTiers.INCANDESCENT, 3.0F, -2.4F))));
     public static final DeferredItem<AmetraSwordItem> AMETRA_SWORD = ITEMS.registerItem(
             "ametra_sword",
             properties -> new AmetraSwordItem(
@@ -161,6 +191,11 @@ public final class ModItems {
             properties -> new PickaxeItem(
                     ModToolTiers.COBALT,
                     properties.attributes(PickaxeItem.createAttributes(ModToolTiers.COBALT, 1.0F, -2.8F))));
+    public static final DeferredItem<IncandescentPickaxeItem> INCANDESCENT_PICKAXE = ITEMS.registerItem(
+            "incandescent_pickaxe",
+            properties -> new IncandescentPickaxeItem(
+                    ModToolTiers.INCANDESCENT,
+                    properties.attributes(PickaxeItem.createAttributes(ModToolTiers.INCANDESCENT, 1.0F, -2.8F))));
     public static final DeferredItem<PickaxeItem> AMETRA_PICKAXE = ITEMS.registerItem(
             "ametra_pickaxe",
             properties -> new PickaxeItem(
@@ -171,6 +206,11 @@ public final class ModItems {
             properties -> new AxeItem(
                     ModToolTiers.COBALT,
                     properties.attributes(AxeItem.createAttributes(ModToolTiers.COBALT, 5.0F, -3.0F))));
+    public static final DeferredItem<IncandescentAxeItem> INCANDESCENT_AXE = ITEMS.registerItem(
+            "incandescent_axe",
+            properties -> new IncandescentAxeItem(
+                    ModToolTiers.INCANDESCENT,
+                    properties.attributes(AxeItem.createAttributes(ModToolTiers.INCANDESCENT, 5.0F, -3.0F))));
     public static final DeferredItem<AxeItem> AMETRA_AXE = ITEMS.registerItem(
             "ametra_axe",
             properties -> new AxeItem(

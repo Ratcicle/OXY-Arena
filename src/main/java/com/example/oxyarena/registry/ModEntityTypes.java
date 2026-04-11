@@ -9,7 +9,9 @@ import com.example.oxyarena.entity.effect.SmokeCloud;
 import com.example.oxyarena.entity.effect.ZenithOrbitSwordEntity;
 import com.example.oxyarena.entity.projectile.CitrineThrowingDagger;
 import com.example.oxyarena.entity.projectile.GrapplingHook;
+import com.example.oxyarena.entity.projectile.IncandescentThrowingDagger;
 import com.example.oxyarena.entity.projectile.SmokeBomb;
+import com.example.oxyarena.entity.projectile.StormCharge;
 import com.example.oxyarena.entity.projectile.ThrownZeusLightning;
 
 import net.minecraft.core.registries.Registries;
@@ -34,6 +36,15 @@ public final class ModEntityTypes {
                             .clientTrackingRange(8)
                             .updateInterval(10)
                             .build("citrine_throwing_dagger"));
+    public static final DeferredHolder<EntityType<?>, EntityType<IncandescentThrowingDagger>> INCANDESCENT_THROWING_DAGGER =
+            ENTITY_TYPES.register(
+                    "incandescent_throwing_dagger",
+                    () -> EntityType.Builder.<IncandescentThrowingDagger>of(IncandescentThrowingDagger::new, MobCategory.MISC)
+                            .sized(0.5F, 0.5F)
+                            .eyeHeight(0.13F)
+                            .clientTrackingRange(8)
+                            .updateInterval(10)
+                            .build("incandescent_throwing_dagger"));
     public static final DeferredHolder<EntityType<?>, EntityType<SmokeBomb>> SMOKE_BOMB = ENTITY_TYPES.register(
             "smoke_bomb",
             () -> EntityType.Builder.<SmokeBomb>of(SmokeBomb::new, MobCategory.MISC)
@@ -50,6 +61,14 @@ public final class ModEntityTypes {
                     .clientTrackingRange(32)
                     .updateInterval(2)
                     .build("smoke_cloud"));
+    public static final DeferredHolder<EntityType<?>, EntityType<StormCharge>> STORM_CHARGE = ENTITY_TYPES.register(
+            "storm_charge",
+            () -> EntityType.Builder.<StormCharge>of(StormCharge::new, MobCategory.MISC)
+                    .sized(0.3125F, 0.3125F)
+                    .eyeHeight(0.0F)
+                    .clientTrackingRange(4)
+                    .updateInterval(10)
+                    .build("storm_charge"));
     public static final DeferredHolder<EntityType<?>, EntityType<ThrownZeusLightning>> ZEUS_LIGHTNING =
             ENTITY_TYPES.register(
                     "zeus_lightning",

@@ -36,6 +36,12 @@ public final class ModBlocks {
     public static final DeferredBlock<Block> DEEPSLATE_AMETRA_ORE = register(
             "deepslate_ametra_ore",
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.DEEPSLATE_DIAMOND_ORE).requiresCorrectToolForDrops().sound(SoundType.DEEPSLATE)));
+    public static final DeferredBlock<Block> INCANDESCENT_ORE = register(
+            "incandescent_ore",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_ORE).requiresCorrectToolForDrops()));
+    public static final DeferredBlock<Block> DEEPSLATE_INCANDESCENT_ORE = register(
+            "deepslate_incandescent_ore",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.DEEPSLATE_IRON_ORE).requiresCorrectToolForDrops().sound(SoundType.DEEPSLATE)));
     public static final DeferredBlock<OxydropCrateBlock> OXYDROP_CRATE = register(
             "oxydrop_crate",
             () -> new OxydropCrateBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.BARREL).strength(2.5F, 6.0F)));

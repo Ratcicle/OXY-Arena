@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:smithing_transform",
+  "template": {
+    "item": "oxyarena:incandescent_ingot"
+  },
+  "base": {
+    "item": "minecraft:iron_sword"
+  },
+  "addition": {
+    "item": "oxyarena:incandescent_ingot"
+  },
+  "result": {
+    "count": 1,
+    "id": "oxyarena:incandescent_sword"
+  }
+}

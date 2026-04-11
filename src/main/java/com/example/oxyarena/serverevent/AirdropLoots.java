@@ -22,7 +22,6 @@ public final class AirdropLoots {
 
         for (int roll = 0; roll < rolls && !availableEntries.isEmpty(); roll++) {
             AirdropLootEntry selectedEntry = pickDistinctEntry(random, availableEntries);
-            availableEntries.remove(selectedEntry);
             selectedStacks.add(selectedEntry.createStack(random));
         }
 

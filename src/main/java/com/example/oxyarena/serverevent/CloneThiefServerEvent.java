@@ -11,6 +11,7 @@ import javax.annotation.Nullable;
 import com.example.oxyarena.OXYArena;
 import com.example.oxyarena.entity.event.CloneThiefEntity;
 import com.example.oxyarena.registry.ModEntityTypes;
+import com.example.oxyarena.registry.ModItems;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -24,6 +25,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 
@@ -32,6 +34,7 @@ public final class CloneThiefServerEvent implements OxyServerEvent {
     private static final int MAX_SPAWN_ATTEMPTS = 24;
     private static final int MIN_SPAWN_OFFSET = 2;
     private static final int MAX_SPAWN_OFFSET = 6;
+    private static final int PERFECT_STORM_CHARGE_REWARD = 5;
     private static final ResourceLocation BOSSBAR_ID = ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "clones");
 
     @Nullable
@@ -135,6 +138,7 @@ public final class CloneThiefServerEvent implements OxyServerEvent {
             return;
         }
 
+        this.tryRewardOwnerForCloneKill(server, clone, event);
         UUID cloneUuid = clone.getUUID();
         clone.getOwnerUuid().ifPresentOrElse(
                 ownerUuid -> this.cloneUuidsByOwner.remove(ownerUuid, cloneUuid),
@@ -190,6 +194,43 @@ public final class CloneThiefServerEvent implements OxyServerEvent {
         }
 
         return clones.size();
+    }
+
+    private void tryRewardOwnerForCloneKill(MinecraftServer server, CloneThiefEntity clone, LivingDeathEvent event) {
+        UUID ownerUuid = clone.getOwnerUuid().orElse(null);
+        if (ownerUuid == null) {
+            return;
+        }
+
+        Entity killer = event.getSource().getEntity();
+        if (!(killer instanceof ServerPlayer killerPlayer) || !killerPlayer.getUUID().equals(ownerUuid)) {
+            return;
+        }
+
+        ServerPlayer owner = server.getPlayerList().getPlayer(ownerUuid);
+        if (owner == null) {
+            return;
+        }
+
+        boolean perfectKill = !clone.hasStolenItem();
+        this.giveReward(owner, new ItemStack(ModItems.GRAPPLING_GUN.get()));
+        if (perfectKill) {
+            this.giveReward(owner, new ItemStack(ModItems.STORM_CHARGE.get(), PERFECT_STORM_CHARGE_REWARD));
+            owner.sendSystemMessage(
+                    Component.translatable("event.oxyarena.clones.reward_perfect")
+                            .withStyle(ChatFormatting.GOLD));
+            return;
+        }
+
+        owner.sendSystemMessage(
+                Component.translatable("event.oxyarena.clones.reward_basic")
+                        .withStyle(ChatFormatting.GREEN));
+    }
+
+    private void giveReward(ServerPlayer player, ItemStack reward) {
+        if (!player.getInventory().add(reward.copy())) {
+            player.drop(reward.copy(), false);
+        }
     }
 
     private boolean spawnCloneForPlayer(ServerLevel level, ServerPlayer player) {

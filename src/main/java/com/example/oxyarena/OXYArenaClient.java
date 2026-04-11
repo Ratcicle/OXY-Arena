@@ -12,6 +12,8 @@ import com.example.oxyarena.client.renderer.entity.CloneThiefRenderer;
 import com.example.oxyarena.client.renderer.entity.CitrineThrowingDaggerRenderer;
 import com.example.oxyarena.client.renderer.entity.EruptionTntRenderer;
 import com.example.oxyarena.client.renderer.entity.GrapplingHookRenderer;
+import com.example.oxyarena.client.renderer.entity.IncandescentThrowingDaggerRenderer;
+import com.example.oxyarena.client.renderer.entity.StormChargeRenderer;
 import com.example.oxyarena.client.renderer.entity.ThrownZeusLightningRenderer;
 import com.example.oxyarena.client.renderer.entity.ZenithOrbitSwordRenderer;
 import com.example.oxyarena.item.SoulReaperItem;
@@ -63,8 +65,12 @@ public class OXYArenaClient {
         event.registerEntityRenderer(
                 ModEntityTypes.CITRINE_THROWING_DAGGER.get(),
                 CitrineThrowingDaggerRenderer::new);
+        event.registerEntityRenderer(
+                ModEntityTypes.INCANDESCENT_THROWING_DAGGER.get(),
+                IncandescentThrowingDaggerRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.SMOKE_BOMB.get(), ThrownItemRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.SMOKE_CLOUD.get(), NoopRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.STORM_CHARGE.get(), StormChargeRenderer::new);
         event.registerEntityRenderer(
                 ModEntityTypes.ZEUS_LIGHTNING.get(),
                 ThrownZeusLightningRenderer::new);

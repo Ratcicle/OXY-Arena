@@ -68,6 +68,11 @@ public final class ModGameEvents {
     private static final double COBALT_SHIELD_SHOCKWAVE_RADIUS = 4.5D;
     private static final float COBALT_SHIELD_SHOCKWAVE_KNOCKBACK = 1.1F;
     private static final float FLAMING_SCYTHE_HIT_BURN_SECONDS = 4.0F;
+    private static final int INCANDESCENT_MAINHAND_SELF_DAMAGE_INTERVAL_TICKS = 20;
+    private static final float INCANDESCENT_MAINHAND_SELF_DAMAGE = 1.0F;
+    private static final float INCANDESCENT_HIT_BURN_SECONDS = 4.0F;
+    private static final int STORM_CHARGE_FALL_IMMUNITY_TICKS = 80;
+    private static final double STORM_CHARGE_SELF_BOOST_MAX_DISTANCE_SQR = 36.0D;
     private static final int KUSABIMARU_DEFLECT_WINDOW_TICKS = 4;
     private static final int KUSABIMARU_STUN_TICKS = 15;
     private static final int KUSABIMARU_DEFLECT_SOUND_CHAIN_WINDOW_TICKS = 30;
@@ -82,6 +87,7 @@ public final class ModGameEvents {
     private static final Map<UUID, Integer> KUSABIMARU_DEFLECT_ACTIVE_UNTIL = new HashMap<>();
     private static final Map<UUID, Integer> KUSABIMARU_DEFLECT_SOUND_INDEX = new HashMap<>();
     private static final Map<UUID, Integer> KUSABIMARU_DEFLECT_LAST_SOUND_TICK = new HashMap<>();
+    private static final Map<UUID, Integer> STORM_CHARGE_FALL_IMMUNE_UNTIL = new HashMap<>();
     private static final Map<UUID, Map<UUID, Integer>> SOUL_REAPER_MARKED_TARGETS = new HashMap<>();
     private static final Map<UUID, UUID> SOUL_REAPER_TARGET_OWNERS = new HashMap<>();
     private static final Map<UUID, Integer> SOUL_REAPER_SELF_DAMAGE_AT = new HashMap<>();
@@ -120,6 +126,7 @@ public final class ModGameEvents {
     }
 
     public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
+        handleStormChargeFallImmunity(event);
         handleCobaltSwordArmorPenetration(event);
         handleCobaltShieldShockwave(event);
 
@@ -146,6 +153,7 @@ public final class ModGameEvents {
         handleSoulReaperDamagePost(event);
         handleBlackDiamondSwordDamagePost(event);
         handleFlamingScytheDamagePost(event);
+        handleIncandescentDamagePost(event);
 
         if (!(event.getEntity() instanceof LivingEntity target)
                 || !(target.level() instanceof ServerLevel serverLevel)
@@ -300,6 +308,20 @@ public final class ModGameEvents {
         }
     }
 
+    public static void grantStormChargeFallImmunity(Player player, Vec3 explosionPos) {
+        if (player.getServer() == null || player.distanceToSqr(explosionPos) > STORM_CHARGE_SELF_BOOST_MAX_DISTANCE_SQR) {
+            return;
+        }
+
+        STORM_CHARGE_FALL_IMMUNE_UNTIL.put(
+                player.getUUID(),
+                player.getServer().getTickCount() + STORM_CHARGE_FALL_IMMUNITY_TICKS);
+    }
+
+    public static void clearStormChargeState(Player player) {
+        STORM_CHARGE_FALL_IMMUNE_UNTIL.remove(player.getUUID());
+    }
+
     public static void clearSoulReaperTarget(LivingEntity target) {
         UUID targetId = target.getUUID();
         UUID ownerId = SOUL_REAPER_TARGET_OWNERS.remove(targetId);
@@ -413,8 +435,10 @@ public final class ModGameEvents {
     }
 
     public static void onServerTickPost(ServerTickEvent.Post event) {
+        cleanupStormChargeFallImmunity(event.getServer().getTickCount());
         tickKusabimaruStunnedPlayers(event);
         tickSoulReaperAlteredPlayers(event);
+        tickIncandescentMainHandDamage(event);
         SoulReaperFireHelper.onServerTickPost(event);
 
         if (COBALT_ARROW_RAIN_WAVES_QUEUE.isEmpty()) {
@@ -619,6 +643,41 @@ public final class ModGameEvents {
         }
 
         target.igniteForSeconds(FLAMING_SCYTHE_HIT_BURN_SECONDS);
+    }
+
+    private static void handleIncandescentDamagePost(LivingDamageEvent.Post event) {
+        if (!(event.getEntity() instanceof LivingEntity target)
+                || event.getNewDamage() <= 0.0F
+                || !(event.getSource().getEntity() instanceof Player attacker)
+                || event.getSource().getDirectEntity() != attacker
+                || attacker == target
+                || !isIncandescentMeleeItem(attacker.getMainHandItem())) {
+            return;
+        }
+
+        target.igniteForSeconds(INCANDESCENT_HIT_BURN_SECONDS);
+    }
+
+    private static void handleStormChargeFallImmunity(LivingIncomingDamageEvent event) {
+        if (!(event.getEntity() instanceof Player player)
+                || player.getServer() == null
+                || !event.getSource().is(DamageTypeTags.IS_FALL)) {
+            return;
+        }
+
+        Integer immuneUntil = STORM_CHARGE_FALL_IMMUNE_UNTIL.get(player.getUUID());
+        if (immuneUntil == null) {
+            return;
+        }
+
+        if (player.getServer().getTickCount() > immuneUntil.intValue()) {
+            STORM_CHARGE_FALL_IMMUNE_UNTIL.remove(player.getUUID());
+            return;
+        }
+
+        event.setCanceled(true);
+        STORM_CHARGE_FALL_IMMUNE_UNTIL.remove(player.getUUID());
+        player.resetFallDistance();
     }
 
     private static void handleCobaltSwordArmorPenetration(LivingIncomingDamageEvent event) {
@@ -878,6 +937,39 @@ public final class ModGameEvents {
                 playerIterator.remove();
             }
         }
+    }
+
+    private static void cleanupStormChargeFallImmunity(int currentTick) {
+        STORM_CHARGE_FALL_IMMUNE_UNTIL.entrySet().removeIf(entry -> entry.getValue().intValue() < currentTick);
+    }
+
+    private static void tickIncandescentMainHandDamage(ServerTickEvent.Post event) {
+        int currentTick = event.getServer().getTickCount();
+        if (currentTick % INCANDESCENT_MAINHAND_SELF_DAMAGE_INTERVAL_TICKS != 0) {
+            return;
+        }
+
+        for (Player player : event.getServer().getPlayerList().getPlayers()) {
+            if (player.isCreative() || player.isSpectator() || !isIncandescentHotItem(player.getMainHandItem())) {
+                continue;
+            }
+
+            player.hurt(player.damageSources().magic(), INCANDESCENT_MAINHAND_SELF_DAMAGE);
+        }
+    }
+
+    private static boolean isIncandescentHotItem(ItemStack stack) {
+        return stack.is(ModItems.INCANDESCENT_INGOT.get())
+                || stack.is(ModItems.INCANDESCENT_SWORD.get())
+                || stack.is(ModItems.INCANDESCENT_PICKAXE.get())
+                || stack.is(ModItems.INCANDESCENT_AXE.get())
+                || stack.is(ModItems.INCANDESCENT_THROWING_DAGGER.get());
+    }
+
+    private static boolean isIncandescentMeleeItem(ItemStack stack) {
+        return stack.is(ModItems.INCANDESCENT_SWORD.get())
+                || stack.is(ModItems.INCANDESCENT_PICKAXE.get())
+                || stack.is(ModItems.INCANDESCENT_AXE.get());
     }
 
     private static final class CobaltArrowRainWave {

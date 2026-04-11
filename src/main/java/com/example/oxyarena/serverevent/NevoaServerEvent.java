@@ -9,6 +9,7 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 import com.example.oxyarena.OXYArena;
+import com.example.oxyarena.registry.ModItems;
 import com.example.oxyarena.registry.ModParticleTypes;
 
 import net.minecraft.ChatFormatting;
@@ -24,6 +25,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.BossEvent;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 
@@ -39,6 +41,8 @@ public final class NevoaServerEvent implements OxyServerEvent {
     private static final double PARTICLE_SEGMENT_HALF_LENGTH = 40.0D;
     private static final double PARTICLE_STEP = 3.5D;
     private static final double[] PARTICLE_HEIGHT_OFFSETS = {0.25D, 0.75D, 1.25D, 1.75D, 2.25D, 2.75D, 3.25D, 3.75D, 4.25D};
+    private static final int ESTUS_REWARD_NO_DEATHS = 10;
+    private static final int ESTUS_REWARD_ONE_DEATH = 5;
     private static final ResourceLocation BOSSBAR_ID = ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "nevoa");
 
     @Nullable
@@ -46,6 +50,7 @@ public final class NevoaServerEvent implements OxyServerEvent {
     @Nullable
     private ServerEventArea initialArea;
     private final Map<UUID, Integer> exposureTicks = new HashMap<>();
+    private final Map<UUID, Integer> deathCounts = new HashMap<>();
     private Phase phase = Phase.IDLE;
     private int timeRemainingTicks;
     private int totalClosingTicks;
@@ -124,6 +129,7 @@ public final class NevoaServerEvent implements OxyServerEvent {
         this.phase = Phase.CLOSING;
         this.bossBar = this.createBossBar(server);
         this.updateBossBar(server);
+        this.deathCounts.clear();
 
         server.getPlayerList().broadcastSystemMessage(
                 Component.translatable("event.oxyarena.nevoa.started")
@@ -143,12 +149,18 @@ public final class NevoaServerEvent implements OxyServerEvent {
             return;
         }
 
+        boolean grantRewards = reason == ServerEventStopReason.COMPLETED;
+        if (grantRewards) {
+            this.rewardPlayers(server);
+        }
+
         this.phase = Phase.IDLE;
         this.timeRemainingTicks = 0;
         this.totalClosingTicks = 0;
         this.closingTicksElapsed = 0;
         this.initialArea = null;
         this.exposureTicks.clear();
+        this.deathCounts.clear();
         this.clearBossBar(server);
         if (reason != ServerEventStopReason.SERVER_SHUTDOWN) {
             server.getPlayerList().broadcastSystemMessage(
@@ -175,6 +187,16 @@ public final class NevoaServerEvent implements OxyServerEvent {
 
     @Override
     public void onLivingDeath(MinecraftServer server, LivingDeathEvent event) {
+        if (!this.isActive() || this.initialArea == null || !(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+
+        if (player.serverLevel().dimension() != Level.OVERWORLD
+                || !this.initialArea.contains(player.getX(), player.getZ())) {
+            return;
+        }
+
+        this.deathCounts.merge(player.getUUID(), 1, Integer::sum);
     }
 
     @Override
@@ -221,7 +243,44 @@ public final class NevoaServerEvent implements OxyServerEvent {
         this.closingTicksElapsed = 0;
         this.initialArea = null;
         this.exposureTicks.clear();
+        this.deathCounts.clear();
         this.clearBossBar(server);
+    }
+
+    private void rewardPlayers(MinecraftServer server) {
+        if (this.initialArea == null) {
+            return;
+        }
+
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (player.serverLevel().dimension() != Level.OVERWORLD
+                    || !this.initialArea.contains(player.getX(), player.getZ())) {
+                continue;
+            }
+
+            int deaths = this.deathCounts.getOrDefault(player.getUUID(), 0);
+            int rewardCount = switch (deaths) {
+                case 0 -> ESTUS_REWARD_NO_DEATHS;
+                case 1 -> ESTUS_REWARD_ONE_DEATH;
+                default -> 0;
+            };
+
+            if (rewardCount <= 0) {
+                player.sendSystemMessage(
+                        Component.translatable("event.oxyarena.nevoa.reward_fail")
+                                .withStyle(ChatFormatting.RED));
+                continue;
+            }
+
+            ItemStack reward = new ItemStack(ModItems.ESTUS_FLASK.get(), rewardCount);
+            if (!player.getInventory().add(reward.copy())) {
+                player.drop(reward.copy(), false);
+            }
+
+            player.sendSystemMessage(
+                    Component.translatable("event.oxyarena.nevoa.reward_success", rewardCount)
+                            .withStyle(ChatFormatting.GOLD));
+        }
     }
 
     private void tickClosing(MinecraftServer server, ServerLevel level) {

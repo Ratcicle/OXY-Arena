@@ -26,6 +26,13 @@ public final class ModToolTiers {
             4.0F,
             15,
             () -> Ingredient.of(ModItems.AMETRA_GEM.get()));
+    public static final SimpleTier INCANDESCENT = new SimpleTier(
+            BlockTags.INCORRECT_FOR_DIAMOND_TOOL,
+            100,
+            8.0F,
+            3.0F,
+            10,
+            () -> Ingredient.of(ModItems.INCANDESCENT_INGOT.get()));
 
     private ModToolTiers() {
     }

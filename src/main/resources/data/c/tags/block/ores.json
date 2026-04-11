@@ -6,6 +6,8 @@
     "oxyarena:cobalt_ore",
     "oxyarena:deepslate_cobalt_ore",
     "oxyarena:ametra_ore",
-    "oxyarena:deepslate_ametra_ore"
+    "oxyarena:deepslate_ametra_ore",
+    "oxyarena:incandescent_ore",
+    "oxyarena:deepslate_incandescent_ore"
   ]
 }
