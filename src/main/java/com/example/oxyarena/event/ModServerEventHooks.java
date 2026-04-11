@@ -1,6 +1,8 @@
 package com.example.oxyarena.event;
 
+import com.example.oxyarena.entity.effect.ZenithOrbitSwordEntity;
 import com.example.oxyarena.network.ItemPickupNotificationPayload;
+import com.example.oxyarena.serverevent.EruptionTntServerEvent;
 import com.example.oxyarena.serverevent.OxyServerEventManager;
 import com.example.oxyarena.serverevent.PlayerHuntServerEvent;
 
@@ -36,6 +38,7 @@ public final class ModServerEventHooks {
     public static void onServerTickPost(ServerTickEvent.Post event) {
         OxyServerEventManager.get(event.getServer()).tick();
         PlayerHuntServerEvent.tickPersistentPlayerEffects(event.getServer());
+        EruptionTntServerEvent.tickPersistentPlayerEffects(event.getServer());
         FallingTreeHelper.onServerTickPost(event);
     }
 
@@ -52,6 +55,7 @@ public final class ModServerEventHooks {
             ModGameEvents.clearMurasamaState(player);
             ModGameEvents.clearKusabimaruState(player);
             ModGameEvents.clearSoulReaperState(player);
+            ZenithOrbitSwordEntity.discardOwnedOrbitSwords(player);
         }
 
         OxyServerEventManager.get(level.getServer()).onLivingDeath(event);
@@ -61,6 +65,7 @@ public final class ModServerEventHooks {
         if (event.getEntity() instanceof ServerPlayer player && player.getServer() != null) {
             OxyServerEventManager.get(player.getServer()).onPlayerLoggedIn(player);
             PlayerHuntServerEvent.refreshPersistentPlayerState(player.getServer(), player);
+            EruptionTntServerEvent.refreshPersistentPlayerState(player.getServer(), player);
         }
     }
 
@@ -70,8 +75,10 @@ public final class ModServerEventHooks {
             ModGameEvents.clearKusabimaruState(player);
             ModGameEvents.clearSoulReaperState(player);
             ModGameEvents.clearSoulReaperTarget(player);
+            ZenithOrbitSwordEntity.discardOwnedOrbitSwords(player);
             OxyServerEventManager.get(player.getServer()).onPlayerChangedDimension(player);
             PlayerHuntServerEvent.refreshPersistentPlayerState(player.getServer(), player);
+            EruptionTntServerEvent.refreshPersistentPlayerState(player.getServer(), player);
         }
     }
 
@@ -81,6 +88,7 @@ public final class ModServerEventHooks {
             ModGameEvents.clearKusabimaruState(player);
             ModGameEvents.clearSoulReaperState(player);
             ModGameEvents.clearSoulReaperTarget(player);
+            ZenithOrbitSwordEntity.discardOwnedOrbitSwords(player);
         }
     }
 

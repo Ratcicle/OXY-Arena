@@ -13,6 +13,7 @@ import com.example.oxyarena.client.renderer.entity.CitrineThrowingDaggerRenderer
 import com.example.oxyarena.client.renderer.entity.EruptionTntRenderer;
 import com.example.oxyarena.client.renderer.entity.GrapplingHookRenderer;
 import com.example.oxyarena.client.renderer.entity.ThrownZeusLightningRenderer;
+import com.example.oxyarena.client.renderer.entity.ZenithOrbitSwordRenderer;
 import com.example.oxyarena.item.SoulReaperItem;
 import com.example.oxyarena.registry.ModBlocks;
 import com.example.oxyarena.network.ItemPickupNotificationPayload;
@@ -82,6 +83,9 @@ public class OXYArenaClient {
         event.registerEntityRenderer(
                 ModEntityTypes.ERUPTION_TNT.get(),
                 EruptionTntRenderer::new);
+        event.registerEntityRenderer(
+                ModEntityTypes.ZENITH_ORBIT_SWORD.get(),
+                ZenithOrbitSwordRenderer::new);
     }
 
     private void registerParticleProviders(RegisterParticleProvidersEvent event) {

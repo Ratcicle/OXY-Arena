@@ -1,0 +1,37 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "combat",
+  "ingredients": [
+    {
+      "item": "minecraft:wooden_sword"
+    },
+    {
+      "item": "minecraft:stone_sword"
+    },
+    {
+      "item": "minecraft:iron_sword"
+    },
+    {
+      "item": "minecraft:golden_sword"
+    },
+    {
+      "item": "minecraft:diamond_sword"
+    },
+    {
+      "item": "minecraft:netherite_sword"
+    },
+    {
+      "item": "oxyarena:citrine_sword"
+    },
+    {
+      "item": "oxyarena:cobalt_sword"
+    },
+    {
+      "item": "oxyarena:ametra_sword"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "oxyarena:zenith"
+  }
+}

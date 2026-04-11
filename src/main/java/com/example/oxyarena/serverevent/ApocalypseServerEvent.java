@@ -26,6 +26,7 @@ import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -36,6 +37,10 @@ public final class ApocalypseServerEvent implements OxyServerEvent {
     private static final int SPAWN_INTERVAL_TICKS = 20;
     private static final int EVENT_DURATION_TICKS = 20 * 60 * 5;
     private static final int GOLDEN_APPLE_REWARD_COUNT = 5;
+    private static final int SPAWN_SEARCH_ATTEMPTS = 24;
+    private static final double MIN_SPAWN_DISTANCE = 8.0D;
+    private static final double MAX_SPAWN_DISTANCE = 18.0D;
+    private static final int[] SPAWN_Y_OFFSETS = {0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6, 8, -8, 10, -10, 12, -12};
     private static final ResourceLocation BOSSBAR_ID = ResourceLocation.fromNamespaceAndPath(OXYArena.MODID,
             "apocalipse");
     private static final String EVENT_ZOMBIE_TAG = OXYArena.MODID + ".apocalipse_zombie";
@@ -186,12 +191,13 @@ public final class ApocalypseServerEvent implements OxyServerEvent {
             return;
         }
 
-        int zombiesToSpawn = Math.min(ZOMBIES_PER_WAVE, MAX_EVENT_ZOMBIES - currentZombies);
         ServerEventArea eventArea = this.getEventArea(server);
+        int zombiesToSpawn = Math.min(ZOMBIES_PER_WAVE, MAX_EVENT_ZOMBIES - currentZombies);
         for (int zombieIndex = 0; zombieIndex < zombiesToSpawn; zombieIndex++) {
-            int x = eventArea.randomX(overworld.random);
-            int z = eventArea.randomZ(overworld.random);
-            BlockPos spawnPos = new BlockPos(x, overworld.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z), z);
+            BlockPos spawnPos = this.findRandomSpawnPos(overworld, eventArea);
+            if (spawnPos == null) {
+                continue;
+            }
 
             Zombie zombie = EntityType.ZOMBIE.create(
                     overworld,
@@ -205,10 +211,57 @@ public final class ApocalypseServerEvent implements OxyServerEvent {
                     false,
                     false);
 
-            if (zombie != null) {
+            if (zombie != null && zombie.checkSpawnObstruction(overworld)) {
                 overworld.addFreshEntity(zombie);
             }
         }
+    }
+
+    @Nullable
+    private BlockPos findRandomSpawnPos(ServerLevel level, ServerEventArea eventArea) {
+        for (int attempt = 0; attempt < SPAWN_SEARCH_ATTEMPTS; attempt++) {
+            int sampleX = eventArea.randomX(level.random);
+            int sampleZ = eventArea.randomZ(level.random);
+            int topY = level.getHeight(Heightmap.Types.MOTION_BLOCKING, sampleX, sampleZ);
+            int minY = level.getMinBuildHeight() + 1;
+            if (topY < minY) {
+                continue;
+            }
+
+            int baseY = attempt % 3 == 0
+                    ? topY
+                    : level.random.nextIntBetweenInclusive(minY, topY);
+            for (int yOffset : SPAWN_Y_OFFSETS) {
+                BlockPos candidate = new BlockPos(sampleX, baseY + yOffset, sampleZ);
+                if (this.isValidZombieSpawnCell(level, candidate)) {
+                    return candidate;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private boolean isValidZombieSpawnCell(ServerLevel level, BlockPos spawnPos) {
+        BlockPos supportPos = spawnPos.below();
+        if (!level.getWorldBorder().isWithinBounds(spawnPos)
+                || !level.getWorldBorder().isWithinBounds(supportPos)) {
+            return false;
+        }
+
+        BlockState supportState = level.getBlockState(supportPos);
+        if (!supportState.isFaceSturdy(level, supportPos, net.minecraft.core.Direction.UP)
+                || !supportState.getFluidState().isEmpty()) {
+            return false;
+        }
+
+        BlockState feetState = level.getBlockState(spawnPos);
+        BlockState headState = level.getBlockState(spawnPos.above());
+        if (!feetState.canBeReplaced() || !headState.canBeReplaced()) {
+            return false;
+        }
+
+        return feetState.getFluidState().isEmpty() && headState.getFluidState().isEmpty();
     }
 
     private int countEventZombiesInArea(ServerLevel level) {

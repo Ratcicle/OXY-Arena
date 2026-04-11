@@ -61,6 +61,8 @@ public final class ModGameEvents {
     private static final float MURASAMA_CRIT_DAMAGE_MULTIPLIER = 1.5F;
     private static final int BLACK_DIAMOND_EXTRA_ARMOR_DURABILITY_DAMAGE = 9;
     private static final int BLACK_DIAMOND_WEAPON_DURABILITY_DAMAGE = 10;
+    private static final double COBALT_SHIELD_SHOCKWAVE_RADIUS = 4.5D;
+    private static final float COBALT_SHIELD_SHOCKWAVE_KNOCKBACK = 1.1F;
     private static final int KUSABIMARU_DEFLECT_WINDOW_TICKS = 4;
     private static final int KUSABIMARU_STUN_TICKS = 15;
     private static final int KUSABIMARU_DEFLECT_SOUND_CHAIN_WINDOW_TICKS = 30;
@@ -113,6 +115,8 @@ public final class ModGameEvents {
     }
 
     public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
+        handleCobaltShieldShockwave(event);
+
         if (!(event.getEntity() instanceof Player defender) || !isKusabimaruDeflectActive(defender)) {
             return;
         }
@@ -593,6 +597,32 @@ public final class ModGameEvents {
         applyBlackDiamondArmorDurabilityDamage(target);
         if (target instanceof Player defendingPlayer) {
             applyBlackDiamondWeaponDurabilityDamage(defendingPlayer);
+        }
+    }
+
+    private static void handleCobaltShieldShockwave(LivingIncomingDamageEvent event) {
+        if (!(event.getEntity() instanceof Player defender)
+                || defender.level().isClientSide()
+                || !defender.isBlocking()
+                || !defender.getUseItem().is(ModItems.COBALT_SHIELD.get())
+                || !defender.isDamageSourceBlocked(event.getSource())) {
+            return;
+        }
+
+        Vec3 defenderCenter = defender.position();
+        for (LivingEntity nearbyEntity : defender.level().getEntitiesOfClass(
+                LivingEntity.class,
+                defender.getBoundingBox().inflate(COBALT_SHIELD_SHOCKWAVE_RADIUS),
+                nearby -> nearby != defender && nearby.isAlive())) {
+            double knockbackX = defenderCenter.x - nearbyEntity.getX();
+            double knockbackZ = defenderCenter.z - nearbyEntity.getZ();
+            if (Mth.equal((float)knockbackX, 0.0F) && Mth.equal((float)knockbackZ, 0.0F)) {
+                Vec3 look = defender.getLookAngle();
+                knockbackX = -look.x;
+                knockbackZ = -look.z;
+            }
+
+            nearbyEntity.knockback(COBALT_SHIELD_SHOCKWAVE_KNOCKBACK, knockbackX, knockbackZ);
         }
     }
 

@@ -2,6 +2,7 @@ package com.example.oxyarena.registry;
 
 import com.example.oxyarena.OXYArena;
 import com.example.oxyarena.item.AmetraSwordItem;
+import com.example.oxyarena.item.ChocolateSwordItem;
 import com.example.oxyarena.item.CitrinePickaxeItem;
 import com.example.oxyarena.item.CitrineSwordItem;
 import com.example.oxyarena.item.CitrineThrowingDaggerItem;
@@ -14,6 +15,7 @@ import com.example.oxyarena.item.LifehuntScytheItem;
 import com.example.oxyarena.item.MurasamaItem;
 import com.example.oxyarena.item.SoulReaperItem;
 import com.example.oxyarena.item.SmokeBombItem;
+import com.example.oxyarena.item.ZenithItem;
 import com.example.oxyarena.item.ZeusLightningItem;
 
 import net.minecraft.core.Holder;
@@ -142,6 +144,16 @@ public final class ModItems {
             properties -> new SwordItem(
                     Tiers.DIAMOND,
                     properties.attributes(SwordItem.createAttributes(Tiers.DIAMOND, 5.0F, -2.4F))));
+    public static final DeferredItem<ChocolateSwordItem> CHOCOLATE_SWORD = ITEMS.registerItem(
+            "chocolate_sword",
+            properties -> new ChocolateSwordItem(
+                    Tiers.IRON,
+                    properties.attributes(SwordItem.createAttributes(Tiers.IRON, 3.0F, -2.4F))));
+    public static final DeferredItem<ZenithItem> ZENITH = ITEMS.registerItem(
+            "zenith",
+            properties -> new ZenithItem(
+                    ModToolTiers.AMETRA,
+                    properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 2.0F, -2.4F))));
     public static final DeferredItem<PickaxeItem> COBALT_PICKAXE = ITEMS.registerItem(
             "cobalt_pickaxe",
             properties -> new PickaxeItem(

@@ -8,6 +8,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.PrimedTnt;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.ExplosionDamageCalculator;
 import net.minecraft.world.level.Level;
@@ -15,6 +16,7 @@ import net.minecraft.world.phys.Vec3;
 
 public final class EruptionTntEntity extends PrimedTnt {
     private static final float EXPLOSION_RADIUS = 4.0F;
+    private static final float MIN_DISTANCE_DAMAGE_FACTOR = 0.55F;
     private static final ExplosionDamageCalculator ONLY_LIVING_DAMAGE_CALCULATOR = new ExplosionDamageCalculator() {
         @Override
         public boolean shouldDamageEntity(Explosion explosion, Entity entity) {
@@ -24,6 +26,17 @@ public final class EruptionTntEntity extends PrimedTnt {
         @Override
         public float getKnockbackMultiplier(Entity entity) {
             return entity instanceof LivingEntity ? super.getKnockbackMultiplier(entity) : 0.0F;
+        }
+
+        @Override
+        public float getEntityDamageAmount(Explosion explosion, Entity entity) {
+            float diameter = explosion.radius() * 2.0F;
+            Vec3 center = explosion.center();
+            double normalizedDistance = Math.sqrt(entity.distanceToSqr(center)) / (double)diameter;
+            double exposure = Explosion.getSeenPercent(center, entity);
+            float impact = Mth.clamp((float)((1.0D - normalizedDistance) * exposure), 0.0F, 1.0F);
+            float softenedImpact = impact * (MIN_DISTANCE_DAMAGE_FACTOR + (1.0F - MIN_DISTANCE_DAMAGE_FACTOR) * impact);
+            return (softenedImpact * softenedImpact + softenedImpact) / 2.0F * 7.0F * diameter + 1.0F;
         }
     };
 

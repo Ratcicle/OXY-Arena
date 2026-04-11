@@ -81,8 +81,6 @@ public class SoulReaperItem extends SwordItem {
             TooltipFlag tooltipFlag) {
         tooltipComponents.add(Component.translatable("tooltip.oxyarena.soul_reaper.ability")
                 .withStyle(ChatFormatting.LIGHT_PURPLE));
-        tooltipComponents.add(Component.translatable("tooltip.oxyarena.soul_reaper.detail")
-                .withStyle(ChatFormatting.GRAY));
         tooltipComponents.add(Component.translatable("tooltip.oxyarena.soul_reaper.damage")
                 .withStyle(ChatFormatting.GOLD));
         tooltipComponents.add(Component.translatable("tooltip.oxyarena.soul_reaper.cooldown")

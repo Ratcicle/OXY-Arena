@@ -55,6 +55,8 @@ public final class ModCreativeModeTabs {
                     output.accept(ModItems.KUSABIMARU);
                     output.accept(ModItems.SOUL_REAPER);
                     output.accept(ModItems.BLACK_DIAMOND_SWORD);
+                    output.accept(ModItems.CHOCOLATE_SWORD);
+                    output.accept(ModItems.ZENITH);
                     output.accept(ModItems.COBALT_PICKAXE);
                     output.accept(ModItems.AMETRA_PICKAXE);
                     output.accept(ModItems.COBALT_AXE);

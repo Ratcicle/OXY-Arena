@@ -6,6 +6,7 @@ import com.example.oxyarena.entity.event.BobBossEntity;
 import com.example.oxyarena.entity.event.CloneThiefEntity;
 import com.example.oxyarena.entity.event.EruptionTntEntity;
 import com.example.oxyarena.entity.effect.SmokeCloud;
+import com.example.oxyarena.entity.effect.ZenithOrbitSwordEntity;
 import com.example.oxyarena.entity.projectile.CitrineThrowingDagger;
 import com.example.oxyarena.entity.projectile.GrapplingHook;
 import com.example.oxyarena.entity.projectile.SmokeBomb;
@@ -99,6 +100,16 @@ public final class ModEntityTypes {
                             .clientTrackingRange(10)
                             .updateInterval(10)
                             .build("eruption_tnt"));
+    public static final DeferredHolder<EntityType<?>, EntityType<ZenithOrbitSwordEntity>> ZENITH_ORBIT_SWORD =
+            ENTITY_TYPES.register(
+                    "zenith_orbit_sword",
+                    () -> EntityType.Builder.<ZenithOrbitSwordEntity>of(ZenithOrbitSwordEntity::new, MobCategory.MISC)
+                            .noSave()
+                            .noSummon()
+                            .sized(0.5F, 0.5F)
+                            .clientTrackingRange(16)
+                            .updateInterval(1)
+                            .build("zenith_orbit_sword"));
 
     private ModEntityTypes() {
     }
