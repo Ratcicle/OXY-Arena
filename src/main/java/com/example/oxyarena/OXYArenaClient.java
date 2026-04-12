@@ -4,6 +4,7 @@ import com.example.oxyarena.client.ImmersiveHudController;
 import com.example.oxyarena.client.InventoryInteractionController;
 import com.example.oxyarena.client.PingLocationController;
 import com.example.oxyarena.client.PickupNotifierController;
+import com.example.oxyarena.client.AmetraXrayController;
 import com.example.oxyarena.client.BridgingAssistController;
 import com.example.oxyarena.client.ToolTooltipStatsController;
 import com.example.oxyarena.client.particle.NevoaBorderParticle;
@@ -54,6 +55,7 @@ public class OXYArenaClient {
         InventoryInteractionController.register();
         PingLocationController.register();
         PickupNotifierController.register();
+        AmetraXrayController.register();
         BridgingAssistController.register();
         ToolTooltipStatsController.register();
         ItemPickupNotificationPayload.setClientReceiver(PickupNotifierController::handlePickup);
@@ -102,6 +104,7 @@ public class OXYArenaClient {
 
     private void registerKeyMappings(RegisterKeyMappingsEvent event) {
         PingLocationController.registerKeyMappings(event);
+        AmetraXrayController.registerKeyMappings(event);
     }
 
     private void onClientSetup(FMLClientSetupEvent event) {

@@ -6,6 +6,7 @@ import com.mojang.logging.LogUtils;
 import com.example.oxyarena.command.ModCommands;
 import com.example.oxyarena.event.ModGameEvents;
 import com.example.oxyarena.event.ModServerEventHooks;
+import com.example.oxyarena.event.ModTooltipEvents;
 import com.example.oxyarena.network.ModPayloads;
 import com.example.oxyarena.registry.ModArmorMaterials;
 import com.example.oxyarena.registry.ModBlockEntityTypes;
@@ -52,6 +53,7 @@ public class OXYArena {
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onLivingDamagePost);
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onProjectileImpact);
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onSweepAttack);
+        NeoForge.EVENT_BUS.addListener(ModGameEvents::onBlockDrops);
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onServerTickPost);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onServerTickPost);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onLivingDeath);
@@ -66,6 +68,7 @@ public class OXYArena {
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onArrowNock);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onLivingGetProjectile);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onBlockBreak);
+        NeoForge.EVENT_BUS.addListener(ModTooltipEvents::onItemTooltip);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onServerStopping);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onServerStopped);
 

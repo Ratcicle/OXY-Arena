@@ -175,7 +175,7 @@ public final class Config {
     }
 
     public static int ametraOreVeinSize() {
-        return COMMON.ametraOreVeinSize.get();
+        return Math.max(3, COMMON.ametraOreVeinSize.get());
     }
 
     public static double ametraOreExposedDiscardChance() {
@@ -272,9 +272,9 @@ public final class Config {
                     .translation("config.oxyarena.ametra_ore_worldgen.deep_max_y")
                     .defineInRange("deep_max_y", -4, -64, 320);
 
-            ametraOreVeinSize = builder.comment("Maximum vein size for Ametra ore.")
+            ametraOreVeinSize = builder.comment("Maximum vein size for Ametra ore. Values below 3 are clamped to keep Feature.ORE generating reliably.")
                     .translation("config.oxyarena.ametra_ore_worldgen.vein_size")
-                    .defineInRange("vein_size", 2, 1, 16);
+                    .defineInRange("vein_size", 3, 3, 16);
 
             ametraOreExposedDiscardChance = builder.comment("Discard chance for primary Ametra ore exposed to air.")
                     .translation("config.oxyarena.ametra_ore_worldgen.exposed_discard_chance")
