@@ -4,7 +4,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 public final class ModPayloads {
-    private static final String NETWORK_VERSION = "1";
+    private static final String NETWORK_VERSION = "2";
 
     private ModPayloads() {
     }
@@ -19,6 +19,10 @@ public final class ModPayloads {
                 PingLocationSyncPayload.TYPE,
                 PingLocationSyncPayload.STREAM_CODEC,
                 PingLocationSyncPayload::handle);
+        registrar.playToClient(
+                OccultCamouflageSyncPayload.TYPE,
+                OccultCamouflageSyncPayload.STREAM_CODEC,
+                OccultCamouflageSyncPayload::handle);
         registrar.playToServer(
                 InventorySortRequestPayload.TYPE,
                 InventorySortRequestPayload.STREAM_CODEC,

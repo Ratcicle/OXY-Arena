@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "A": {
+      "item": "oxyarena:ametra_gem"
+    },
+    "S": {
+      "item": "minecraft:amethyst_shard"
+    }
+  },
+  "pattern": [
+    "ASA",
+    "S S",
+    "A A"
+  ],
+  "result": {
+    "count": 1,
+    "id": "oxyarena:occult_leggings"
+  }
+}

@@ -55,6 +55,10 @@ public final class ModMobEffects {
                             ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "effect.kusabimaru_stun.attack_speed"),
                             -1.0D,
                             AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+    public static final DeferredHolder<MobEffect, MobEffect> OCCULT_CAMOUFLAGE = MOB_EFFECTS.register(
+            "occult_camouflage",
+            () -> new MobEffect(MobEffectCategory.BENEFICIAL, 0x8FE9F1) {
+            });
 
     private ModMobEffects() {
     }

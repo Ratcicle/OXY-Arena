@@ -2,6 +2,8 @@ package com.example.oxyarena;
 
 import com.example.oxyarena.client.ImmersiveHudController;
 import com.example.oxyarena.client.InventoryInteractionController;
+import com.example.oxyarena.client.OccultCamouflageController;
+import com.example.oxyarena.client.OccultCamouflageRenderTypes;
 import com.example.oxyarena.client.PingLocationController;
 import com.example.oxyarena.client.PickupNotifierController;
 import com.example.oxyarena.client.AmetraXrayController;
@@ -11,15 +13,18 @@ import com.example.oxyarena.client.particle.NevoaBorderParticle;
 import com.example.oxyarena.client.renderer.entity.AirdropCrateRenderer;
 import com.example.oxyarena.client.renderer.entity.CloneThiefRenderer;
 import com.example.oxyarena.client.renderer.entity.CitrineThrowingDaggerRenderer;
+import com.example.oxyarena.client.renderer.entity.ElementalGauntletProjectileRenderer;
 import com.example.oxyarena.client.renderer.entity.EruptionTntRenderer;
 import com.example.oxyarena.client.renderer.entity.GrapplingHookRenderer;
 import com.example.oxyarena.client.renderer.entity.IncandescentThrowingDaggerRenderer;
+import com.example.oxyarena.client.renderer.entity.SpectralMarkRenderer;
 import com.example.oxyarena.client.renderer.entity.StormChargeRenderer;
 import com.example.oxyarena.client.renderer.entity.ThrownZeusLightningRenderer;
 import com.example.oxyarena.client.renderer.entity.ZenithOrbitSwordRenderer;
 import com.example.oxyarena.item.SoulReaperItem;
 import com.example.oxyarena.registry.ModBlocks;
 import com.example.oxyarena.network.ItemPickupNotificationPayload;
+import com.example.oxyarena.network.OccultCamouflageSyncPayload;
 import com.example.oxyarena.network.PingLocationSyncPayload;
 import com.example.oxyarena.registry.ModEntityTypes;
 import com.example.oxyarena.registry.ModItems;
@@ -39,6 +44,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
@@ -51,6 +57,7 @@ public class OXYArenaClient {
         modEventBus.addListener(this::registerParticleProviders);
         modEventBus.addListener(this::registerKeyMappings);
         modEventBus.addListener(this::onClientSetup);
+        modEventBus.addListener(this::registerShaders);
         ImmersiveHudController.register();
         InventoryInteractionController.register();
         PingLocationController.register();
@@ -58,8 +65,10 @@ public class OXYArenaClient {
         AmetraXrayController.register();
         BridgingAssistController.register();
         ToolTooltipStatsController.register();
+        OccultCamouflageController.register();
         ItemPickupNotificationPayload.setClientReceiver(PickupNotifierController::handlePickup);
         PingLocationSyncPayload.setClientReceiver(PingLocationController::handlePing);
+        OccultCamouflageSyncPayload.setClientReceiver(OccultCamouflageController::handleSync);
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
     }
 
@@ -76,6 +85,9 @@ public class OXYArenaClient {
         event.registerEntityRenderer(
                 ModEntityTypes.ZEUS_LIGHTNING.get(),
                 ThrownZeusLightningRenderer::new);
+        event.registerEntityRenderer(
+                ModEntityTypes.ELEMENTAL_GAUNTLET_PROJECTILE.get(),
+                ElementalGauntletProjectileRenderer::new);
         event.registerEntityRenderer(
                 ModEntityTypes.GRAPPLING_HOOK.get(),
                 GrapplingHookRenderer::new);
@@ -94,6 +106,9 @@ public class OXYArenaClient {
         event.registerEntityRenderer(
                 ModEntityTypes.ZENITH_ORBIT_SWORD.get(),
                 ZenithOrbitSwordRenderer::new);
+        event.registerEntityRenderer(
+                ModEntityTypes.SPECTRAL_MARK.get(),
+                SpectralMarkRenderer::new);
     }
 
     private void registerParticleProviders(RegisterParticleProvidersEvent event) {
@@ -105,6 +120,14 @@ public class OXYArenaClient {
     private void registerKeyMappings(RegisterKeyMappingsEvent event) {
         PingLocationController.registerKeyMappings(event);
         AmetraXrayController.registerKeyMappings(event);
+    }
+
+    private void registerShaders(RegisterShadersEvent event) {
+        try {
+            OccultCamouflageRenderTypes.registerShaders(event);
+        } catch (java.io.IOException exception) {
+            throw new RuntimeException("Failed to register occult camouflage shaders", exception);
+        }
     }
 
     private void onClientSetup(FMLClientSetupEvent event) {

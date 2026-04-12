@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "#": {
+      "item": "minecraft:stick"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "X": {
+      "item": "oxyarena:cobalt_ingot"
+    }
+  },
+  "pattern": [
+    "X",
+    "R",
+    "#"
+  ],
+  "result": {
+    "count": 1,
+    "id": "oxyarena:assassin_dagger"
+  }
+}

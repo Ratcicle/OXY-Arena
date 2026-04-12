@@ -6,8 +6,10 @@ import com.example.oxyarena.entity.event.BobBossEntity;
 import com.example.oxyarena.entity.event.CloneThiefEntity;
 import com.example.oxyarena.entity.event.EruptionTntEntity;
 import com.example.oxyarena.entity.effect.SmokeCloud;
+import com.example.oxyarena.entity.effect.SpectralMarkEntity;
 import com.example.oxyarena.entity.effect.ZenithOrbitSwordEntity;
 import com.example.oxyarena.entity.projectile.CitrineThrowingDagger;
+import com.example.oxyarena.entity.projectile.ElementalGauntletProjectile;
 import com.example.oxyarena.entity.projectile.GrapplingHook;
 import com.example.oxyarena.entity.projectile.IncandescentThrowingDagger;
 import com.example.oxyarena.entity.projectile.SmokeBomb;
@@ -78,6 +80,17 @@ public final class ModEntityTypes {
                             .clientTrackingRange(8)
                             .updateInterval(10)
                             .build("zeus_lightning"));
+    public static final DeferredHolder<EntityType<?>, EntityType<ElementalGauntletProjectile>> ELEMENTAL_GAUNTLET_PROJECTILE =
+            ENTITY_TYPES.register(
+                    "elemental_gauntlet_projectile",
+                    () -> EntityType.Builder.<ElementalGauntletProjectile>of(
+                            ElementalGauntletProjectile::new,
+                            MobCategory.MISC)
+                            .sized(0.75F, 0.75F)
+                            .eyeHeight(0.0F)
+                            .clientTrackingRange(8)
+                            .updateInterval(1)
+                            .build("elemental_gauntlet_projectile"));
     public static final DeferredHolder<EntityType<?>, EntityType<GrapplingHook>> GRAPPLING_HOOK =
             ENTITY_TYPES.register(
                     "grappling_hook",
@@ -129,6 +142,15 @@ public final class ModEntityTypes {
                             .clientTrackingRange(16)
                             .updateInterval(1)
                             .build("zenith_orbit_sword"));
+    public static final DeferredHolder<EntityType<?>, EntityType<SpectralMarkEntity>> SPECTRAL_MARK =
+            ENTITY_TYPES.register(
+                    "spectral_mark",
+                    () -> EntityType.Builder.<SpectralMarkEntity>of(SpectralMarkEntity::new, MobCategory.MISC)
+                            .noSummon()
+                            .sized(0.25F, 0.25F)
+                            .clientTrackingRange(16)
+                            .updateInterval(1)
+                            .build("spectral_mark"));
 
     private ModEntityTypes() {
     }

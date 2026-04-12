@@ -50,12 +50,17 @@ public final class ModCreativeModeTabs {
                     output.accept(ModItems.CITRINE_CHESTPLATE);
                     output.accept(ModItems.CITRINE_LEGGINGS);
                     output.accept(ModItems.CITRINE_BOOTS);
+                    output.accept(ModItems.OCCULT_HELMET);
+                    output.accept(ModItems.OCCULT_CHESTPLATE);
+                    output.accept(ModItems.OCCULT_LEGGINGS);
+                    output.accept(ModItems.OCCULT_BOOTS);
                     output.accept(ModItems.CITRINE_THROWING_DAGGER);
                     output.accept(ModItems.INCANDESCENT_THROWING_DAGGER);
                     output.accept(ModItems.SMOKE_BOMB);
                     output.accept(ModItems.ESTUS_FLASK);
                     output.accept(ModItems.STORM_CHARGE);
                     output.accept(ModItems.ZEUS_LIGHTNING);
+                    output.accept(ModItems.ELEMENTAL_GAUNTLET);
                     output.accept(ModItems.FLAMING_SCYTHE);
                     output.accept(ModItems.LIFEHUNT_SCYTHE);
                     output.accept(ModItems.COBALT_SWORD);
@@ -63,6 +68,8 @@ public final class ModCreativeModeTabs {
                     output.accept(ModItems.MURASAMA);
                     output.accept(ModItems.KUSABIMARU);
                     output.accept(ModItems.SOUL_REAPER);
+                    output.accept(ModItems.SPECTRAL_BLADE);
+                    output.accept(ModItems.ASSASSIN_DAGGER);
                     output.accept(ModItems.BLACK_DIAMOND_SWORD);
                     output.accept(ModItems.CHOCOLATE_SWORD);
                     output.accept(ModItems.ZENITH);

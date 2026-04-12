@@ -1,6 +1,8 @@
 package com.example.oxyarena.event;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -11,19 +13,24 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.example.oxyarena.OXYArena;
+import com.example.oxyarena.entity.effect.SpectralMarkEntity;
 import com.example.oxyarena.item.CobaltBowItem;
 import com.example.oxyarena.item.SoulReaperItem;
+import com.example.oxyarena.network.OccultCamouflageSyncPayload;
 import com.example.oxyarena.registry.ModItems;
 import com.example.oxyarena.registry.ModMobEffects;
 import com.example.oxyarena.registry.ModSoundEvents;
+import com.example.oxyarena.util.OccultCamouflageTuning;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.DamageTypeTags;
@@ -52,6 +59,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -63,6 +71,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.SweepAttackEvent;
 import net.neoforged.neoforge.event.level.BlockDropsEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 public final class ModGameEvents {
@@ -93,6 +102,11 @@ public final class ModGameEvents {
     private static final int KUSABIMARU_STUN_TICKS = 15;
     private static final int KUSABIMARU_DEFLECT_SOUND_CHAIN_WINDOW_TICKS = 30;
     private static final int KUSABIMARU_DEFLECT_SOUND_COUNT = 6;
+    private static final double SPECTRAL_BLADE_CONSUME_RANGE_SQR = 64.0D;
+    private static final double ASSASSIN_DAGGER_REPLAY_RANGE_SQR = 64.0D;
+    private static final int ASSASSIN_DAGGER_HISTORY_TICKS = 40;
+    private static final float ASSASSIN_DAGGER_REPLAY_DAMAGE_MULTIPLIER = 0.5F;
+    private static final double ASSASSIN_DAGGER_BACKSTAB_DOT_THRESHOLD = -0.35D;
     private static final int SOUL_REAPER_WEAKNESS_TICKS = 100;
     private static final int SOUL_REAPER_SELF_DAMAGE_INTERVAL_TICKS = 100;
     private static final float SOUL_REAPER_SELF_DAMAGE = 2.0F;
@@ -118,16 +132,24 @@ public final class ModGameEvents {
     private static final Map<UUID, Integer> KUSABIMARU_DEFLECT_ACTIVE_UNTIL = new HashMap<>();
     private static final Map<UUID, Integer> KUSABIMARU_DEFLECT_SOUND_INDEX = new HashMap<>();
     private static final Map<UUID, Integer> KUSABIMARU_DEFLECT_LAST_SOUND_TICK = new HashMap<>();
+    private static final Set<UUID> SPECTRAL_BLADE_BURST_ATTACKERS = new HashSet<>();
+    private static final Map<UUID, UUID> SPECTRAL_BLADE_LAST_TARGETS = new HashMap<>();
+    private static final Set<UUID> ASSASSIN_DAGGER_REPLAY_ATTACKERS = new HashSet<>();
+    private static final Map<UUID, UUID> ASSASSIN_DAGGER_LAST_TARGETS = new HashMap<>();
+    private static final Map<UUID, Map<UUID, Deque<AssassinDamageSnapshot>>> ASSASSIN_DAGGER_DAMAGE_HISTORY = new HashMap<>();
+    private static final List<AssassinReplayPulse> ASSASSIN_DAGGER_PENDING_REPLAY_PULSES = new ArrayList<>();
     private static final Map<UUID, Integer> STORM_CHARGE_FALL_IMMUNE_UNTIL = new HashMap<>();
     private static final Map<UUID, Map<UUID, Integer>> SOUL_REAPER_MARKED_TARGETS = new HashMap<>();
     private static final Map<UUID, UUID> SOUL_REAPER_TARGET_OWNERS = new HashMap<>();
     private static final Map<UUID, Integer> SOUL_REAPER_SELF_DAMAGE_AT = new HashMap<>();
+    private static final Map<UUID, OccultCamouflageState> OCCULT_CAMOUFLAGE_STATES = new HashMap<>();
 
     private ModGameEvents() {
     }
 
     public static void onLivingDamagePre(LivingDamageEvent.Pre event) {
         handleMurasamaDamagePre(event);
+        handleAssassinDaggerDamagePre(event);
         if (event.getEntity() instanceof LivingEntity livingEntity
                 && event.getSource().is(DamageTypeTags.IS_FIRE)
                 && livingEntity.level() instanceof ServerLevel serverLevel) {
@@ -181,7 +203,10 @@ public final class ModGameEvents {
     }
 
     public static void onLivingDamagePost(LivingDamageEvent.Post event) {
+        handleOccultCamouflageDamagePost(event);
         handleMurasamaDamagePost(event);
+        handleSpectralBladeDamagePost(event);
+        handleAssassinDaggerDamagePost(event);
         handleSoulReaperDamagePost(event);
         handleBlackDiamondSwordDamagePost(event);
         handleFlamingScytheDamagePost(event);
@@ -313,6 +338,150 @@ public final class ModGameEvents {
         UUID playerId = player.getUUID();
         MURASAMA_COMBO_COUNTS.remove(playerId);
         MURASAMA_CRIT_ATTACKERS.remove(playerId);
+    }
+
+    public static int consumeSpectralBladeMarks(Player player) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return 0;
+        }
+
+        UUID playerId = player.getUUID();
+        UUID targetId = SPECTRAL_BLADE_LAST_TARGETS.get(playerId);
+        if (targetId == null) {
+            return 0;
+        }
+
+        Entity targetEntity = serverLevel.getEntity(targetId);
+        if (!(targetEntity instanceof LivingEntity target)
+                || !target.isAlive()
+                || player.distanceToSqr(target) > SPECTRAL_BLADE_CONSUME_RANGE_SQR) {
+            if (targetEntity == null || !(targetEntity instanceof LivingEntity livingEntity) || !livingEntity.isAlive()) {
+                SPECTRAL_BLADE_LAST_TARGETS.remove(playerId, targetId);
+            }
+            return 0;
+        }
+
+        int consumedMarks = SpectralMarkEntity.consumeMarks(serverLevel, playerId, targetId);
+        if (consumedMarks <= 0) {
+            return 0;
+        }
+
+        SPECTRAL_BLADE_BURST_ATTACKERS.add(playerId);
+        try {
+            target.invulnerableTime = 0;
+            target.hurtTime = 0;
+            target.hurt(player.damageSources().playerAttack(player), (float)consumedMarks);
+        } finally {
+            SPECTRAL_BLADE_BURST_ATTACKERS.remove(playerId);
+        }
+
+        return consumedMarks;
+    }
+
+    public static void clearSpectralBladeState(Player player) {
+        SPECTRAL_BLADE_LAST_TARGETS.remove(player.getUUID());
+        SPECTRAL_BLADE_BURST_ATTACKERS.remove(player.getUUID());
+    }
+
+    public static void clearSpectralBladeTarget(LivingEntity target) {
+        UUID targetId = target.getUUID();
+        SPECTRAL_BLADE_LAST_TARGETS.entrySet().removeIf(entry -> targetId.equals(entry.getValue()));
+    }
+
+    public static void clearSpectralBladeTracking() {
+        SPECTRAL_BLADE_BURST_ATTACKERS.clear();
+        SPECTRAL_BLADE_LAST_TARGETS.clear();
+        SpectralMarkEntity.clearServerState();
+    }
+
+    public static int activateAssassinDagger(Player player) {
+        if (!(player.level() instanceof ServerLevel serverLevel) || player.getServer() == null) {
+            return 0;
+        }
+
+        UUID playerId = player.getUUID();
+        UUID targetId = ASSASSIN_DAGGER_LAST_TARGETS.get(playerId);
+        if (targetId == null) {
+            return 0;
+        }
+
+        Entity targetEntity = serverLevel.getEntity(targetId);
+        if (!(targetEntity instanceof LivingEntity target) || !target.isAlive()) {
+            ASSASSIN_DAGGER_LAST_TARGETS.remove(playerId, targetId);
+            return 0;
+        }
+
+        if (player.distanceToSqr(target) > ASSASSIN_DAGGER_REPLAY_RANGE_SQR) {
+            return 0;
+        }
+
+        int currentTick = player.getServer().getTickCount();
+        Deque<AssassinDamageSnapshot> history = getAssassinDaggerHistory(playerId, targetId, false);
+        if (history == null || history.isEmpty()) {
+            return 0;
+        }
+
+        trimAssassinDaggerHistory(history, currentTick);
+        if (history.isEmpty()) {
+            return 0;
+        }
+
+        List<AssassinDamageSnapshot> snapshot = new ArrayList<>(history);
+        int firstTick = snapshot.get(0).serverTick();
+        int queuedPulses = 0;
+
+        for (AssassinDamageSnapshot damageSnapshot : snapshot) {
+            float replayDamage = damageSnapshot.damage() * ASSASSIN_DAGGER_REPLAY_DAMAGE_MULTIPLIER;
+            if (replayDamage <= 0.0F) {
+                continue;
+            }
+
+            int delay = Math.max(0, damageSnapshot.serverTick() - firstTick);
+            if (delay == 0) {
+                applyAssassinDaggerReplayDamage(player, target, replayDamage);
+            } else {
+                ASSASSIN_DAGGER_PENDING_REPLAY_PULSES.add(new AssassinReplayPulse(
+                        playerId,
+                        targetId,
+                        serverLevel.dimension(),
+                        currentTick + delay,
+                        replayDamage));
+            }
+
+            queuedPulses++;
+        }
+
+        return queuedPulses;
+    }
+
+    public static void clearAssassinDaggerState(Player player) {
+        UUID playerId = player.getUUID();
+        ASSASSIN_DAGGER_LAST_TARGETS.remove(playerId);
+        ASSASSIN_DAGGER_REPLAY_ATTACKERS.remove(playerId);
+        ASSASSIN_DAGGER_DAMAGE_HISTORY.remove(playerId);
+        ASSASSIN_DAGGER_PENDING_REPLAY_PULSES.removeIf(pulse -> playerId.equals(pulse.ownerId()));
+    }
+
+    public static void clearAssassinDaggerTarget(LivingEntity target) {
+        UUID targetId = target.getUUID();
+        ASSASSIN_DAGGER_LAST_TARGETS.entrySet().removeIf(entry -> targetId.equals(entry.getValue()));
+        ASSASSIN_DAGGER_PENDING_REPLAY_PULSES.removeIf(pulse -> targetId.equals(pulse.targetId()));
+
+        for (Iterator<Entry<UUID, Map<UUID, Deque<AssassinDamageSnapshot>>>> playerIterator = ASSASSIN_DAGGER_DAMAGE_HISTORY.entrySet()
+                .iterator(); playerIterator.hasNext();) {
+            Entry<UUID, Map<UUID, Deque<AssassinDamageSnapshot>>> playerEntry = playerIterator.next();
+            playerEntry.getValue().remove(targetId);
+            if (playerEntry.getValue().isEmpty()) {
+                playerIterator.remove();
+            }
+        }
+    }
+
+    public static void clearAssassinDaggerTracking() {
+        ASSASSIN_DAGGER_REPLAY_ATTACKERS.clear();
+        ASSASSIN_DAGGER_LAST_TARGETS.clear();
+        ASSASSIN_DAGGER_DAMAGE_HISTORY.clear();
+        ASSASSIN_DAGGER_PENDING_REPLAY_PULSES.clear();
     }
 
     public static void onSoulReaperActivated(Player player) {
@@ -471,11 +640,14 @@ public final class ModGameEvents {
     }
 
     public static void onServerTickPost(ServerTickEvent.Post event) {
-        cleanupStormChargeFallImmunity(event.getServer().getTickCount());
+        int currentTick = event.getServer().getTickCount();
+        cleanupStormChargeFallImmunity(currentTick);
+        cleanupAssassinDaggerHistory(currentTick);
         tickKusabimaruStunnedPlayers(event);
         tickSoulReaperAlteredPlayers(event);
         tickIncandescentMainHandDamage(event);
         tickArmorSetPassives(event);
+        tickAssassinDaggerReplay(event);
         SoulReaperFireHelper.onServerTickPost(event);
 
         if (COBALT_ARROW_RAIN_WAVES_QUEUE.isEmpty()) {
@@ -650,6 +822,58 @@ public final class ModGameEvents {
                 player.getUUID(),
                 target.getUUID(),
                 serverLevel.getServer().getTickCount() + SOUL_REAPER_WEAKNESS_TICKS);
+    }
+
+    private static void handleAssassinDaggerDamagePre(LivingDamageEvent.Pre event) {
+        if (!(event.getEntity() instanceof LivingEntity target)
+                || event.getNewDamage() <= 0.0F
+                || !(event.getSource().getEntity() instanceof Player attacker)
+                || event.getSource().getDirectEntity() != attacker
+                || attacker == target
+                || ASSASSIN_DAGGER_REPLAY_ATTACKERS.contains(attacker.getUUID())
+                || !attacker.getMainHandItem().is(ModItems.ASSASSIN_DAGGER.get())
+                || !isAssassinDaggerBackstab(attacker, target)) {
+            return;
+        }
+
+        event.setNewDamage(event.getNewDamage() * 2.0F);
+    }
+
+    private static void handleSpectralBladeDamagePost(LivingDamageEvent.Post event) {
+        if (!(event.getEntity() instanceof LivingEntity target)
+                || !(target.level() instanceof ServerLevel serverLevel)
+                || event.getNewDamage() <= 0.0F
+                || !(event.getSource().getEntity() instanceof Player attacker)
+                || event.getSource().getDirectEntity() != attacker
+                || attacker == target
+                || SPECTRAL_BLADE_BURST_ATTACKERS.contains(attacker.getUUID())
+                || !attacker.getMainHandItem().is(ModItems.SPECTRAL_BLADE.get())) {
+            return;
+        }
+
+        SPECTRAL_BLADE_LAST_TARGETS.put(attacker.getUUID(), target.getUUID());
+        SpectralMarkEntity.spawn(serverLevel, attacker, target);
+    }
+
+    private static void handleAssassinDaggerDamagePost(LivingDamageEvent.Post event) {
+        if (!(event.getEntity() instanceof LivingEntity target)
+                || !(target.level() instanceof ServerLevel serverLevel)
+                || event.getNewDamage() <= 0.0F
+                || !(event.getSource().getEntity() instanceof Player attacker)
+                || event.getSource().getDirectEntity() != attacker
+                || attacker == target
+                || ASSASSIN_DAGGER_REPLAY_ATTACKERS.contains(attacker.getUUID())
+                || !attacker.getMainHandItem().is(ModItems.ASSASSIN_DAGGER.get())) {
+            return;
+        }
+
+        UUID attackerId = attacker.getUUID();
+        UUID targetId = target.getUUID();
+        int currentTick = serverLevel.getServer().getTickCount();
+        Deque<AssassinDamageSnapshot> history = getAssassinDaggerHistory(attackerId, targetId, true);
+        history.addLast(new AssassinDamageSnapshot(currentTick, event.getNewDamage()));
+        trimAssassinDaggerHistory(history, currentTick);
+        ASSASSIN_DAGGER_LAST_TARGETS.put(attackerId, targetId);
     }
 
     private static void handleBlackDiamondSwordDamagePost(LivingDamageEvent.Post event) {
@@ -980,6 +1204,103 @@ public final class ModGameEvents {
         STORM_CHARGE_FALL_IMMUNE_UNTIL.entrySet().removeIf(entry -> entry.getValue().intValue() < currentTick);
     }
 
+    private static boolean isAssassinDaggerBackstab(Player attacker, LivingEntity target) {
+        float bodyYawRadians = target.yBodyRot * ((float)Math.PI / 180.0F);
+        Vec3 targetForward = new Vec3(-Mth.sin(bodyYawRadians), 0.0D, Mth.cos(bodyYawRadians));
+        Vec3 toAttacker = attacker.position().subtract(target.position());
+        Vec3 horizontalDirection = new Vec3(toAttacker.x, 0.0D, toAttacker.z);
+        if (horizontalDirection.lengthSqr() < 1.0E-6D) {
+            return false;
+        }
+
+        return targetForward.dot(horizontalDirection.normalize()) <= ASSASSIN_DAGGER_BACKSTAB_DOT_THRESHOLD;
+    }
+
+    private static Deque<AssassinDamageSnapshot> getAssassinDaggerHistory(UUID attackerId, UUID targetId, boolean create) {
+        Map<UUID, Deque<AssassinDamageSnapshot>> playerHistory = create
+                ? ASSASSIN_DAGGER_DAMAGE_HISTORY.computeIfAbsent(attackerId, ignored -> new HashMap<>())
+                : ASSASSIN_DAGGER_DAMAGE_HISTORY.get(attackerId);
+        if (playerHistory == null) {
+            return null;
+        }
+
+        return create ? playerHistory.computeIfAbsent(targetId, ignored -> new ArrayDeque<>()) : playerHistory.get(targetId);
+    }
+
+    private static void trimAssassinDaggerHistory(Deque<AssassinDamageSnapshot> history, int currentTick) {
+        int oldestAllowedTick = currentTick - ASSASSIN_DAGGER_HISTORY_TICKS;
+        while (!history.isEmpty() && history.peekFirst().serverTick() < oldestAllowedTick) {
+            history.removeFirst();
+        }
+    }
+
+    private static void cleanupAssassinDaggerHistory(int currentTick) {
+        for (Iterator<Entry<UUID, Map<UUID, Deque<AssassinDamageSnapshot>>>> playerIterator = ASSASSIN_DAGGER_DAMAGE_HISTORY.entrySet()
+                .iterator(); playerIterator.hasNext();) {
+            Entry<UUID, Map<UUID, Deque<AssassinDamageSnapshot>>> playerEntry = playerIterator.next();
+            for (Iterator<Entry<UUID, Deque<AssassinDamageSnapshot>>> targetIterator = playerEntry.getValue().entrySet()
+                    .iterator(); targetIterator.hasNext();) {
+                Entry<UUID, Deque<AssassinDamageSnapshot>> targetEntry = targetIterator.next();
+                trimAssassinDaggerHistory(targetEntry.getValue(), currentTick);
+                if (targetEntry.getValue().isEmpty()) {
+                    targetIterator.remove();
+                }
+            }
+
+            if (playerEntry.getValue().isEmpty()) {
+                playerIterator.remove();
+            }
+        }
+    }
+
+    private static void tickAssassinDaggerReplay(ServerTickEvent.Post event) {
+        if (ASSASSIN_DAGGER_PENDING_REPLAY_PULSES.isEmpty()) {
+            return;
+        }
+
+        int currentTick = event.getServer().getTickCount();
+        List<AssassinReplayPulse> duePulses = new ArrayList<>();
+        ASSASSIN_DAGGER_PENDING_REPLAY_PULSES.removeIf(replayPulse -> {
+            if (replayPulse.executeAtTick() > currentTick) {
+                return false;
+            }
+
+            duePulses.add(replayPulse);
+            return true;
+        });
+
+        for (AssassinReplayPulse replayPulse : duePulses) {
+            Player attacker = event.getServer().getPlayerList().getPlayer(replayPulse.ownerId());
+            LivingEntity target = findLoadedLivingEntity(event.getServer(), replayPulse.targetId());
+            if (attacker == null
+                    || !attacker.isAlive()
+                    || target == null
+                    || !target.isAlive()
+                    || target.level() != attacker.level()
+                    || !target.level().dimension().equals(replayPulse.dimension())) {
+                continue;
+            }
+
+            applyAssassinDaggerReplayDamage(attacker, target, replayPulse.damage());
+        }
+    }
+
+    private static void applyAssassinDaggerReplayDamage(Player attacker, LivingEntity target, float damage) {
+        if (damage <= 0.0F) {
+            return;
+        }
+
+        UUID attackerId = attacker.getUUID();
+        ASSASSIN_DAGGER_REPLAY_ATTACKERS.add(attackerId);
+        try {
+            target.invulnerableTime = 0;
+            target.hurtTime = 0;
+            target.hurt(attacker.damageSources().playerAttack(attacker), damage);
+        } finally {
+            ASSASSIN_DAGGER_REPLAY_ATTACKERS.remove(attackerId);
+        }
+    }
+
     private static void tickIncandescentMainHandDamage(ServerTickEvent.Post event) {
         int currentTick = event.getServer().getTickCount();
         if (currentTick % INCANDESCENT_MAINHAND_SELF_DAMAGE_INTERVAL_TICKS != 0) {
@@ -999,6 +1320,7 @@ public final class ModGameEvents {
         for (Player player : event.getServer().getPlayerList().getPlayers()) {
             if (player.isSpectator()) {
                 clearArmorSetAttributeModifiers(player);
+                clearOccultCamouflageState(player);
                 continue;
             }
 
@@ -1031,6 +1353,7 @@ public final class ModGameEvents {
                     NETHERITE_SET_EXPLOSION_KNOCKBACK_RESISTANCE_BONUS,
                     AttributeModifier.Operation.ADD_VALUE,
                     hasFullNetheriteSet(player));
+            tickOccultCamouflage(player);
         }
     }
 
@@ -1110,6 +1433,13 @@ public final class ModGameEvents {
                 && player.getItemBySlot(EquipmentSlot.CHEST).is(ModItems.COBALT_CHESTPLATE.get())
                 && player.getItemBySlot(EquipmentSlot.LEGS).is(ModItems.COBALT_LEGGINGS.get())
                 && player.getItemBySlot(EquipmentSlot.FEET).is(ModItems.COBALT_BOOTS.get());
+    }
+
+    private static boolean hasFullOccultSet(Player player) {
+        return player.getItemBySlot(EquipmentSlot.HEAD).is(ModItems.OCCULT_HELMET.get())
+                && player.getItemBySlot(EquipmentSlot.CHEST).is(ModItems.OCCULT_CHESTPLATE.get())
+                && player.getItemBySlot(EquipmentSlot.LEGS).is(ModItems.OCCULT_LEGGINGS.get())
+                && player.getItemBySlot(EquipmentSlot.FEET).is(ModItems.OCCULT_BOOTS.get());
     }
 
     private static boolean hasFullIronSet(Player player) {
@@ -1207,6 +1537,141 @@ public final class ModGameEvents {
         return entities;
     }
 
+    public static void cancelOccultCamouflage(Player player) {
+        OccultCamouflageState state = OCCULT_CAMOUFLAGE_STATES.computeIfAbsent(
+                player.getUUID(),
+                ignored -> new OccultCamouflageState(player.position()));
+        state.lastPosition = player.position();
+        state.stationaryTicks = 0;
+        state.progress = 0.0F;
+        updateOccultMarkerEffect(player, state.progress);
+        syncOccultCamouflageProgress(player, state, false);
+    }
+
+    public static void clearOccultCamouflageState(Player player) {
+        UUID playerId = player.getUUID();
+        OccultCamouflageState state = OCCULT_CAMOUFLAGE_STATES.get(playerId);
+        if (state != null) {
+            state.progress = 0.0F;
+            syncOccultCamouflageProgress(player, state, false);
+            OCCULT_CAMOUFLAGE_STATES.remove(playerId);
+        }
+        player.removeEffect(ModMobEffects.OCCULT_CAMOUFLAGE);
+    }
+
+    public static void clearOccultCamouflageTracking() {
+        OCCULT_CAMOUFLAGE_STATES.clear();
+    }
+
+    public static void syncOccultCamouflageStateTo(ServerPlayer recipient, Player target) {
+        if (!(target.level() instanceof ServerLevel) || recipient.server != target.getServer()) {
+            return;
+        }
+
+        int quantizedProgress = OccultCamouflageTuning.progressToQuantized(getOccultCamouflageProgress(target));
+        PacketDistributor.sendToPlayer(recipient, new OccultCamouflageSyncPayload(target.getUUID(), quantizedProgress));
+    }
+
+    public static float getOccultCamouflageProgress(Player player) {
+        OccultCamouflageState state = OCCULT_CAMOUFLAGE_STATES.get(player.getUUID());
+        return state == null ? 0.0F : state.progress;
+    }
+
+    private static void handleOccultCamouflageDamagePost(LivingDamageEvent.Post event) {
+        if (event.getNewDamage() <= 0.0F) {
+            return;
+        }
+
+        if (event.getEntity() instanceof Player damagedPlayer) {
+            cancelOccultCamouflage(damagedPlayer);
+        }
+
+        if (event.getSource().getEntity() instanceof Player attackingPlayer) {
+            cancelOccultCamouflage(attackingPlayer);
+        }
+    }
+
+    private static void tickOccultCamouflage(Player player) {
+        if (!(player.level() instanceof ServerLevel)) {
+            return;
+        }
+
+        if (!hasFullOccultSet(player)) {
+            clearOccultCamouflageState(player);
+            return;
+        }
+
+        OccultCamouflageState state = OCCULT_CAMOUFLAGE_STATES.computeIfAbsent(
+                player.getUUID(),
+                ignored -> new OccultCamouflageState(player.position()));
+        Vec3 currentPosition = player.position();
+        double deltaMovementSqr = currentPosition.distanceToSqr(state.lastPosition);
+        boolean stationary = deltaMovementSqr <= OccultCamouflageTuning.MOVEMENT_EPSILON_SQR;
+        boolean microMovement = OccultCamouflageTuning.isMicroMovement(deltaMovementSqr, player.isCrouching());
+        boolean hardBreakMovement = OccultCamouflageTuning.isNormalMovement(deltaMovementSqr, player.isCrouching())
+                || player.isSprinting()
+                || !player.onGround()
+                || player.isUsingItem();
+
+        if (hardBreakMovement) {
+            state.stationaryTicks = 0;
+            state.progress = 0.0F;
+        } else if (stationary) {
+            state.stationaryTicks++;
+            if (state.stationaryTicks >= OccultCamouflageTuning.ARMING_TICKS) {
+                state.progress = Mth.clamp(
+                        state.progress + OccultCamouflageTuning.fadeInStep(),
+                        0.0F,
+                        1.0F);
+            } else {
+                state.progress = 0.0F;
+            }
+        } else if (microMovement && state.progress > 0.0F) {
+            state.stationaryTicks = OccultCamouflageTuning.ARMING_TICKS;
+            state.progress = Math.max(
+                    OccultCamouflageTuning.PARTIAL_FLOOR_PROGRESS,
+                    state.progress - OccultCamouflageTuning.PARTIAL_DECAY_PER_TICK);
+        } else {
+            state.stationaryTicks = 0;
+            state.progress = 0.0F;
+        }
+
+        state.lastPosition = currentPosition;
+        updateOccultMarkerEffect(player, state.progress);
+        syncOccultCamouflageProgress(player, state, false);
+    }
+
+    private static void updateOccultMarkerEffect(Player player, float progress) {
+        if (progress <= 0.0F) {
+            player.removeEffect(ModMobEffects.OCCULT_CAMOUFLAGE);
+            return;
+        }
+
+        player.addEffect(new MobEffectInstance(
+                ModMobEffects.OCCULT_CAMOUFLAGE,
+                SET_PASSIVE_EFFECT_DURATION_TICKS,
+                0,
+                false,
+                false,
+                false));
+    }
+
+    private static void syncOccultCamouflageProgress(Player player, OccultCamouflageState state, boolean force) {
+        if (player.level().isClientSide) {
+            return;
+        }
+
+        int quantizedProgress = OccultCamouflageTuning.progressToQuantized(state.progress);
+        if (!force && quantizedProgress == state.lastSyncedProgress) {
+            return;
+        }
+
+        state.lastSyncedProgress = quantizedProgress;
+        PacketDistributor.sendToPlayersTrackingEntityAndSelf(
+                player,
+                new OccultCamouflageSyncPayload(player.getUUID(), quantizedProgress));
+    }
+
     private static boolean isIncandescentHotItem(ItemStack stack) {
         return stack.is(ModItems.INCANDESCENT_INGOT.get())
                 || stack.is(ModItems.INCANDESCENT_SWORD.get())
@@ -1219,6 +1684,31 @@ public final class ModGameEvents {
         return stack.is(ModItems.INCANDESCENT_SWORD.get())
                 || stack.is(ModItems.INCANDESCENT_PICKAXE.get())
                 || stack.is(ModItems.INCANDESCENT_AXE.get());
+    }
+
+    private record AssassinDamageSnapshot(int serverTick, float damage) {
+    }
+
+    private record AssassinReplayPulse(
+            UUID ownerId,
+            UUID targetId,
+            ResourceKey<Level> dimension,
+            int executeAtTick,
+            float damage) {
+    }
+
+    private static final class OccultCamouflageState {
+        private Vec3 lastPosition;
+        private int stationaryTicks;
+        private float progress;
+        private int lastSyncedProgress;
+
+        private OccultCamouflageState(Vec3 lastPosition) {
+            this.lastPosition = lastPosition;
+            this.stationaryTicks = 0;
+            this.progress = 0.0F;
+            this.lastSyncedProgress = -1;
+        }
     }
 
     private static final class CobaltArrowRainWave {

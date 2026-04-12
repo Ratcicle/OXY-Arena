@@ -40,6 +40,13 @@ public final class ModTooltipEvents {
             return "tooltip.oxyarena.cobalt_armor.passive";
         }
 
+        if (stack.is(ModItems.OCCULT_HELMET.get())
+                || stack.is(ModItems.OCCULT_CHESTPLATE.get())
+                || stack.is(ModItems.OCCULT_LEGGINGS.get())
+                || stack.is(ModItems.OCCULT_BOOTS.get())) {
+            return "tooltip.oxyarena.occult_armor.passive";
+        }
+
         if (stack.is(Items.IRON_HELMET)
                 || stack.is(Items.IRON_CHESTPLATE)
                 || stack.is(Items.IRON_LEGGINGS)

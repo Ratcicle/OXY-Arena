@@ -68,6 +68,7 @@ public class OXYArena {
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onArrowNock);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onLivingGetProjectile);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onBlockBreak);
+        NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onStartTracking);
         NeoForge.EVENT_BUS.addListener(ModTooltipEvents::onItemTooltip);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onServerStopping);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onServerStopped);

@@ -48,14 +48,19 @@ public final class ModServerEventHooks {
         }
 
         if (event.getEntity() instanceof LivingEntity livingEntity) {
+            ModGameEvents.clearAssassinDaggerTarget(livingEntity);
             ModGameEvents.clearSoulReaperTarget(livingEntity);
+            ModGameEvents.clearSpectralBladeTarget(livingEntity);
         }
 
         if (event.getEntity() instanceof ServerPlayer player) {
             ModGameEvents.clearMurasamaState(player);
             ModGameEvents.clearKusabimaruState(player);
+            ModGameEvents.clearAssassinDaggerState(player);
+            ModGameEvents.clearSpectralBladeState(player);
             ModGameEvents.clearSoulReaperState(player);
             ModGameEvents.clearStormChargeState(player);
+            ModGameEvents.clearOccultCamouflageState(player);
             ZenithOrbitSwordEntity.discardOwnedOrbitSwords(player);
         }
 
@@ -74,9 +79,14 @@ public final class ModServerEventHooks {
         if (event.getEntity() instanceof ServerPlayer player && player.getServer() != null) {
             ModGameEvents.clearMurasamaState(player);
             ModGameEvents.clearKusabimaruState(player);
+            ModGameEvents.clearAssassinDaggerState(player);
+            ModGameEvents.clearSpectralBladeState(player);
             ModGameEvents.clearSoulReaperState(player);
             ModGameEvents.clearStormChargeState(player);
+            ModGameEvents.clearAssassinDaggerTarget(player);
             ModGameEvents.clearSoulReaperTarget(player);
+            ModGameEvents.clearSpectralBladeTarget(player);
+            ModGameEvents.clearOccultCamouflageState(player);
             ZenithOrbitSwordEntity.discardOwnedOrbitSwords(player);
             OxyServerEventManager.get(player.getServer()).onPlayerChangedDimension(player);
             PlayerHuntServerEvent.refreshPersistentPlayerState(player.getServer(), player);
@@ -88,9 +98,14 @@ public final class ModServerEventHooks {
         if (event.getEntity() instanceof ServerPlayer player) {
             ModGameEvents.clearMurasamaState(player);
             ModGameEvents.clearKusabimaruState(player);
+            ModGameEvents.clearAssassinDaggerState(player);
+            ModGameEvents.clearSpectralBladeState(player);
             ModGameEvents.clearSoulReaperState(player);
             ModGameEvents.clearStormChargeState(player);
+            ModGameEvents.clearAssassinDaggerTarget(player);
             ModGameEvents.clearSoulReaperTarget(player);
+            ModGameEvents.clearSpectralBladeTarget(player);
+            ModGameEvents.clearOccultCamouflageState(player);
             ZenithOrbitSwordEntity.discardOwnedOrbitSwords(player);
         }
     }
@@ -112,6 +127,7 @@ public final class ModServerEventHooks {
     }
 
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+        ModGameEvents.cancelOccultCamouflage(event.getEntity());
         if (cancelIfKusabimaruStunned(event.getEntity())) {
             event.setCancellationResult(net.minecraft.world.InteractionResult.FAIL);
             event.setCanceled(true);
@@ -122,6 +138,7 @@ public final class ModServerEventHooks {
     }
 
     public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
+        ModGameEvents.cancelOccultCamouflage(event.getEntity());
         if (!cancelIfKusabimaruStunned(event.getEntity())) {
             return;
         }
@@ -131,12 +148,14 @@ public final class ModServerEventHooks {
     }
 
     public static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
+        ModGameEvents.cancelOccultCamouflage(event.getEntity());
         if (cancelIfKusabimaruStunned(event.getEntity())) {
             event.setCanceled(true);
         }
     }
 
     public static void onAttackEntity(AttackEntityEvent event) {
+        ModGameEvents.cancelOccultCamouflage(event.getEntity());
         if (cancelIfKusabimaruStunned(event.getEntity())) {
             event.setCanceled(true);
         }
@@ -162,18 +181,34 @@ public final class ModServerEventHooks {
     }
 
     public static void onBlockBreak(BlockEvent.BreakEvent event) {
+        if (event.getPlayer() != null) {
+            ModGameEvents.cancelOccultCamouflage(event.getPlayer());
+        }
         FallingTreeHelper.onBlockBreak(event);
+    }
+
+    public static void onStartTracking(PlayerEvent.StartTracking event) {
+        if (event.getEntity() instanceof ServerPlayer trackingPlayer
+                && event.getTarget() instanceof Player trackedPlayer) {
+            ModGameEvents.syncOccultCamouflageStateTo(trackingPlayer, trackedPlayer);
+        }
     }
 
     public static void onServerStopping(ServerStoppingEvent event) {
         FallingTreeHelper.onServerStopping(event);
         SoulReaperFireHelper.onServerStopping(event);
+        ModGameEvents.clearAssassinDaggerTracking();
+        ModGameEvents.clearOccultCamouflageTracking();
+        ModGameEvents.clearSpectralBladeTracking();
         OxyServerEventManager.get(event.getServer()).onServerStopping();
     }
 
     public static void onServerStopped(ServerStoppedEvent event) {
         FallingTreeHelper.onServerStopped(event);
         SoulReaperFireHelper.onServerStopped(event);
+        ModGameEvents.clearAssassinDaggerTracking();
+        ModGameEvents.clearOccultCamouflageTracking();
+        ModGameEvents.clearSpectralBladeTracking();
         OxyServerEventManager.remove(event.getServer());
     }
 

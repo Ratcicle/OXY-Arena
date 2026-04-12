@@ -12,6 +12,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterial;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -19,6 +20,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 public final class ModArmorMaterials {
     public static final int CITRINE_DURABILITY_FACTOR = 13;
+    public static final int OCCULT_DURABILITY_FACTOR = 25;
     public static final int COBALT_DURABILITY_FACTOR = 30;
 
     public static final DeferredRegister<ArmorMaterial> ARMOR_MATERIALS = DeferredRegister.create(
@@ -44,6 +46,16 @@ public final class ModArmorMaterials {
                     () -> Ingredient.of(ModItems.COBALT_INGOT.get()),
                     List.of(new ArmorMaterial.Layer(ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "cobalt"))),
                     1.5F,
+                    0.0F));
+    public static final DeferredHolder<ArmorMaterial, ArmorMaterial> OCCULT = ARMOR_MATERIALS.register(
+            "occult",
+            () -> new ArmorMaterial(
+                    createDefenseMap(3, 6, 8, 3, 8),
+                    18,
+                    SoundEvents.ARMOR_EQUIP_CHAIN,
+                    () -> Ingredient.of(Items.AMETHYST_SHARD, ModItems.AMETRA_GEM.get()),
+                    List.of(new ArmorMaterial.Layer(ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "occult"))),
+                    0.0F,
                     0.0F));
 
     private ModArmorMaterials() {

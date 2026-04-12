@@ -2,6 +2,7 @@ package com.example.oxyarena.registry;
 
 import com.example.oxyarena.OXYArena;
 import com.example.oxyarena.item.AmetraSwordItem;
+import com.example.oxyarena.item.AssassinDaggerItem;
 import com.example.oxyarena.item.BlackDiamondSwordItem;
 import com.example.oxyarena.item.ChocolateSwordItem;
 import com.example.oxyarena.item.CobaltSwordItem;
@@ -11,6 +12,7 @@ import com.example.oxyarena.item.CitrineThrowingDaggerItem;
 import com.example.oxyarena.item.CobaltBowItem;
 import com.example.oxyarena.item.CobaltShieldItem;
 import com.example.oxyarena.item.FlamingScytheItem;
+import com.example.oxyarena.item.ElementalGauntletItem;
 import com.example.oxyarena.item.EstusFlaskItem;
 import com.example.oxyarena.item.GrapplingGunItem;
 import com.example.oxyarena.item.IncandescentAxeItem;
@@ -23,6 +25,7 @@ import com.example.oxyarena.item.LifehuntScytheItem;
 import com.example.oxyarena.item.MurasamaItem;
 import com.example.oxyarena.item.SoulReaperItem;
 import com.example.oxyarena.item.SmokeBombItem;
+import com.example.oxyarena.item.SpectralBladeItem;
 import com.example.oxyarena.item.StormChargeItem;
 import com.example.oxyarena.item.ZenithItem;
 import com.example.oxyarena.item.ZeusLightningItem;
@@ -105,6 +108,26 @@ public final class ModItems {
             ModArmorMaterials.CITRINE,
             ArmorItem.Type.BOOTS,
             ModArmorMaterials.CITRINE_DURABILITY_FACTOR);
+    public static final DeferredItem<ArmorItem> OCCULT_HELMET = registerArmorItem(
+            "occult_helmet",
+            ModArmorMaterials.OCCULT,
+            ArmorItem.Type.HELMET,
+            ModArmorMaterials.OCCULT_DURABILITY_FACTOR);
+    public static final DeferredItem<ArmorItem> OCCULT_CHESTPLATE = registerArmorItem(
+            "occult_chestplate",
+            ModArmorMaterials.OCCULT,
+            ArmorItem.Type.CHESTPLATE,
+            ModArmorMaterials.OCCULT_DURABILITY_FACTOR);
+    public static final DeferredItem<ArmorItem> OCCULT_LEGGINGS = registerArmorItem(
+            "occult_leggings",
+            ModArmorMaterials.OCCULT,
+            ArmorItem.Type.LEGGINGS,
+            ModArmorMaterials.OCCULT_DURABILITY_FACTOR);
+    public static final DeferredItem<ArmorItem> OCCULT_BOOTS = registerArmorItem(
+            "occult_boots",
+            ModArmorMaterials.OCCULT,
+            ArmorItem.Type.BOOTS,
+            ModArmorMaterials.OCCULT_DURABILITY_FACTOR);
     public static final DeferredItem<CitrineThrowingDaggerItem> CITRINE_THROWING_DAGGER = ITEMS.registerItem(
             "citrine_throwing_dagger",
             CitrineThrowingDaggerItem::new,
@@ -131,6 +154,12 @@ public final class ModItems {
             new Item.Properties()
                     .stacksTo(1)
                     .attributes(ZeusLightningItem.createAttributes()));
+    public static final DeferredItem<ElementalGauntletItem> ELEMENTAL_GAUNTLET = ITEMS.registerItem(
+            "elemental_gauntlet",
+            ElementalGauntletItem::new,
+            new Item.Properties()
+                    .stacksTo(1)
+                    .durability(910));
     public static final DeferredItem<FlamingScytheItem> FLAMING_SCYTHE = ITEMS.registerItem(
             "flaming_scythe",
             properties -> new FlamingScytheItem(
@@ -171,6 +200,16 @@ public final class ModItems {
             properties -> new SoulReaperItem(
                     ModToolTiers.AMETRA,
                     properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 2.0F, -3.0F))));
+    public static final DeferredItem<SpectralBladeItem> SPECTRAL_BLADE = ITEMS.registerItem(
+            "spectral_blade",
+            properties -> new SpectralBladeItem(
+                    Tiers.IRON,
+                    properties.attributes(SpectralBladeItem.createAttributes())));
+    public static final DeferredItem<AssassinDaggerItem> ASSASSIN_DAGGER = ITEMS.registerItem(
+            "assassin_dagger",
+            properties -> new AssassinDaggerItem(
+                    Tiers.IRON,
+                    properties.attributes(AssassinDaggerItem.createAttributes())));
     public static final DeferredItem<BlackDiamondSwordItem> BLACK_DIAMOND_SWORD = ITEMS.registerItem(
             "black_diamond_sword",
             properties -> new BlackDiamondSwordItem(
