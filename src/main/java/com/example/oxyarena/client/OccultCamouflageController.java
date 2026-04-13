@@ -25,6 +25,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
@@ -94,6 +95,12 @@ public final class OccultCamouflageController {
             return;
         }
 
+        float cloakWeight = getCloakWeight(progress);
+        if (cloakWeight <= OccultCamouflageTuning.CROSSFADE_EPSILON) {
+            return;
+        }
+
+        float normalWeight = getNormalWeight(cloakWeight);
         renderCamouflagedPlayer(
                 player,
                 event.getRenderer(),
@@ -101,7 +108,8 @@ public final class OccultCamouflageController {
                 event.getMultiBufferSource(),
                 event.getPackedLight(),
                 event.getPartialTick(),
-                progress);
+                normalWeight,
+                cloakWeight);
         INVISIBILITY_RESTORE.putIfAbsent(player, player.isInvisible());
         player.setInvisible(true);
         event.setCanceled(true);
@@ -119,6 +127,12 @@ public final class OccultCamouflageController {
             return;
         }
 
+        float cloakWeight = getCloakWeight(progress);
+        if (cloakWeight <= OccultCamouflageTuning.CROSSFADE_EPSILON) {
+            return;
+        }
+
+        float normalWeight = getNormalWeight(cloakWeight);
         event.setCanceled(true);
         renderCamouflagedArm(
                 player,
@@ -128,7 +142,8 @@ public final class OccultCamouflageController {
                 event.getMultiBufferSource(),
                 event.getPackedLight(),
                 partialTick,
-                progress);
+                normalWeight,
+                cloakWeight);
     }
 
     private static void onRenderFramePost(RenderFrameEvent.Post event) {
@@ -265,15 +280,31 @@ public final class OccultCamouflageController {
             MultiBufferSource buffer,
             int packedLight,
             float partialTick,
-            float progress) {
+            float normalWeight,
+            float cloakWeight) {
         PlayerModel<AbstractClientPlayer> model = renderer.getModel();
         preparePlayerModel(model, player);
 
         poseStack.pushPose();
-        applyPlayerRenderTransforms(player, poseStack, partialTick, model);
+        PlayerAnimationState animationState = applyPlayerRenderTransforms(player, poseStack, partialTick, model);
         int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
+        ResourceLocation skinTexture = player.getSkin().texture();
 
-        renderCloakPasses(model, poseStack, buffer, packedLight, overlay, player.tickCount + partialTick, progress);
+        if (normalWeight > MIN_RENDER_PROGRESS) {
+            renderNormalPlayerPass(model, poseStack, buffer, packedLight, overlay, skinTexture, normalWeight);
+            OccultArmorFadeRenderer.renderArmor(
+                    player,
+                    model,
+                    poseStack,
+                    buffer,
+                    packedLight,
+                    animationState,
+                    normalWeight);
+        }
+
+        if (cloakWeight > MIN_RENDER_PROGRESS) {
+            renderCloakPasses(model, poseStack, buffer, packedLight, overlay, player.tickCount + partialTick, cloakWeight);
+        }
         poseStack.popPose();
     }
 
@@ -285,7 +316,8 @@ public final class OccultCamouflageController {
             MultiBufferSource buffer,
             int packedLight,
             float partialTick,
-            float progress) {
+            float normalWeight,
+            float cloakWeight) {
         PlayerModel<AbstractClientPlayer> model = renderer.getModel();
         preparePlayerModel(model, player);
         model.attackTime = 0.0F;
@@ -294,19 +326,59 @@ public final class OccultCamouflageController {
         model.setupAnim(player, 0.0F, 0.0F, player.tickCount + partialTick, 0.0F, 0.0F);
 
         ModelPart armPart = arm == HumanoidArm.RIGHT ? model.rightArm : model.leftArm;
+        ModelPart sleevePart = arm == HumanoidArm.RIGHT ? model.rightSleeve : model.leftSleeve;
         armPart.xRot = 0.0F;
+        sleevePart.xRot = 0.0F;
         int overlay = OverlayTexture.NO_OVERLAY;
+        ResourceLocation skinTexture = player.getSkin().texture();
 
         poseStack.pushPose();
-        renderArmCloakPasses(
-                armPart,
-                poseStack,
-                buffer,
-                packedLight,
-                overlay,
-                player.tickCount + partialTick,
-                progress);
+        if (normalWeight > MIN_RENDER_PROGRESS) {
+            renderNormalArmPass(armPart, sleevePart, poseStack, buffer, packedLight, overlay, skinTexture, normalWeight);
+        }
+
+        if (cloakWeight > MIN_RENDER_PROGRESS) {
+            renderArmCloakPasses(
+                    armPart,
+                    poseStack,
+                    buffer,
+                    packedLight,
+                    overlay,
+                    player.tickCount + partialTick,
+                    cloakWeight);
+        }
         poseStack.popPose();
+    }
+
+    private static void renderNormalPlayerPass(
+            PlayerModel<AbstractClientPlayer> model,
+            PoseStack poseStack,
+            MultiBufferSource buffer,
+            int packedLight,
+            int overlay,
+            ResourceLocation skinTexture,
+            float alpha) {
+        VertexConsumer normalBuffer = buffer.getBuffer(RenderType.entityTranslucent(skinTexture));
+        model.renderToBuffer(poseStack, normalBuffer, packedLight, overlay, argb(alpha, 1.0F, 1.0F, 1.0F));
+    }
+
+    private static void renderNormalArmPass(
+            ModelPart armPart,
+            ModelPart sleevePart,
+            PoseStack poseStack,
+            MultiBufferSource buffer,
+            int packedLight,
+            int overlay,
+            ResourceLocation skinTexture,
+            float alpha) {
+        int armColor = argb(alpha, 1.0F, 1.0F, 1.0F);
+        VertexConsumer normalBuffer = buffer.getBuffer(RenderType.entityTranslucent(skinTexture));
+        armPart.render(poseStack, normalBuffer, packedLight, overlay, armColor);
+
+        boolean originalSleeveVisibility = sleevePart.visible;
+        sleevePart.visible = true;
+        sleevePart.render(poseStack, normalBuffer, packedLight, overlay, armColor);
+        sleevePart.visible = originalSleeveVisibility;
     }
 
     private static void renderCloakPasses(
@@ -469,7 +541,7 @@ public final class OccultCamouflageController {
         }
     }
 
-    private static void applyPlayerRenderTransforms(
+    private static PlayerAnimationState applyPlayerRenderTransforms(
             AbstractClientPlayer player,
             PoseStack poseStack,
             float partialTick,
@@ -528,6 +600,7 @@ public final class OccultCamouflageController {
 
         model.prepareMobModel(player, walkPosition, walkSpeed, partialTick);
         model.setupAnim(player, walkPosition, walkSpeed, bob, headBodyDiff, xRot);
+        return new PlayerAnimationState(walkPosition, walkSpeed, partialTick, bob, headBodyDiff, xRot);
     }
 
     private static void setupPlayerRotations(
@@ -644,6 +717,15 @@ public final class OccultCamouflageController {
         return extensionPose != null ? extensionPose : HumanoidModel.ArmPose.ITEM;
     }
 
+    private static float getCloakWeight(float progress) {
+        float clampedProgress = Mth.clamp(progress, 0.0F, 1.0F);
+        return clampedProgress * clampedProgress * (3.0F - 2.0F * clampedProgress);
+    }
+
+    private static float getNormalWeight(float cloakWeight) {
+        return 1.0F - Mth.clamp(cloakWeight, 0.0F, 1.0F);
+    }
+
     private static int argb(float alpha, float red, float green, float blue) {
         return ((Mth.clamp((int)(alpha * 255.0F), 0, 255) & 255) << 24)
                 | ((Mth.clamp((int)(red * 255.0F), 0, 255) & 255) << 16)
@@ -661,5 +743,14 @@ public final class OccultCamouflageController {
         private float predictedProgress;
         private float previousRenderProgress;
         private float renderProgress;
+    }
+
+    record PlayerAnimationState(
+            float limbSwing,
+            float limbSwingAmount,
+            float partialTick,
+            float ageInTicks,
+            float netHeadYaw,
+            float headPitch) {
     }
 }

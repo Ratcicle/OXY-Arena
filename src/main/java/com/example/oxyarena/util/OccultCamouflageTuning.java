@@ -14,6 +14,7 @@ public final class OccultCamouflageTuning {
     public static final float LOCAL_HARD_RECONCILE_FACTOR = 0.55F;
     public static final float RENDER_LERP_IN_PER_TICK = 0.28F;
     public static final float RENDER_LERP_OUT_PER_TICK = 0.36F;
+    public static final float CROSSFADE_EPSILON = 0.01F;
     public static final float INTERIOR_ALPHA_SCALE = 0.032F;
     public static final float EDGE_ALPHA_SCALE = 0.18F;
     public static final float SHIMMER_ALPHA_SCALE = 0.11F;
