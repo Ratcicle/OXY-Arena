@@ -49,16 +49,15 @@ public final class ModServerEventHooks {
 
         if (event.getEntity() instanceof LivingEntity livingEntity) {
             ModGameEvents.clearAssassinDaggerTarget(livingEntity);
-            ModGameEvents.clearSoulReaperTarget(livingEntity);
             ModGameEvents.clearSpectralBladeTarget(livingEntity);
         }
 
         if (event.getEntity() instanceof ServerPlayer player) {
             ModGameEvents.clearMurasamaState(player);
+            ModGameEvents.clearRiversOfBloodState(player);
             ModGameEvents.clearKusabimaruState(player);
             ModGameEvents.clearAssassinDaggerState(player);
             ModGameEvents.clearSpectralBladeState(player);
-            ModGameEvents.clearSoulReaperState(player);
             ModGameEvents.clearStormChargeState(player);
             ModGameEvents.clearOccultCamouflageState(player);
             ZenithOrbitSwordEntity.discardOwnedOrbitSwords(player);
@@ -78,13 +77,12 @@ public final class ModServerEventHooks {
     public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && player.getServer() != null) {
             ModGameEvents.clearMurasamaState(player);
+            ModGameEvents.clearRiversOfBloodState(player);
             ModGameEvents.clearKusabimaruState(player);
             ModGameEvents.clearAssassinDaggerState(player);
             ModGameEvents.clearSpectralBladeState(player);
-            ModGameEvents.clearSoulReaperState(player);
             ModGameEvents.clearStormChargeState(player);
             ModGameEvents.clearAssassinDaggerTarget(player);
-            ModGameEvents.clearSoulReaperTarget(player);
             ModGameEvents.clearSpectralBladeTarget(player);
             ModGameEvents.clearOccultCamouflageState(player);
             ZenithOrbitSwordEntity.discardOwnedOrbitSwords(player);
@@ -97,13 +95,12 @@ public final class ModServerEventHooks {
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             ModGameEvents.clearMurasamaState(player);
+            ModGameEvents.clearRiversOfBloodState(player);
             ModGameEvents.clearKusabimaruState(player);
             ModGameEvents.clearAssassinDaggerState(player);
             ModGameEvents.clearSpectralBladeState(player);
-            ModGameEvents.clearSoulReaperState(player);
             ModGameEvents.clearStormChargeState(player);
             ModGameEvents.clearAssassinDaggerTarget(player);
-            ModGameEvents.clearSoulReaperTarget(player);
             ModGameEvents.clearSpectralBladeTarget(player);
             ModGameEvents.clearOccultCamouflageState(player);
             ZenithOrbitSwordEntity.discardOwnedOrbitSwords(player);

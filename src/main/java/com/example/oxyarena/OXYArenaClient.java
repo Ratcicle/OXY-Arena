@@ -6,6 +6,7 @@ import com.example.oxyarena.client.OccultCamouflageController;
 import com.example.oxyarena.client.OccultCamouflageRenderTypes;
 import com.example.oxyarena.client.PingLocationController;
 import com.example.oxyarena.client.PickupNotifierController;
+import com.example.oxyarena.client.RiversOfBloodClientController;
 import com.example.oxyarena.client.AmetraXrayController;
 import com.example.oxyarena.client.BridgingAssistController;
 import com.example.oxyarena.client.ToolTooltipStatsController;
@@ -64,6 +65,7 @@ public class OXYArenaClient {
         PickupNotifierController.register();
         AmetraXrayController.register();
         BridgingAssistController.register();
+        RiversOfBloodClientController.register();
         ToolTooltipStatsController.register();
         OccultCamouflageController.register();
         ItemPickupNotificationPayload.setClientReceiver(PickupNotifierController::handlePickup);

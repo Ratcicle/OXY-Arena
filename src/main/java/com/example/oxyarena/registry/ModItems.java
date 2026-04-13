@@ -23,6 +23,7 @@ import com.example.oxyarena.item.IncandescentThrowingDaggerItem;
 import com.example.oxyarena.item.KusabimaruItem;
 import com.example.oxyarena.item.LifehuntScytheItem;
 import com.example.oxyarena.item.MurasamaItem;
+import com.example.oxyarena.item.RiversOfBloodItem;
 import com.example.oxyarena.item.SoulReaperItem;
 import com.example.oxyarena.item.SmokeBombItem;
 import com.example.oxyarena.item.SpectralBladeItem;
@@ -190,6 +191,11 @@ public final class ModItems {
             properties -> new MurasamaItem(
                     ModToolTiers.AMETRA,
                     properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 2.0F, -2.1F))));
+    public static final DeferredItem<RiversOfBloodItem> RIVERS_OF_BLOOD = ITEMS.registerItem(
+            "rivers_of_blood",
+            properties -> new RiversOfBloodItem(
+                    ModToolTiers.AMETRA,
+                    properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 2.0F, -2.4F))));
     public static final DeferredItem<KusabimaruItem> KUSABIMARU = ITEMS.registerItem(
             "kusabimaru",
             properties -> new KusabimaruItem(
