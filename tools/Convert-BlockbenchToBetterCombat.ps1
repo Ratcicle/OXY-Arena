@@ -23,7 +23,7 @@ $ErrorActionPreference = "Stop"
 
 function Get-PropertyValue {
     param(
-        [Parameter(Mandatory = $true)]$Object,
+        $Object,
         [Parameter(Mandatory = $true)][string]$Name
     )
 
@@ -113,27 +113,42 @@ function Resolve-BetterCombatBoneName {
         "head" { return "head" }
         "torso" { return "torso" }
         "body" { return "torso" }
+        "abdomen" { return "torso" }
+        "peitoral" { return "torso" }
+        "chest" { return "torso" }
+        "pescoco" { return "head" }
+        "neck" { return "head" }
         "rightarm" { return "rightArm" }
         "armright" { return "rightArm" }
         "rarm" { return "rightArm" }
+        "bracodireito" { return "rightArm" }
         "leftarm" { return "leftArm" }
         "armleft" { return "leftArm" }
         "larm" { return "leftArm" }
+        "bracoesquerdo" { return "leftArm" }
         "rightleg" { return "rightLeg" }
         "legright" { return "rightLeg" }
         "rleg" { return "rightLeg" }
+        "pernadireita" { return "rightLeg" }
+        "caneladireita" { return "rightLeg" }
         "leftleg" { return "leftLeg" }
         "legleft" { return "leftLeg" }
         "lleg" { return "leftLeg" }
+        "pernaesquerda" { return "leftLeg" }
+        "canelaesquerda" { return "leftLeg" }
         "rightitem" { return "rightItem" }
         "itemright" { return "rightItem" }
+        "maodireita" { return "rightItem" }
         "leftitem" { return "leftItem" }
         "itemleft" { return "leftItem" }
+        "maoesquerda" { return "leftItem" }
         "torsobend" { return "torso_bend" }
         "rightarmbend" { return "rightArm_bend" }
         "leftarmbend" { return "leftArm_bend" }
         "rightlegbend" { return "rightLeg_bend" }
         "leftlegbend" { return "leftLeg_bend" }
+        "antebracodireito" { return "rightArm_bend" }
+        "antebracoesquerdo" { return "leftArm_bend" }
         default { return $null }
     }
 }
@@ -294,6 +309,174 @@ function Get-AnimationByName {
     throw "Animation '$RequestedName' was not found in '$InputPath'."
 }
 
+function Add-MoveFromComponents {
+    param(
+        [Parameter(Mandatory = $true)]$Moves,
+        [Parameter(Mandatory = $true)][string]$BetterCombatBone,
+        [Parameter(Mandatory = $true)][int]$Tick,
+        [Parameter(Mandatory = $true)][string]$Easing,
+        [Parameter(Mandatory = $true)]$Components,
+        [Parameter(Mandatory = $true)][string]$Channel
+    )
+
+    foreach ($axis in @("x", "y", "z")) {
+        if ($BetterCombatBone.EndsWith("_bend") -and $axis -ne "x") {
+            continue
+        }
+
+        if ($BetterCombatBone.EndsWith("_bend") -and $Channel -ne "rotation") {
+            continue
+        }
+
+        $componentValue = $Components[$axis]
+        if ($null -eq $componentValue) {
+            continue
+        }
+
+        $converted = if ($BetterCombatBone.EndsWith("_bend")) {
+            @{
+                key = "bend"
+                value = if ($DegreesOutput) {
+                    $componentValue
+                } else {
+                    $componentValue * [Math]::PI / 180.0
+                }
+            }
+        } elseif ($Channel -eq "rotation") {
+            Convert-RotationAxis -Axis $axis -ValueDegrees $componentValue
+        } else {
+            Convert-PositionAxis -Axis $axis -Value $componentValue
+        }
+
+        if ($null -eq $converted) {
+            continue
+        }
+
+        $targetBone = $BetterCombatBone
+        $targetChannel = $converted.key
+        if ($targetChannel -eq "bend" -or $targetBone.EndsWith("_bend")) {
+            $targetBone = $targetBone -replace "_bend$", ""
+            $targetChannel = "bend"
+        }
+
+        $Moves.Add((New-MoveObject -Tick $Tick -Easing $Easing -BoneName $targetBone -ChannelName $targetChannel -Value $converted.value))
+    }
+}
+
+function Convert-PluginExportAnimation {
+    param(
+        [Parameter(Mandatory = $true)]$PluginAnimation
+    )
+
+    $moves = New-Object System.Collections.Generic.List[object]
+    $maxObservedTick = 0
+    $minObservedTick = [int]::MaxValue
+
+    foreach ($track in @((Get-PropertyValue $PluginAnimation "animations"))) {
+        $betterCombatBone = Resolve-BetterCombatBoneName -Name (Get-StringValue (Get-PropertyValue $track "bone"))
+        if ([string]::IsNullOrWhiteSpace($betterCombatBone)) {
+            continue
+        }
+
+        $channel = Get-StringValue (Get-PropertyValue $track "target")
+        if ($channel -notin @("rotation", "position")) {
+            continue
+        }
+
+        foreach ($keyframe in @((Get-PropertyValue $track "keyframes"))) {
+            $timestamp = Try-ParseDouble (Get-PropertyValue $keyframe "timestamp")
+            if ($null -eq $timestamp) {
+                continue
+            }
+
+            $tick = Convert-ToTick -TimeSeconds $timestamp
+            if ($tick -le 0) {
+                continue
+            }
+
+            $target = Get-PropertyValue $keyframe "target"
+            if ($null -eq $target -or @($target).Count -lt 3) {
+                continue
+            }
+
+            $components = @{
+                x = Try-ParseDouble $target[0]
+                y = Try-ParseDouble $target[1]
+                z = Try-ParseDouble $target[2]
+            }
+
+            Add-MoveFromComponents -Moves $moves -BetterCombatBone $betterCombatBone -Tick $tick -Easing (Get-EasingName -Keyframe $keyframe) -Components $components -Channel $channel
+            $maxObservedTick = [Math]::Max($maxObservedTick, $tick)
+            $minObservedTick = [Math]::Min($minObservedTick, $tick)
+        }
+    }
+
+    return @{
+        moves = $moves
+        minTick = $minObservedTick
+        maxTick = $maxObservedTick
+        endTick = if ($null -ne (Try-ParseDouble (Get-PropertyValue $PluginAnimation "length"))) { Convert-ToTick -TimeSeconds (Try-ParseDouble (Get-PropertyValue $PluginAnimation "length")) } else { $maxObservedTick }
+        loop = if ((Get-PropertyValue $PluginAnimation "loop") -eq $true) { "loop" } else { "once" }
+    }
+}
+
+function Convert-BbmodelAnimation {
+    param(
+        [Parameter(Mandatory = $true)]$ProjectAnimation,
+        [Parameter(Mandatory = $true)][hashtable]$AnimatorLookup
+    )
+
+    $moves = New-Object System.Collections.Generic.List[object]
+    $maxObservedTick = 0
+    $minObservedTick = [int]::MaxValue
+
+    $animators = Get-PropertyValue $ProjectAnimation "animators"
+    if ($null -eq $animators) {
+        throw "Animation '$AnimationName' does not contain any animators."
+    }
+
+    foreach ($animatorProperty in $animators.PSObject.Properties) {
+        $animatorId = $animatorProperty.Name
+        $animator = $animatorProperty.Value
+        $resolvedName = Resolve-AnimatorName -AnimatorId $animatorId -Animator $animator -NameLookup $AnimatorLookup
+        $betterCombatBone = Resolve-BetterCombatBoneName -Name $resolvedName
+
+        if ([string]::IsNullOrWhiteSpace($betterCombatBone)) {
+            continue
+        }
+
+        $keyframes = @((Get-PropertyValue $animator "keyframes"))
+        foreach ($keyframe in $keyframes) {
+            $channel = (Get-StringValue (Get-PropertyValue $keyframe "channel"))
+            if ($channel -notin @("rotation", "position")) {
+                continue
+            }
+
+            $timeValue = Try-ParseDouble (Get-PropertyValue $keyframe "time")
+            if ($null -eq $timeValue) {
+                continue
+            }
+
+            $tick = Convert-ToTick -TimeSeconds $timeValue
+            if ($tick -le 0) {
+                continue
+            }
+
+            Add-MoveFromComponents -Moves $moves -BetterCombatBone $betterCombatBone -Tick $tick -Easing (Get-EasingName -Keyframe $keyframe) -Components (Get-KeyframeComponents -Keyframe $keyframe) -Channel $channel
+            $maxObservedTick = [Math]::Max($maxObservedTick, $tick)
+            $minObservedTick = [Math]::Min($minObservedTick, $tick)
+        }
+    }
+
+    return @{
+        moves = $moves
+        minTick = $minObservedTick
+        maxTick = $maxObservedTick
+        endTick = if ($null -ne (Try-ParseDouble (Get-PropertyValue $ProjectAnimation "length"))) { Convert-ToTick -TimeSeconds (Try-ParseDouble (Get-PropertyValue $ProjectAnimation "length")) } else { $maxObservedTick }
+        loop = Get-StringValue (Get-PropertyValue $ProjectAnimation "loop")
+    }
+}
+
 if (-not (Test-Path -LiteralPath $InputPath)) {
     throw "Input file not found: $InputPath"
 }
@@ -305,76 +488,22 @@ if ($null -ne $formatVersion) {
     $formatVersionValue = Get-StringValue (Get-PropertyValue $formatVersion "format_version")
 }
 
-$animation = Get-AnimationByName -Project $project -RequestedName $AnimationName
-$lookup = Get-AnimatorLookup -Project $project
-$moves = New-Object System.Collections.Generic.List[object]
-$maxObservedTick = 0
-$minObservedTick = [int]::MaxValue
-
-$animators = Get-PropertyValue $animation "animators"
-if ($null -eq $animators) {
-    throw "Animation '$AnimationName' does not contain any animators."
+$conversion = $null
+$animationsArray = @($project.animations)
+if ($null -ne (Get-PropertyValue $project "length") -and $animationsArray.Count -gt 0 -and $null -eq (Get-PropertyValue $project "meta")) {
+    $conversion = Convert-PluginExportAnimation -PluginAnimation $project
+} else {
+    $animation = $animationsArray | Where-Object { $_.name -eq $AnimationName } | Select-Object -First 1
+    if ($null -eq $animation) {
+        throw "Animation '$AnimationName' was not found in '$InputPath'."
+    }
+    $lookup = Get-AnimatorLookup -Project $project
+    $conversion = Convert-BbmodelAnimation -ProjectAnimation $animation -AnimatorLookup $lookup
 }
 
-foreach ($animatorProperty in $animators.PSObject.Properties) {
-    $animatorId = $animatorProperty.Name
-    $animator = $animatorProperty.Value
-    $resolvedName = Resolve-AnimatorName -AnimatorId $animatorId -Animator $animator -NameLookup $lookup
-    $betterCombatBone = Resolve-BetterCombatBoneName -Name $resolvedName
-
-    if ([string]::IsNullOrWhiteSpace($betterCombatBone)) {
-        continue
-    }
-
-    $keyframes = @((Get-PropertyValue $animator "keyframes"))
-    foreach ($keyframe in $keyframes) {
-        $channel = (Get-StringValue (Get-PropertyValue $keyframe "channel"))
-        if ($channel -notin @("rotation", "position")) {
-            continue
-        }
-
-        $timeValue = Try-ParseDouble (Get-PropertyValue $keyframe "time")
-        if ($null -eq $timeValue) {
-            continue
-        }
-
-        $tick = Convert-ToTick -TimeSeconds $timeValue
-        if ($tick -le 0) {
-            continue
-        }
-
-        $easing = Get-EasingName -Keyframe $keyframe
-        $components = Get-KeyframeComponents -Keyframe $keyframe
-
-        foreach ($axis in @("x", "y", "z")) {
-            $componentValue = $components[$axis]
-            if ($null -eq $componentValue) {
-                continue
-            }
-
-            $converted = if ($channel -eq "rotation") {
-                Convert-RotationAxis -Axis $axis -ValueDegrees $componentValue
-            } else {
-                Convert-PositionAxis -Axis $axis -Value $componentValue
-            }
-
-            if ($null -eq $converted) {
-                continue
-            }
-
-            $targetBone = $betterCombatBone
-            $targetChannel = $converted.key
-            if ($targetChannel -eq "bend" -or $targetBone.EndsWith("_bend")) {
-                $targetBone = $targetBone -replace "_bend$", ""
-                $targetChannel = "bend"
-            }
-
-            $moves.Add((New-MoveObject -Tick $tick -Easing $easing -BoneName $targetBone -ChannelName $targetChannel -Value $converted.value))
-            $maxObservedTick = [Math]::Max($maxObservedTick, $tick)
-            $minObservedTick = [Math]::Min($minObservedTick, $tick)
-        }
-    }
-}
+$moves = $conversion.moves
+$maxObservedTick = $conversion.maxTick
+$minObservedTick = $conversion.minTick
 
 if ($moves.Count -eq 0) {
     throw "No supported keyframes were found. Make sure the Blockbench bones are named like head/torso/rightArm/etc."
@@ -385,12 +514,7 @@ $sortedMoves = $moves | Sort-Object `
     @{ Expression = { $_.PSObject.Properties.Name[3] } }, `
     @{ Expression = { ($_.PSObject.Properties.Value | Select-Object -Last 1 | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name -First 1) } }
 
-$lengthSeconds = Try-ParseDouble (Get-PropertyValue $animation "length")
-$computedEndTick = if ($null -ne $lengthSeconds) {
-    Convert-ToTick -TimeSeconds $lengthSeconds
-} else {
-    $maxObservedTick
-}
+$computedEndTick = $conversion.endTick
 
 if ($minObservedTick -eq [int]::MaxValue) {
     $minObservedTick = 1
@@ -399,7 +523,7 @@ if ($minObservedTick -eq [int]::MaxValue) {
 $finalBeginTick = if ($null -ne $BeginTick) { [int]$BeginTick } else { $minObservedTick }
 $finalEndTick = if ($null -ne $EndTick) { [int]$EndTick } else { [Math]::Max($computedEndTick, $maxObservedTick) }
 $finalStopTick = if ($null -ne $StopTick) { [int]$StopTick } else { [Math]::Max($finalEndTick + 10, $maxObservedTick) }
-$loopValue = Get-StringValue (Get-PropertyValue $animation "loop")
+$loopValue = $conversion.loop
 
 $outputName = [System.IO.Path]::GetFileNameWithoutExtension($OutputPath)
 if ([string]::IsNullOrWhiteSpace($Description)) {
