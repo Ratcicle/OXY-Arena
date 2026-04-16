@@ -1,0 +1,13 @@
+{
+  "max_buildup": 100.0,
+  "decay_delay_ticks": 60,
+  "decay_per_tick": 1.0,
+  "proc_flat_damage": 4.0,
+  "proc_max_health_ratio": 0.1,
+  "reset_on_proc": true,
+  "overflow_carry": false,
+  "damage_source": "magic",
+  "hud_icon": "oxyarena:textures/gui/bleed_icon.png",
+  "hud_bar": "oxyarena:textures/gui/bleed_bar.png",
+  "proc_particle_style": "bleed_burst"
+}

@@ -7,12 +7,10 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.example.oxyarena.event.SoulReaperFireHelper;
-import com.example.oxyarena.item.RiversOfBloodItem;
 import com.example.oxyarena.registry.ModItems;
 import com.example.oxyarena.registry.ModMobEffects;
 
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
@@ -101,7 +99,6 @@ public final class CombatWeaponEvents {
 
     public static void onServerTickPost(ServerTickEvent.Post event) {
         tickIncandescentMainHandDamage(event);
-        tickRiversOfBloodState(event);
         SoulReaperFireHelper.onServerTickPost(event);
     }
 
@@ -111,20 +108,9 @@ public final class CombatWeaponEvents {
         MURASAMA_CRIT_ATTACKERS.remove(playerId);
     }
 
-    public static void clearRiversOfBloodState(Player player) {
-        RiversOfBloodItem.clearCorpsePilerState(player);
-    }
-
     private static boolean isHoldingFlamingScythe(Player player) {
         return player.getMainHandItem().is(ModItems.FLAMING_SCYTHE.get())
                 || player.getOffhandItem().is(ModItems.FLAMING_SCYTHE.get());
-    }
-
-    private static void tickRiversOfBloodState(ServerTickEvent.Post event) {
-        long gameTime = event.getServer().overworld().getGameTime();
-        for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
-            RiversOfBloodItem.tickCorpsePilerState(player, gameTime);
-        }
     }
 
     private static void handleMurasamaDamagePre(LivingDamageEvent.Pre event) {

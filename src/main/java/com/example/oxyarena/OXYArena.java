@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
 import com.example.oxyarena.command.ModCommands;
+import com.example.oxyarena.combatstatus.CombatStatusDataManager;
 import com.example.oxyarena.event.ModGameEvents;
 import com.example.oxyarena.event.ModServerEventHooks;
 import com.example.oxyarena.event.ModTooltipEvents;
@@ -48,6 +49,7 @@ public class OXYArena {
         modEventBus.addListener(ModPayloads::register);
 
         NeoForge.EVENT_BUS.addListener(ModCommands::register);
+        NeoForge.EVENT_BUS.addListener(CombatStatusDataManager::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onLivingIncomingDamage);
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onLivingDamagePre);
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onLivingDamagePost);

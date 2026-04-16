@@ -1,0 +1,9 @@
+{
+  "item": "oxyarena:rivers_of_blood",
+  "applications": [
+    {
+      "status": "oxyarena:bleed",
+      "buildup_per_hit": 35.0
+    }
+  ]
+}

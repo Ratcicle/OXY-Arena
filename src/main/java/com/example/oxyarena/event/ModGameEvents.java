@@ -1,5 +1,6 @@
 package com.example.oxyarena.event;
 
+import com.example.oxyarena.combatstatus.CombatStatusEvents;
 import com.example.oxyarena.event.gameplay.ArmorSetEvents;
 import com.example.oxyarena.event.gameplay.CombatWeaponEvents;
 import com.example.oxyarena.event.gameplay.CounterMobilityEvents;
@@ -36,6 +37,7 @@ public final class ModGameEvents {
     public static void onLivingDamagePost(LivingDamageEvent.Post event) {
         OccultCamouflageEvents.onLivingDamagePost(event);
         CombatWeaponEvents.onLivingDamagePost(event);
+        CombatStatusEvents.onLivingDamagePost(event);
         MarkReplayEvents.onLivingDamagePost(event);
     }
 
@@ -56,6 +58,7 @@ public final class ModGameEvents {
     }
 
     public static void onServerTickPost(ServerTickEvent.Post event) {
+        CombatStatusEvents.onServerTickPost(event);
         CounterMobilityEvents.onServerTickPost(event);
         MarkReplayEvents.onServerTickPost(event);
         CombatWeaponEvents.onServerTickPost(event);
@@ -68,8 +71,12 @@ public final class ModGameEvents {
         CombatWeaponEvents.clearMurasamaState(player);
     }
 
-    public static void clearRiversOfBloodState(Player player) {
-        CombatWeaponEvents.clearRiversOfBloodState(player);
+    public static void clearCombatStatusState(LivingEntity target) {
+        CombatStatusEvents.clearEntity(target);
+    }
+
+    public static void clearAllCombatStatuses() {
+        CombatStatusEvents.clearAll();
     }
 
     public static int consumeSpectralBladeMarks(Player player) {
