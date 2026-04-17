@@ -2,6 +2,8 @@ package com.example.oxyarena.item;
 
 import java.util.List;
 
+import com.example.oxyarena.event.ModGameEvents;
+
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
@@ -18,8 +20,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
 public class FlamingScytheItem extends SwordItem {
-    private static final float ACTIVE_BURN_SECONDS = 8.0F;
-    private static final int COOLDOWN_TICKS = 400;
+    private static final int ACTIVE_DURATION_TICKS = 200;
+    private static final float ACTIVE_BURN_SECONDS = ACTIVE_DURATION_TICKS / 20.0F;
+    private static final int COOLDOWN_TICKS = 500;
 
     public FlamingScytheItem(Tier tier, Properties properties) {
         super(tier, properties);
@@ -37,6 +40,7 @@ public class FlamingScytheItem extends SwordItem {
         }
 
         if (!level.isClientSide) {
+            ModGameEvents.activateFlamingScythe(player, ACTIVE_DURATION_TICKS);
             player.igniteForSeconds(ACTIVE_BURN_SECONDS);
             level.playSound(
                     null,

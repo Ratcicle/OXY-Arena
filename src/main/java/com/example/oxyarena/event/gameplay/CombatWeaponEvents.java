@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import com.example.oxyarena.event.EarthbreakerCrackHelper;
 import com.example.oxyarena.event.SoulReaperFireHelper;
 import com.example.oxyarena.registry.ModItems;
 import com.example.oxyarena.registry.ModMobEffects;
@@ -43,6 +44,7 @@ public final class CombatWeaponEvents {
     private static final Set<UUID> AMETRA_SWEEP_ATTACKERS = new HashSet<>();
     private static final Map<UUID, Integer> MURASAMA_COMBO_COUNTS = new HashMap<>();
     private static final Set<UUID> MURASAMA_CRIT_ATTACKERS = new HashSet<>();
+    private static final Map<UUID, Integer> FLAMING_SCYTHE_ACTIVE_UNTIL = new HashMap<>();
 
     private CombatWeaponEvents() {
     }
@@ -62,7 +64,7 @@ public final class CombatWeaponEvents {
 
         if (!(event.getEntity() instanceof Player player)
                 || !event.getSource().is(DamageTypeTags.IS_FIRE)
-                || !isHoldingFlamingScythe(player)) {
+                || !isFlamingScytheActive(player)) {
             return;
         }
 
@@ -99,7 +101,9 @@ public final class CombatWeaponEvents {
 
     public static void onServerTickPost(ServerTickEvent.Post event) {
         tickIncandescentMainHandDamage(event);
+        pruneFlamingScytheState(event);
         SoulReaperFireHelper.onServerTickPost(event);
+        EarthbreakerCrackHelper.onServerTickPost(event);
     }
 
     public static void clearMurasamaState(Player player) {
@@ -108,9 +112,44 @@ public final class CombatWeaponEvents {
         MURASAMA_CRIT_ATTACKERS.remove(playerId);
     }
 
-    private static boolean isHoldingFlamingScythe(Player player) {
-        return player.getMainHandItem().is(ModItems.FLAMING_SCYTHE.get())
-                || player.getOffhandItem().is(ModItems.FLAMING_SCYTHE.get());
+    public static void activateFlamingScythe(Player player, int durationTicks) {
+        if (!(player.level() instanceof ServerLevel serverLevel) || durationTicks <= 0) {
+            return;
+        }
+
+        FLAMING_SCYTHE_ACTIVE_UNTIL.put(
+                player.getUUID(),
+                serverLevel.getServer().getTickCount() + durationTicks);
+    }
+
+    public static void clearFlamingScytheState(Player player) {
+        FLAMING_SCYTHE_ACTIVE_UNTIL.remove(player.getUUID());
+    }
+
+    public static void clearFlamingScytheTracking() {
+        FLAMING_SCYTHE_ACTIVE_UNTIL.clear();
+    }
+
+    private static boolean isMainHandFlamingScythe(Player player) {
+        return player.getMainHandItem().is(ModItems.FLAMING_SCYTHE.get());
+    }
+
+    private static boolean isFlamingScytheActive(Player player) {
+        if (!isMainHandFlamingScythe(player) || !(player.level() instanceof ServerLevel serverLevel)) {
+            return false;
+        }
+
+        Integer activeUntil = FLAMING_SCYTHE_ACTIVE_UNTIL.get(player.getUUID());
+        if (activeUntil == null) {
+            return false;
+        }
+
+        if (serverLevel.getServer().getTickCount() > activeUntil) {
+            FLAMING_SCYTHE_ACTIVE_UNTIL.remove(player.getUUID());
+            return false;
+        }
+
+        return true;
     }
 
     private static void handleMurasamaDamagePre(LivingDamageEvent.Pre event) {
@@ -243,7 +282,7 @@ public final class CombatWeaponEvents {
                 || !(event.getSource().getEntity() instanceof Player attacker)
                 || event.getSource().getDirectEntity() != attacker
                 || !attacker.getMainHandItem().is(ModItems.FLAMING_SCYTHE.get())
-                || !attacker.isOnFire()
+                || !isFlamingScytheActive(attacker)
                 || attacker == target) {
             return;
         }
@@ -351,6 +390,11 @@ public final class CombatWeaponEvents {
         }
 
         offhandItem.hurtAndBreak(BLACK_DIAMOND_WEAPON_DURABILITY_DAMAGE, target, EquipmentSlot.OFFHAND);
+    }
+
+    private static void pruneFlamingScytheState(ServerTickEvent.Post event) {
+        int currentTick = event.getServer().getTickCount();
+        FLAMING_SCYTHE_ACTIVE_UNTIL.entrySet().removeIf(entry -> currentTick > entry.getValue());
     }
 
     private static void tickIncandescentMainHandDamage(ServerTickEvent.Post event) {

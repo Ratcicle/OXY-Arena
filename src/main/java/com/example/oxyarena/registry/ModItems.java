@@ -12,6 +12,7 @@ import com.example.oxyarena.item.CitrineThrowingDaggerItem;
 import com.example.oxyarena.item.CobaltBowItem;
 import com.example.oxyarena.item.CobaltShieldItem;
 import com.example.oxyarena.item.FlamingScytheItem;
+import com.example.oxyarena.item.EarthbreakerItem;
 import com.example.oxyarena.item.ElementalGauntletItem;
 import com.example.oxyarena.item.EstusFlaskItem;
 import com.example.oxyarena.item.GrapplingGunItem;
@@ -165,7 +166,7 @@ public final class ModItems {
             "flaming_scythe",
             properties -> new FlamingScytheItem(
                     ModToolTiers.COBALT,
-                    properties.attributes(SwordItem.createAttributes(ModToolTiers.COBALT, 5.2F, -2.8F))));
+                    properties.attributes(SwordItem.createAttributes(ModToolTiers.COBALT, 4.2F, -2.8F))));
     public static final DeferredItem<LifehuntScytheItem> LIFEHUNT_SCYTHE = ITEMS.registerItem(
             "lifehunt_scythe",
             properties -> new LifehuntScytheItem(
@@ -196,6 +197,11 @@ public final class ModItems {
             properties -> new RiversOfBloodItem(
                     ModToolTiers.AMETRA,
                     properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 2.0F, -2.4F))));
+    public static final DeferredItem<EarthbreakerItem> EARTHBREAKER = ITEMS.registerItem(
+            "earthbreaker",
+            properties -> new EarthbreakerItem(
+                    ModToolTiers.AMETRA,
+                    properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 1.5F, -2.6F))));
     public static final DeferredItem<KusabimaruItem> KUSABIMARU = ITEMS.registerItem(
             "kusabimaru",
             properties -> new KusabimaruItem(
@@ -220,7 +226,7 @@ public final class ModItems {
             "black_diamond_sword",
             properties -> new BlackDiamondSwordItem(
                     Tiers.DIAMOND,
-                    properties.attributes(SwordItem.createAttributes(Tiers.DIAMOND, 4.0F, -2.4F))));
+                    properties.attributes(SwordItem.createAttributes(Tiers.DIAMOND, 3.0F, -2.5F))));
     public static final DeferredItem<ChocolateSwordItem> CHOCOLATE_SWORD = ITEMS.registerItem(
             "chocolate_sword",
             properties -> new ChocolateSwordItem(

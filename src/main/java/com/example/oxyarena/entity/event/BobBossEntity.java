@@ -3,6 +3,7 @@ package com.example.oxyarena.entity.event;
 import javax.annotation.Nullable;
 
 import com.example.oxyarena.OXYArena;
+import com.example.oxyarena.registry.ModItems;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
@@ -197,7 +198,7 @@ public final class BobBossEntity extends Zombie {
 
         ServerPlayer killer = damageSource.getEntity() instanceof ServerPlayer player ? player : null;
         if (killer != null) {
-            this.giveOrDrop(killer, new ItemStack(Items.DIAMOND_SWORD));
+            this.giveOrDrop(killer, new ItemStack(ModItems.BLACK_DIAMOND_SWORD.get()));
             this.giveOrDrop(killer, this.createRewardBook());
             serverLevel.getServer().getPlayerList().broadcastSystemMessage(
                     Component.translatable(

@@ -14,6 +14,9 @@ public final class ModDamageTypes {
     public static final ResourceKey<DamageType> ELEMENTAL_GAUNTLET_PROJECTILE = ResourceKey.create(
             Registries.DAMAGE_TYPE,
             ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "elemental_gauntlet_projectile"));
+    public static final ResourceKey<DamageType> EARTHBREAKER_CRACK = ResourceKey.create(
+            Registries.DAMAGE_TYPE,
+            ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "earthbreaker_crack"));
 
     private ModDamageTypes() {
     }

@@ -71,6 +71,18 @@ public final class ModGameEvents {
         CombatWeaponEvents.clearMurasamaState(player);
     }
 
+    public static void activateFlamingScythe(Player player, int durationTicks) {
+        CombatWeaponEvents.activateFlamingScythe(player, durationTicks);
+    }
+
+    public static void clearFlamingScytheState(Player player) {
+        CombatWeaponEvents.clearFlamingScytheState(player);
+    }
+
+    public static void clearFlamingScytheTracking() {
+        CombatWeaponEvents.clearFlamingScytheTracking();
+    }
+
     public static void clearCombatStatusState(LivingEntity target) {
         CombatStatusEvents.clearEntity(target);
     }

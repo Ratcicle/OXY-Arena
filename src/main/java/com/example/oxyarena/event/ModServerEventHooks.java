@@ -55,6 +55,7 @@ public final class ModServerEventHooks {
 
         if (event.getEntity() instanceof ServerPlayer player) {
             ModGameEvents.clearMurasamaState(player);
+            ModGameEvents.clearFlamingScytheState(player);
             ModGameEvents.clearKusabimaruState(player);
             ModGameEvents.clearAssassinDaggerState(player);
             ModGameEvents.clearSpectralBladeState(player);
@@ -78,6 +79,7 @@ public final class ModServerEventHooks {
         if (event.getEntity() instanceof ServerPlayer player && player.getServer() != null) {
             ModGameEvents.clearCombatStatusState(player);
             ModGameEvents.clearMurasamaState(player);
+            ModGameEvents.clearFlamingScytheState(player);
             ModGameEvents.clearKusabimaruState(player);
             ModGameEvents.clearAssassinDaggerState(player);
             ModGameEvents.clearSpectralBladeState(player);
@@ -96,6 +98,7 @@ public final class ModServerEventHooks {
         if (event.getEntity() instanceof ServerPlayer player) {
             ModGameEvents.clearCombatStatusState(player);
             ModGameEvents.clearMurasamaState(player);
+            ModGameEvents.clearFlamingScytheState(player);
             ModGameEvents.clearKusabimaruState(player);
             ModGameEvents.clearAssassinDaggerState(player);
             ModGameEvents.clearSpectralBladeState(player);
@@ -194,7 +197,9 @@ public final class ModServerEventHooks {
     public static void onServerStopping(ServerStoppingEvent event) {
         FallingTreeHelper.onServerStopping(event);
         SoulReaperFireHelper.onServerStopping(event);
+        EarthbreakerCrackHelper.onServerStopping(event);
         ModGameEvents.clearAllCombatStatuses();
+        ModGameEvents.clearFlamingScytheTracking();
         ModGameEvents.clearAssassinDaggerTracking();
         ModGameEvents.clearOccultCamouflageTracking();
         ModGameEvents.clearSpectralBladeTracking();
@@ -204,7 +209,9 @@ public final class ModServerEventHooks {
     public static void onServerStopped(ServerStoppedEvent event) {
         FallingTreeHelper.onServerStopped(event);
         SoulReaperFireHelper.onServerStopped(event);
+        EarthbreakerCrackHelper.onServerStopped(event);
         ModGameEvents.clearAllCombatStatuses();
+        ModGameEvents.clearFlamingScytheTracking();
         ModGameEvents.clearAssassinDaggerTracking();
         ModGameEvents.clearOccultCamouflageTracking();
         ModGameEvents.clearSpectralBladeTracking();

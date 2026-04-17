@@ -67,6 +67,7 @@ public final class ModCreativeModeTabs {
                     output.accept(ModItems.AMETRA_SWORD);
                     output.accept(ModItems.MURASAMA);
                     output.accept(ModItems.RIVERS_OF_BLOOD);
+                    output.accept(ModItems.EARTHBREAKER);
                     output.accept(ModItems.KUSABIMARU);
                     output.accept(ModItems.SOUL_REAPER);
                     output.accept(ModItems.SPECTRAL_BLADE);

@@ -57,9 +57,11 @@ public final class SpectralMarkEntity extends Entity {
             EntityDataSerializers.FLOAT);
 
     private static final Map<UUID, Map<UUID, Set<SpectralMarkEntity>>> ACTIVE_MARKS_BY_OWNER = new HashMap<>();
+    private static final int MAX_AGE_TICKS = 400;
     private static final int TARGET_LOOKUP_GRACE_TICKS = 10;
     private static final float SURFACE_OFFSET = 0.018F;
 
+    private int markAgeTicks;
     private int missingTargetTicks;
 
     public SpectralMarkEntity(EntityType<? extends SpectralMarkEntity> entityType, Level level) {
@@ -141,6 +143,12 @@ public final class SpectralMarkEntity extends Entity {
             return;
         }
 
+        this.markAgeTicks++;
+        if (this.markAgeTicks >= MAX_AGE_TICKS) {
+            this.discard();
+            return;
+        }
+
         LivingEntity target = this.findTarget(serverLevel);
         if (target == null || !target.isAlive()) {
             this.missingTargetTicks++;
@@ -191,6 +199,7 @@ public final class SpectralMarkEntity extends Entity {
         this.setLocalPitch(compound.getFloat("LocalPitch"));
         this.setLocalRoll(compound.getFloat("LocalRoll"));
         this.setColorMix(compound.getFloat("ColorMix"));
+        this.markAgeTicks = compound.contains("MarkAgeTicks") ? compound.getInt("MarkAgeTicks") : 0;
     }
 
     @Override
@@ -204,6 +213,7 @@ public final class SpectralMarkEntity extends Entity {
         compound.putFloat("LocalPitch", this.getLocalPitch());
         compound.putFloat("LocalRoll", this.getLocalRoll());
         compound.putFloat("ColorMix", this.getColorMix());
+        compound.putInt("MarkAgeTicks", this.markAgeTicks);
     }
 
     @Override

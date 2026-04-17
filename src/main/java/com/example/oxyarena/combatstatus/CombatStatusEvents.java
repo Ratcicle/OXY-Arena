@@ -42,6 +42,7 @@ public final class CombatStatusEvents {
                 || target.level().isClientSide()
                 || event.getNewDamage() <= 0.0F
                 || !target.isAlive()
+                || event.getSource().is(ModDamageTypes.BLEED_PROC)
                 || !(event.getSource().getEntity() instanceof Player attacker)
                 || event.getSource().getDirectEntity() != attacker) {
             return;
@@ -133,15 +134,18 @@ public final class CombatStatusEvents {
         float newBuildup = activeStatusState.currentBuildup() + adjustedBuildup;
         activeStatusState.setLastApplicationTick(currentTick);
         if (newBuildup >= definition.maxBuildup()) {
-            procStatus(target, attacker, definition);
             if (definition.resetOnProc()) {
                 newBuildup = definition.overflowCarry() ? newBuildup - definition.maxBuildup() : 0.0F;
             } else {
                 newBuildup = definition.maxBuildup();
             }
+
+            activeStatusState.setCurrentBuildup(Mth.clamp(newBuildup, 0.0F, definition.maxBuildup()));
+            procStatus(target, attacker, definition);
+        } else {
+            activeStatusState.setCurrentBuildup(Mth.clamp(newBuildup, 0.0F, definition.maxBuildup()));
         }
 
-        activeStatusState.setCurrentBuildup(Mth.clamp(newBuildup, 0.0F, definition.maxBuildup()));
         syncStatusIfNeeded(target, application.statusId(), definition, activeStatusState);
     }
 

@@ -19,12 +19,16 @@ public final class CombatStatusHudController {
             ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "bleed");
     private static final int ICON_SIZE = 15;
     private static final int BAR_WIDTH = 64;
-    private static final int BAR_HEIGHT = 3;
+    private static final int BAR_HEIGHT = 5;
     private static final int TEXTURE_SIZE = 16;
     private static final int STATUS_SPACING = 4;
     private static final int ICON_TO_BAR_SPACING = 4;
-    private static final int BOTTOM_MARGIN = 32;
+    private static final int RIGHT_MARGIN = 10;
+    private static final int BOTTOM_MARGIN = 24;
     private static final int BACKGROUND_COLOR = 0xAA22060A;
+    private static final int BORDER_COLOR = 0xCC050105;
+    private static final int BLEED_FILL_COLOR = 0xFFE11124;
+    private static final int BLEED_HIGHLIGHT_COLOR = 0xFFFF3A48;
 
     private static final Map<ResourceLocation, StatusHudVisual> VISUALS = Map.of(
             BLEED_STATUS_ID,
@@ -59,7 +63,7 @@ public final class CombatStatusHudController {
             return;
         }
 
-        ACTIVE_PROGRESS.put(payload.statusId(), payload.quantizedProgress());
+        ACTIVE_PROGRESS.put(payload.statusId(), Math.max(0, Math.min(100, payload.quantizedProgress())));
     }
 
     private static void onClientTickPost(ClientTickEvent.Post event) {
@@ -85,8 +89,8 @@ public final class CombatStatusHudController {
 
     private static void renderStatuses(GuiGraphics guiGraphics, int guiWidth, int guiHeight) {
         int totalWidth = ICON_SIZE + ICON_TO_BAR_SPACING + BAR_WIDTH;
-        int startX = guiWidth / 2 - totalWidth / 2;
-        int startY = guiHeight - BOTTOM_MARGIN - ((ACTIVE_PROGRESS.size() - 1) * (ICON_SIZE + STATUS_SPACING));
+        int startX = guiWidth - RIGHT_MARGIN - totalWidth;
+        int startY = guiHeight - BOTTOM_MARGIN - ICON_SIZE;
 
         int index = 0;
         for (Map.Entry<ResourceLocation, Integer> entry : ACTIVE_PROGRESS.entrySet()) {
@@ -95,7 +99,7 @@ public final class CombatStatusHudController {
                 continue;
             }
 
-            int y = startY + index * (ICON_SIZE + STATUS_SPACING);
+            int y = startY - index * (ICON_SIZE + STATUS_SPACING);
             renderSingleStatus(guiGraphics, visual, startX, y, entry.getValue());
             index++;
         }
@@ -120,20 +124,13 @@ public final class CombatStatusHudController {
 
         int barX = x + ICON_SIZE + ICON_TO_BAR_SPACING;
         int barY = y + (ICON_SIZE - BAR_HEIGHT) / 2;
+        guiGraphics.fill(barX - 1, barY - 1, barX + BAR_WIDTH + 1, barY + BAR_HEIGHT + 1, BORDER_COLOR);
         guiGraphics.fill(barX, barY, barX + BAR_WIDTH, barY + BAR_HEIGHT, BACKGROUND_COLOR);
 
         int filledWidth = Math.max(0, Math.min(BAR_WIDTH, Math.round(progress / 100.0F * BAR_WIDTH)));
         if (filledWidth > 0) {
-            guiGraphics.blit(
-                    visual.barTexture(),
-                    barX,
-                    barY,
-                    0.0F,
-                    0.0F,
-                    filledWidth,
-                    BAR_HEIGHT,
-                    TEXTURE_SIZE,
-                    TEXTURE_SIZE);
+            guiGraphics.fill(barX, barY, barX + filledWidth, barY + BAR_HEIGHT, BLEED_FILL_COLOR);
+            guiGraphics.fill(barX, barY, barX + filledWidth, barY + 1, BLEED_HIGHLIGHT_COLOR);
         }
     }
 
