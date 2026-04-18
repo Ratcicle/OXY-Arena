@@ -2,6 +2,7 @@ package com.example.oxyarena;
 
 import com.example.oxyarena.client.ImmersiveHudController;
 import com.example.oxyarena.client.InventoryInteractionController;
+import com.example.oxyarena.client.NecromancerStaffHudController;
 import com.example.oxyarena.client.OccultCamouflageController;
 import com.example.oxyarena.client.OccultCamouflageRenderTypes;
 import com.example.oxyarena.client.CombatStatusHudController;
@@ -65,6 +66,7 @@ public class OXYArenaClient {
         PingLocationController.register();
         PickupNotifierController.register();
         CombatStatusHudController.register();
+        NecromancerStaffHudController.register();
         AmetraXrayController.register();
         BridgingAssistController.register();
         ToolTooltipStatsController.register();

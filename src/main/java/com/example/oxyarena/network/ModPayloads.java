@@ -35,5 +35,9 @@ public final class ModPayloads {
                 PingLocationRequestPayload.TYPE,
                 PingLocationRequestPayload.STREAM_CODEC,
                 PingLocationRequestPayload::handle);
+        registrar.playToServer(
+                NecromancerStaffSelectSoulPayload.TYPE,
+                NecromancerStaffSelectSoulPayload.STREAM_CODEC,
+                NecromancerStaffSelectSoulPayload::handle);
     }
 }

@@ -42,6 +42,8 @@ public final class AirdropLootPool {
             AirdropLootEntry.of(ModItems.KUSABIMARU, 1, 1, 1),
             AirdropLootEntry.of(ModItems.SOUL_REAPER, 1, 1, 1),
             AirdropLootEntry.of(ModItems.EARTHBREAKER, 1, 1, 1),
+            AirdropLootEntry.of(ModItems.ZERO_REVERSE, 1, 1, 1),
+            AirdropLootEntry.of(ModItems.NECROMANCER_STAFF, 1, 1, 1),
             AirdropLootEntry.of(ModItems.ZENITH, 1, 1, 1));
 
     private AirdropLootPool() {

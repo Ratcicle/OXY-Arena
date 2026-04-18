@@ -5,6 +5,7 @@ import com.example.oxyarena.event.gameplay.ArmorSetEvents;
 import com.example.oxyarena.event.gameplay.CombatWeaponEvents;
 import com.example.oxyarena.event.gameplay.CounterMobilityEvents;
 import com.example.oxyarena.event.gameplay.MarkReplayEvents;
+import com.example.oxyarena.event.gameplay.NecromancerStaffEvents;
 import com.example.oxyarena.event.gameplay.OccultCamouflageEvents;
 import com.example.oxyarena.event.gameplay.ProjectileSpecialEvents;
 
@@ -13,6 +14,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
+import net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.SweepAttackEvent;
@@ -30,14 +32,20 @@ public final class ModGameEvents {
 
     public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
         CounterMobilityEvents.onLivingIncomingDamage(event);
+        NecromancerStaffEvents.onLivingIncomingDamage(event);
         CombatWeaponEvents.onLivingIncomingDamage(event);
         ArmorSetEvents.onLivingIncomingDamage(event);
+    }
+
+    public static void onLivingChangeTarget(LivingChangeTargetEvent event) {
+        NecromancerStaffEvents.onLivingChangeTarget(event);
     }
 
     public static void onLivingDamagePost(LivingDamageEvent.Post event) {
         OccultCamouflageEvents.onLivingDamagePost(event);
         CombatWeaponEvents.onLivingDamagePost(event);
         CombatStatusEvents.onLivingDamagePost(event);
+        NecromancerStaffEvents.onLivingDamagePost(event);
         MarkReplayEvents.onLivingDamagePost(event);
     }
 
@@ -58,10 +66,12 @@ public final class ModGameEvents {
     }
 
     public static void onServerTickPost(ServerTickEvent.Post event) {
+        ZeroReverseRewindHelper.onServerTickPost(event);
         CombatStatusEvents.onServerTickPost(event);
         CounterMobilityEvents.onServerTickPost(event);
         MarkReplayEvents.onServerTickPost(event);
         CombatWeaponEvents.onServerTickPost(event);
+        NecromancerStaffEvents.onServerTickPost(event);
         ArmorSetEvents.onServerTickPost(event);
         OccultCamouflageEvents.onServerTickPost(event);
         ProjectileSpecialEvents.onServerTickPost(event);
@@ -89,6 +99,14 @@ public final class ModGameEvents {
 
     public static void clearAllCombatStatuses() {
         CombatStatusEvents.clearAll();
+    }
+
+    public static void clearZeroReverseState(ServerPlayer player) {
+        ZeroReverseRewindHelper.clearPlayer(player);
+    }
+
+    public static void clearZeroReverseTracking() {
+        ZeroReverseRewindHelper.clearAll();
     }
 
     public static int consumeSpectralBladeMarks(Player player) {

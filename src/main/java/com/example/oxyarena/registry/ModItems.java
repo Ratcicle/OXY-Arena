@@ -24,12 +24,14 @@ import com.example.oxyarena.item.IncandescentThrowingDaggerItem;
 import com.example.oxyarena.item.KusabimaruItem;
 import com.example.oxyarena.item.LifehuntScytheItem;
 import com.example.oxyarena.item.MurasamaItem;
+import com.example.oxyarena.item.NecromancerStaffItem;
 import com.example.oxyarena.item.RiversOfBloodItem;
 import com.example.oxyarena.item.SoulReaperItem;
 import com.example.oxyarena.item.SmokeBombItem;
 import com.example.oxyarena.item.SpectralBladeItem;
 import com.example.oxyarena.item.StormChargeItem;
 import com.example.oxyarena.item.ZenithItem;
+import com.example.oxyarena.item.ZeroReverseItem;
 import com.example.oxyarena.item.ZeusLightningItem;
 
 import net.minecraft.core.Holder;
@@ -227,6 +229,16 @@ public final class ModItems {
             properties -> new BlackDiamondSwordItem(
                     Tiers.DIAMOND,
                     properties.attributes(SwordItem.createAttributes(Tiers.DIAMOND, 3.0F, -2.5F))));
+    public static final DeferredItem<ZeroReverseItem> ZERO_REVERSE = ITEMS.registerItem(
+            "zero_reverse",
+            properties -> new ZeroReverseItem(
+                    ModToolTiers.AMETRA,
+                    properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 1.7F, -2.4F))));
+    public static final DeferredItem<NecromancerStaffItem> NECROMANCER_STAFF = ITEMS.registerItem(
+            "necromancer_staff",
+            properties -> new NecromancerStaffItem(
+                    ModToolTiers.AMETRA,
+                    properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 0.0F, -2.4F))));
     public static final DeferredItem<ChocolateSwordItem> CHOCOLATE_SWORD = ITEMS.registerItem(
             "chocolate_sword",
             properties -> new ChocolateSwordItem(

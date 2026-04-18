@@ -51,6 +51,7 @@ public class OXYArena {
         NeoForge.EVENT_BUS.addListener(ModCommands::register);
         NeoForge.EVENT_BUS.addListener(CombatStatusDataManager::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onLivingIncomingDamage);
+        NeoForge.EVENT_BUS.addListener(ModGameEvents::onLivingChangeTarget);
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onLivingDamagePre);
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onLivingDamagePost);
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onProjectileImpact);
@@ -65,6 +66,7 @@ public class OXYArena {
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onItemEntityPickup);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onRightClickBlock);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onRightClickItem);
+        NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onEntityInteract);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onLeftClickBlock);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onAttackEntity);
         NeoForge.EVENT_BUS.addListener(ModServerEventHooks::onArrowNock);
