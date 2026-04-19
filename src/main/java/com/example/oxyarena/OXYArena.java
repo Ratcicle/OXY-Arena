@@ -8,6 +8,7 @@ import com.example.oxyarena.combatstatus.CombatStatusDataManager;
 import com.example.oxyarena.event.ModGameEvents;
 import com.example.oxyarena.event.ModServerEventHooks;
 import com.example.oxyarena.event.ModTooltipEvents;
+import com.example.oxyarena.event.gameplay.WeaponAttributesDataManager;
 import com.example.oxyarena.network.ModPayloads;
 import com.example.oxyarena.registry.ModArmorMaterials;
 import com.example.oxyarena.registry.ModBlockEntityTypes;
@@ -50,6 +51,7 @@ public class OXYArena {
 
         NeoForge.EVENT_BUS.addListener(ModCommands::register);
         NeoForge.EVENT_BUS.addListener(CombatStatusDataManager::onAddReloadListeners);
+        NeoForge.EVENT_BUS.addListener(WeaponAttributesDataManager::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onLivingIncomingDamage);
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onLivingChangeTarget);
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onLivingDamagePre);

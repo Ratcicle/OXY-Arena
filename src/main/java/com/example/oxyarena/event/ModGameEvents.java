@@ -4,11 +4,16 @@ import com.example.oxyarena.combatstatus.CombatStatusEvents;
 import com.example.oxyarena.event.gameplay.ArmorSetEvents;
 import com.example.oxyarena.event.gameplay.CombatWeaponEvents;
 import com.example.oxyarena.event.gameplay.CounterMobilityEvents;
+import com.example.oxyarena.event.gameplay.GhostSaberEvents;
 import com.example.oxyarena.event.gameplay.MarkReplayEvents;
 import com.example.oxyarena.event.gameplay.NecromancerStaffEvents;
 import com.example.oxyarena.event.gameplay.OccultCamouflageEvents;
+import com.example.oxyarena.event.gameplay.PlayerMantleEvents;
+import com.example.oxyarena.event.gameplay.PlayerSlideEvents;
+import com.example.oxyarena.event.gameplay.PlayerStepAssistEvents;
 import com.example.oxyarena.event.gameplay.ProjectileSpecialEvents;
 
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -26,13 +31,16 @@ public final class ModGameEvents {
     }
 
     public static void onLivingDamagePre(LivingDamageEvent.Pre event) {
+        PlayerMantleEvents.onLivingDamagePre(event);
         CombatWeaponEvents.onLivingDamagePre(event);
         MarkReplayEvents.onLivingDamagePre(event);
     }
 
     public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
         CounterMobilityEvents.onLivingIncomingDamage(event);
+        GhostSaberEvents.onLivingIncomingDamage(event);
         NecromancerStaffEvents.onLivingIncomingDamage(event);
+        CombatStatusEvents.onLivingIncomingDamage(event);
         CombatWeaponEvents.onLivingIncomingDamage(event);
         ArmorSetEvents.onLivingIncomingDamage(event);
     }
@@ -72,6 +80,10 @@ public final class ModGameEvents {
         MarkReplayEvents.onServerTickPost(event);
         CombatWeaponEvents.onServerTickPost(event);
         NecromancerStaffEvents.onServerTickPost(event);
+        GhostSaberEvents.onServerTickPost(event);
+        PlayerSlideEvents.onServerTickPost(event);
+        PlayerMantleEvents.onServerTickPost(event);
+        PlayerStepAssistEvents.onServerTickPost(event);
         ArmorSetEvents.onServerTickPost(event);
         OccultCamouflageEvents.onServerTickPost(event);
         ProjectileSpecialEvents.onServerTickPost(event);
@@ -107,6 +119,34 @@ public final class ModGameEvents {
 
     public static void clearZeroReverseTracking() {
         ZeroReverseRewindHelper.clearAll();
+    }
+
+    public static boolean activateGhostSaber(ServerPlayer player) {
+        return GhostSaberEvents.activate(player);
+    }
+
+    public static void clearGhostSaberState(ServerPlayer player) {
+        GhostSaberEvents.clearPlayer(player);
+    }
+
+    public static void clearGhostSaberTracking(MinecraftServer server) {
+        GhostSaberEvents.clearAll(server);
+    }
+
+    public static void clearPlayerSlideState(ServerPlayer player) {
+        PlayerSlideEvents.clearPlayer(player);
+    }
+
+    public static void clearPlayerSlideTracking(MinecraftServer server) {
+        PlayerSlideEvents.clearAll(server);
+    }
+
+    public static void clearPlayerMantleState(ServerPlayer player) {
+        PlayerMantleEvents.clearPlayer(player);
+    }
+
+    public static void clearPlayerMantleTracking(MinecraftServer server) {
+        PlayerMantleEvents.clearAll(server);
     }
 
     public static int consumeSpectralBladeMarks(Player player) {

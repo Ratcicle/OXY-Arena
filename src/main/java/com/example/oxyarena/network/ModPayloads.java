@@ -4,7 +4,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 public final class ModPayloads {
-    private static final String NETWORK_VERSION = "3";
+    private static final String NETWORK_VERSION = "4";
 
     private ModPayloads() {
     }
@@ -27,6 +27,10 @@ public final class ModPayloads {
                 OccultCamouflageSyncPayload.TYPE,
                 OccultCamouflageSyncPayload.STREAM_CODEC,
                 OccultCamouflageSyncPayload::handle);
+        registrar.playToClient(
+                PlayerAnimationPlayPayload.TYPE,
+                PlayerAnimationPlayPayload.STREAM_CODEC,
+                PlayerAnimationPlayPayload::handle);
         registrar.playToServer(
                 InventorySortRequestPayload.TYPE,
                 InventorySortRequestPayload.STREAM_CODEC,
@@ -39,5 +43,13 @@ public final class ModPayloads {
                 NecromancerStaffSelectSoulPayload.TYPE,
                 NecromancerStaffSelectSoulPayload.STREAM_CODEC,
                 NecromancerStaffSelectSoulPayload::handle);
+        registrar.playToServer(
+                PlayerSlideInputPayload.TYPE,
+                PlayerSlideInputPayload.STREAM_CODEC,
+                PlayerSlideInputPayload::handle);
+        registrar.playToServer(
+                PlayerMantleInputPayload.TYPE,
+                PlayerMantleInputPayload.STREAM_CODEC,
+                PlayerMantleInputPayload::handle);
     }
 }

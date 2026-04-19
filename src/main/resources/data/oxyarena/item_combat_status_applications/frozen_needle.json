@@ -1,0 +1,9 @@
+{
+  "item": "oxyarena:frozen_needle",
+  "applications": [
+    {
+      "status": "oxyarena:frostbite",
+      "buildup_per_hit": 25.0
+    }
+  ]
+}

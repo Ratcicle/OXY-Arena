@@ -141,7 +141,11 @@ public final class CombatStatusDataManager extends SimplePreparableReloadListene
                 GsonHelper.getAsString(json, "damage_source"),
                 ResourceLocation.parse(GsonHelper.getAsString(json, "hud_icon")),
                 ResourceLocation.parse(GsonHelper.getAsString(json, "hud_bar")),
-                GsonHelper.getAsString(json, "proc_particle_style"));
+                GsonHelper.getAsString(json, "proc_particle_style"),
+                (float)GsonHelper.getAsDouble(json, "post_proc_damage_taken_multiplier", 1.0D),
+                GsonHelper.getAsInt(json, "post_proc_duration_ticks", 0),
+                GsonHelper.getAsBoolean(json, "block_buildup_while_active", false),
+                GsonHelper.getAsBoolean(json, "remove_active_on_fire_damage", false));
     }
 
     private static ResourceLocation toDataId(ResourceLocation fileId, String directory) {

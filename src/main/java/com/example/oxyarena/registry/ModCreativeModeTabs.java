@@ -75,6 +75,8 @@ public final class ModCreativeModeTabs {
                     output.accept(ModItems.BLACK_DIAMOND_SWORD);
                     output.accept(ModItems.ZERO_REVERSE);
                     output.accept(ModItems.NECROMANCER_STAFF);
+                    output.accept(ModItems.FROZEN_NEEDLE);
+                    output.accept(ModItems.GHOST_SABER);
                     output.accept(ModItems.CHOCOLATE_SWORD);
                     output.accept(ModItems.ZENITH);
                     output.accept(ModItems.COBALT_PICKAXE);

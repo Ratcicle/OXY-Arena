@@ -17,6 +17,8 @@ import net.neoforged.neoforge.common.NeoForge;
 public final class CombatStatusHudController {
     private static final ResourceLocation BLEED_STATUS_ID =
             ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "bleed");
+    private static final ResourceLocation FROSTBITE_STATUS_ID =
+            ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "frostbite");
     private static final int ICON_SIZE = 15;
     private static final int BAR_WIDTH = 64;
     private static final int BAR_HEIGHT = 5;
@@ -27,14 +29,20 @@ public final class CombatStatusHudController {
     private static final int BOTTOM_MARGIN = 24;
     private static final int BACKGROUND_COLOR = 0xAA22060A;
     private static final int BORDER_COLOR = 0xCC050105;
-    private static final int BLEED_FILL_COLOR = 0xFFE11124;
-    private static final int BLEED_HIGHLIGHT_COLOR = 0xFFFF3A48;
 
     private static final Map<ResourceLocation, StatusHudVisual> VISUALS = Map.of(
             BLEED_STATUS_ID,
             new StatusHudVisual(
                     ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "textures/gui/bleed_icon.png"),
-                    ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "textures/gui/bleed_bar.png")));
+                    ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "textures/gui/bleed_bar.png"),
+                    0xFFE11124,
+                    0xFFFF3A48),
+            FROSTBITE_STATUS_ID,
+            new StatusHudVisual(
+                    ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "textures/gui/frostbite-icon.png"),
+                    ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "textures/gui/frostbite-bar.png"),
+                    0xFF58C8FF,
+                    0xFFA8F0FF));
 
     private static final Map<ResourceLocation, Integer> ACTIVE_PROGRESS = new LinkedHashMap<>();
 
@@ -129,11 +137,15 @@ public final class CombatStatusHudController {
 
         int filledWidth = Math.max(0, Math.min(BAR_WIDTH, Math.round(progress / 100.0F * BAR_WIDTH)));
         if (filledWidth > 0) {
-            guiGraphics.fill(barX, barY, barX + filledWidth, barY + BAR_HEIGHT, BLEED_FILL_COLOR);
-            guiGraphics.fill(barX, barY, barX + filledWidth, barY + 1, BLEED_HIGHLIGHT_COLOR);
+            guiGraphics.fill(barX, barY, barX + filledWidth, barY + BAR_HEIGHT, visual.fillColor());
+            guiGraphics.fill(barX, barY, barX + filledWidth, barY + 1, visual.highlightColor());
         }
     }
 
-    private record StatusHudVisual(ResourceLocation iconTexture, ResourceLocation barTexture) {
+    private record StatusHudVisual(
+            ResourceLocation iconTexture,
+            ResourceLocation barTexture,
+            int fillColor,
+            int highlightColor) {
     }
 }

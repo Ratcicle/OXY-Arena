@@ -1,0 +1,17 @@
+{
+  "max_buildup": 100.0,
+  "decay_delay_ticks": 60,
+  "decay_per_tick": 1.0,
+  "proc_flat_damage": 2.0,
+  "proc_max_health_ratio": 0.05,
+  "reset_on_proc": true,
+  "overflow_carry": false,
+  "damage_source": "frostbite",
+  "hud_icon": "oxyarena:textures/gui/frostbite-icon.png",
+  "hud_bar": "oxyarena:textures/gui/frostbite-bar.png",
+  "proc_particle_style": "frost_burst",
+  "post_proc_damage_taken_multiplier": 1.2,
+  "post_proc_duration_ticks": 300,
+  "block_buildup_while_active": true,
+  "remove_active_on_fire_damage": true
+}

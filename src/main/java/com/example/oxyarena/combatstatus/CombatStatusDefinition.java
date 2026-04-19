@@ -14,5 +14,9 @@ public record CombatStatusDefinition(
         String damageSource,
         ResourceLocation hudIcon,
         ResourceLocation hudBar,
-        String procParticleStyle) {
+        String procParticleStyle,
+        float postProcDamageTakenMultiplier,
+        int postProcDurationTicks,
+        boolean blockBuildupWhileActive,
+        boolean removeActiveOnFireDamage) {
 }

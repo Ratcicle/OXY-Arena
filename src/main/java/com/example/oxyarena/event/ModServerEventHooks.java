@@ -1,7 +1,9 @@
 package com.example.oxyarena.event;
 
 import com.example.oxyarena.entity.effect.ZenithOrbitSwordEntity;
+import com.example.oxyarena.event.gameplay.GhostSaberEvents;
 import com.example.oxyarena.event.gameplay.NecromancerStaffEvents;
+import com.example.oxyarena.event.gameplay.TwoHandedTotemEvents;
 import com.example.oxyarena.network.ItemPickupNotificationPayload;
 import com.example.oxyarena.serverevent.EruptionTntServerEvent;
 import com.example.oxyarena.serverevent.OxyServerEventManager;
@@ -49,13 +51,20 @@ public final class ModServerEventHooks {
         }
 
         if (event.getEntity() instanceof LivingEntity livingEntity) {
+            if (livingEntity instanceof ServerPlayer player && TwoHandedTotemEvents.tryUseInventoryTotem(event, player)) {
+                return;
+            }
+
             ModGameEvents.clearCombatStatusState(livingEntity);
             ModGameEvents.clearAssassinDaggerTarget(livingEntity);
             ModGameEvents.clearSpectralBladeTarget(livingEntity);
         }
 
+        GhostSaberEvents.onLivingDeath(event);
+
         if (event.getEntity() instanceof ServerPlayer player) {
             ModGameEvents.clearZeroReverseState(player);
+            ModGameEvents.clearGhostSaberState(player);
             NecromancerStaffEvents.clearPlayer(player);
             ModGameEvents.clearMurasamaState(player);
             ModGameEvents.clearFlamingScytheState(player);
@@ -64,6 +73,8 @@ public final class ModServerEventHooks {
             ModGameEvents.clearSpectralBladeState(player);
             ModGameEvents.clearStormChargeState(player);
             ModGameEvents.clearOccultCamouflageState(player);
+            ModGameEvents.clearPlayerSlideState(player);
+            ModGameEvents.clearPlayerMantleState(player);
             ZenithOrbitSwordEntity.discardOwnedOrbitSwords(player);
         }
 
@@ -74,6 +85,9 @@ public final class ModServerEventHooks {
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && player.getServer() != null) {
             ModGameEvents.clearZeroReverseState(player);
+            ModGameEvents.clearGhostSaberState(player);
+            ModGameEvents.clearPlayerSlideState(player);
+            ModGameEvents.clearPlayerMantleState(player);
             NecromancerStaffEvents.clearPlayer(player);
             OxyServerEventManager.get(player.getServer()).onPlayerLoggedIn(player);
             PlayerHuntServerEvent.refreshPersistentPlayerState(player.getServer(), player);
@@ -84,6 +98,9 @@ public final class ModServerEventHooks {
     public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && player.getServer() != null) {
             ModGameEvents.clearZeroReverseState(player);
+            ModGameEvents.clearGhostSaberState(player);
+            ModGameEvents.clearPlayerSlideState(player);
+            ModGameEvents.clearPlayerMantleState(player);
             NecromancerStaffEvents.clearPlayer(player);
             ModGameEvents.clearCombatStatusState(player);
             ModGameEvents.clearMurasamaState(player);
@@ -105,6 +122,9 @@ public final class ModServerEventHooks {
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             ModGameEvents.clearZeroReverseState(player);
+            ModGameEvents.clearGhostSaberState(player);
+            ModGameEvents.clearPlayerSlideState(player);
+            ModGameEvents.clearPlayerMantleState(player);
             NecromancerStaffEvents.clearPlayer(player);
             ModGameEvents.clearCombatStatusState(player);
             ModGameEvents.clearMurasamaState(player);
@@ -217,6 +237,9 @@ public final class ModServerEventHooks {
         SoulReaperFireHelper.onServerStopping(event);
         EarthbreakerCrackHelper.onServerStopping(event);
         ModGameEvents.clearZeroReverseTracking();
+        ModGameEvents.clearGhostSaberTracking(event.getServer());
+        ModGameEvents.clearPlayerSlideTracking(event.getServer());
+        ModGameEvents.clearPlayerMantleTracking(event.getServer());
         NecromancerStaffEvents.clearAll(event.getServer());
         ModGameEvents.clearAllCombatStatuses();
         ModGameEvents.clearFlamingScytheTracking();
@@ -231,6 +254,9 @@ public final class ModServerEventHooks {
         SoulReaperFireHelper.onServerStopped(event);
         EarthbreakerCrackHelper.onServerStopped(event);
         ModGameEvents.clearZeroReverseTracking();
+        ModGameEvents.clearGhostSaberTracking(event.getServer());
+        ModGameEvents.clearPlayerSlideTracking(event.getServer());
+        ModGameEvents.clearPlayerMantleTracking(event.getServer());
         NecromancerStaffEvents.clearAll(event.getServer());
         ModGameEvents.clearAllCombatStatuses();
         ModGameEvents.clearFlamingScytheTracking();

@@ -16,18 +16,23 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 public final class CombatStatusEvents {
     private static final String MAGIC_DAMAGE_SOURCE = "magic";
+    private static final String FROSTBITE_DAMAGE_SOURCE = "frostbite";
     private static final String BLEED_BURST_PARTICLE_STYLE = "bleed_burst";
+    private static final String FROST_BURST_PARTICLE_STYLE = "frost_burst";
     private static final Vector3f BLEED_DUST_COLOR = new Vector3f(0.74F, 0.08F, 0.10F);
+    private static final Vector3f FROST_DUST_COLOR = new Vector3f(0.42F, 0.82F, 1.0F);
     private static final float ARMOR_BUILDUP_REDUCTION_PER_POINT = 0.02F;
     private static final float MIN_BUILDUP_MULTIPLIER = 0.45F;
 
@@ -37,12 +42,38 @@ public final class CombatStatusEvents {
     private CombatStatusEvents() {
     }
 
+    public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
+        if (!(event.getEntity() instanceof LivingEntity target)
+                || target.level().isClientSide()
+                || event.isCanceled()
+                || event.getAmount() <= 0.0F) {
+            return;
+        }
+
+        EntityCombatStatusState entityState = getEntityState(target);
+        if (entityState == null) {
+            return;
+        }
+
+        int currentTick = target.getServer() != null ? target.getServer().getTickCount() : 0;
+        if (event.getSource().is(DamageTypeTags.IS_FIRE)) {
+            removeFireSensitiveActiveStatuses(target, entityState);
+            return;
+        }
+
+        float multiplier = getIncomingDamageMultiplier(entityState, currentTick);
+        if (multiplier > 1.0F) {
+            event.setAmount(event.getAmount() * multiplier);
+        }
+    }
+
     public static void onLivingDamagePost(LivingDamageEvent.Post event) {
         if (!(event.getEntity() instanceof LivingEntity target)
                 || target.level().isClientSide()
                 || event.getNewDamage() <= 0.0F
                 || !target.isAlive()
                 || event.getSource().is(ModDamageTypes.BLEED_PROC)
+                || event.getSource().is(ModDamageTypes.FROSTBITE_PROC)
                 || !(event.getSource().getEntity() instanceof Player attacker)
                 || event.getSource().getDirectEntity() != attacker) {
             return;
@@ -129,6 +160,10 @@ public final class CombatStatusEvents {
                 .computeIfAbsent(target.getUUID(), key -> new EntityCombatStatusState());
         ActiveStatusState activeStatusState = entityState.statuses()
                 .computeIfAbsent(application.statusId(), key -> new ActiveStatusState());
+        if (definition.blockBuildupWhileActive() && activeStatusState.isActive(currentTick)) {
+            syncStatusIfNeeded(target, application.statusId(), definition, activeStatusState, currentTick);
+            return;
+        }
 
         float adjustedBuildup = getArmorAdjustedBuildup(application.buildupPerHit(), target);
         float newBuildup = activeStatusState.currentBuildup() + adjustedBuildup;
@@ -141,12 +176,12 @@ public final class CombatStatusEvents {
             }
 
             activeStatusState.setCurrentBuildup(Mth.clamp(newBuildup, 0.0F, definition.maxBuildup()));
-            procStatus(target, attacker, definition);
+            procStatus(target, attacker, definition, activeStatusState, currentTick);
         } else {
             activeStatusState.setCurrentBuildup(Mth.clamp(newBuildup, 0.0F, definition.maxBuildup()));
         }
 
-        syncStatusIfNeeded(target, application.statusId(), definition, activeStatusState);
+        syncStatusIfNeeded(target, application.statusId(), definition, activeStatusState, currentTick);
     }
 
     private static void tickTargetStatus(LivingEntity target, EntityCombatStatusState entityState, int currentTick) {
@@ -161,13 +196,18 @@ public final class CombatStatusEvents {
                 continue;
             }
 
-            if (activeStatusState.currentBuildup() > 0.0F
+            if (activeStatusState.activeUntilTick() > 0 && !activeStatusState.isActive(currentTick)) {
+                activeStatusState.setActiveUntilTick(0);
+            }
+
+            if (!activeStatusState.isActive(currentTick)
+                    && activeStatusState.currentBuildup() > 0.0F
                     && currentTick - activeStatusState.lastApplicationTick() >= definition.decayDelayTicks()) {
                 activeStatusState.setCurrentBuildup(Math.max(0.0F, activeStatusState.currentBuildup() - definition.decayPerTick()));
             }
 
-            syncStatusIfNeeded(target, statusEntry.getKey(), definition, activeStatusState);
-            if (activeStatusState.currentBuildup() <= 0.0F) {
+            syncStatusIfNeeded(target, statusEntry.getKey(), definition, activeStatusState, currentTick);
+            if (activeStatusState.currentBuildup() <= 0.0F && !activeStatusState.isActive(currentTick)) {
                 iterator.remove();
             }
         }
@@ -177,12 +217,15 @@ public final class CombatStatusEvents {
             LivingEntity target,
             ResourceLocation statusId,
             CombatStatusDefinition definition,
-            ActiveStatusState activeStatusState) {
+            ActiveStatusState activeStatusState,
+            int currentTick) {
         if (!(target instanceof ServerPlayer serverPlayer)) {
             return;
         }
 
-        int quantizedProgress = quantizeProgress(activeStatusState.currentBuildup(), definition.maxBuildup());
+        int quantizedProgress = activeStatusState.isActive(currentTick)
+                ? 100
+                : quantizeProgress(activeStatusState.currentBuildup(), definition.maxBuildup());
         if (quantizedProgress == activeStatusState.lastSentHudProgress()) {
             return;
         }
@@ -240,9 +283,17 @@ public final class CombatStatusEvents {
         return Mth.clamp(Math.round(currentBuildup / maxBuildup * 100.0F), 0, 100);
     }
 
-    private static void procStatus(LivingEntity target, Player attacker, CombatStatusDefinition definition) {
+    private static void procStatus(
+            LivingEntity target,
+            Player attacker,
+            CombatStatusDefinition definition,
+            ActiveStatusState activeStatusState,
+            int currentTick) {
         target.hurt(resolveDamageSource(target, attacker, definition.damageSource()),
                 definition.procFlatDamage() + target.getMaxHealth() * definition.procMaxHealthRatio());
+        if (definition.postProcDurationTicks() > 0) {
+            activeStatusState.setActiveUntilTick(currentTick + definition.postProcDurationTicks());
+        }
 
         if (target.level() instanceof ServerLevel serverLevel) {
             spawnProcParticles(serverLevel, target, definition.procParticleStyle());
@@ -255,6 +306,9 @@ public final class CombatStatusEvents {
             String damageSource) {
         if (MAGIC_DAMAGE_SOURCE.equals(damageSource)) {
             return target.damageSources().source(ModDamageTypes.BLEED_PROC, attacker);
+        }
+        if (FROSTBITE_DAMAGE_SOURCE.equals(damageSource)) {
+            return target.damageSources().source(ModDamageTypes.FROSTBITE_PROC, attacker);
         }
 
         return target.damageSources().source(ModDamageTypes.BLEED_PROC, attacker);
@@ -270,6 +324,11 @@ public final class CombatStatusEvents {
     }
 
     private static void spawnProcParticles(ServerLevel level, LivingEntity target, String particleStyle) {
+        if (FROST_BURST_PARTICLE_STYLE.equals(particleStyle)) {
+            spawnFrostBurstParticles(level, target);
+            return;
+        }
+
         if (!BLEED_BURST_PARTICLE_STYLE.equals(particleStyle)) {
             return;
         }
@@ -298,6 +357,90 @@ public final class CombatStatusEvents {
                 0.1D);
     }
 
+    private static void spawnFrostBurstParticles(ServerLevel level, LivingEntity target) {
+        double width = Math.max(0.25D, target.getBbWidth() * 0.4D);
+        double height = Math.max(0.25D, target.getBbHeight() * 0.35D);
+        level.sendParticles(
+                new DustParticleOptions(FROST_DUST_COLOR, 1.0F),
+                target.getX(),
+                target.getY(0.65D),
+                target.getZ(),
+                20,
+                width,
+                height,
+                width,
+                0.01D);
+        level.sendParticles(
+                ParticleTypes.SNOWFLAKE,
+                target.getX(),
+                target.getY(0.8D),
+                target.getZ(),
+                14,
+                width * 0.8D,
+                height * 0.7D,
+                width * 0.8D,
+                0.03D);
+    }
+
+    private static EntityCombatStatusState getEntityState(LivingEntity target) {
+        Map<UUID, EntityCombatStatusState> levelStates = ACTIVE_STATUSES.get(target.level().dimension());
+        return levelStates != null ? levelStates.get(target.getUUID()) : null;
+    }
+
+    private static float getIncomingDamageMultiplier(EntityCombatStatusState entityState, int currentTick) {
+        float multiplier = 1.0F;
+        for (Map.Entry<ResourceLocation, ActiveStatusState> statusEntry : entityState.statuses().entrySet()) {
+            CombatStatusDefinition definition = CombatStatusDataManager.getDefinition(statusEntry.getKey());
+            if (definition != null
+                    && statusEntry.getValue().isActive(currentTick)
+                    && definition.postProcDamageTakenMultiplier() > 1.0F) {
+                multiplier *= definition.postProcDamageTakenMultiplier();
+            }
+        }
+
+        return multiplier;
+    }
+
+    private static void removeFireSensitiveActiveStatuses(
+            LivingEntity target,
+            EntityCombatStatusState entityState) {
+        boolean removedAny = false;
+        for (Map.Entry<ResourceLocation, ActiveStatusState> statusEntry : entityState.statuses().entrySet()) {
+            CombatStatusDefinition definition = CombatStatusDataManager.getDefinition(statusEntry.getKey());
+            ActiveStatusState activeStatusState = statusEntry.getValue();
+            if (definition != null
+                    && definition.removeActiveOnFireDamage()
+                    && activeStatusState.activeUntilTick() > 0) {
+                activeStatusState.setActiveUntilTick(0);
+                activeStatusState.setCurrentBuildup(0.0F);
+                sendZeroIfPlayerTarget(target, statusEntry.getKey(), activeStatusState);
+                removedAny = true;
+            }
+        }
+
+        if (removedAny) {
+            pruneEmptyState(target, entityState);
+        }
+    }
+
+    private static void pruneEmptyState(LivingEntity target, EntityCombatStatusState entityState) {
+        entityState.statuses().entrySet().removeIf(entry -> entry.getValue().currentBuildup() <= 0.0F
+                && entry.getValue().activeUntilTick() <= 0);
+        if (!entityState.statuses().isEmpty()) {
+            return;
+        }
+
+        Map<UUID, EntityCombatStatusState> levelStates = ACTIVE_STATUSES.get(target.level().dimension());
+        if (levelStates == null) {
+            return;
+        }
+
+        levelStates.remove(target.getUUID());
+        if (levelStates.isEmpty()) {
+            ACTIVE_STATUSES.remove(target.level().dimension());
+        }
+    }
+
     private static final class EntityCombatStatusState {
         private final Map<ResourceLocation, ActiveStatusState> statuses = new HashMap<>();
 
@@ -310,6 +453,7 @@ public final class CombatStatusEvents {
         private float currentBuildup;
         private int lastApplicationTick;
         private int lastSentHudProgress = -1;
+        private int activeUntilTick;
 
         private float currentBuildup() {
             return currentBuildup;
@@ -333,6 +477,18 @@ public final class CombatStatusEvents {
 
         private void setLastSentHudProgress(int lastSentHudProgress) {
             this.lastSentHudProgress = lastSentHudProgress;
+        }
+
+        private int activeUntilTick() {
+            return activeUntilTick;
+        }
+
+        private void setActiveUntilTick(int activeUntilTick) {
+            this.activeUntilTick = activeUntilTick;
+        }
+
+        private boolean isActive(int currentTick) {
+            return this.activeUntilTick > currentTick;
         }
     }
 }

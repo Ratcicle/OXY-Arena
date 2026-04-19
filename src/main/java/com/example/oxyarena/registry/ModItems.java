@@ -15,7 +15,9 @@ import com.example.oxyarena.item.FlamingScytheItem;
 import com.example.oxyarena.item.EarthbreakerItem;
 import com.example.oxyarena.item.ElementalGauntletItem;
 import com.example.oxyarena.item.EstusFlaskItem;
+import com.example.oxyarena.item.FrozenNeedleItem;
 import com.example.oxyarena.item.GrapplingGunItem;
+import com.example.oxyarena.item.GhostSaberItem;
 import com.example.oxyarena.item.IncandescentAxeItem;
 import com.example.oxyarena.item.IncandescentIngotItem;
 import com.example.oxyarena.item.IncandescentPickaxeItem;
@@ -198,7 +200,7 @@ public final class ModItems {
             "rivers_of_blood",
             properties -> new RiversOfBloodItem(
                     ModToolTiers.AMETRA,
-                    properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 2.0F, -2.4F))));
+                    properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 1.0F, -2.4F))));
     public static final DeferredItem<EarthbreakerItem> EARTHBREAKER = ITEMS.registerItem(
             "earthbreaker",
             properties -> new EarthbreakerItem(
@@ -239,6 +241,16 @@ public final class ModItems {
             properties -> new NecromancerStaffItem(
                     ModToolTiers.AMETRA,
                     properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 0.0F, -2.4F))));
+    public static final DeferredItem<FrozenNeedleItem> FROZEN_NEEDLE = ITEMS.registerItem(
+            "frozen_needle",
+            properties -> new FrozenNeedleItem(
+                    ModToolTiers.AMETRA,
+                    properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 0.8F, -2.0F))));
+    public static final DeferredItem<GhostSaberItem> GHOST_SABER = ITEMS.registerItem(
+            "ghost_saber",
+            properties -> new GhostSaberItem(
+                    ModToolTiers.AMETRA,
+                    properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 1.5F, -2.3F))));
     public static final DeferredItem<ChocolateSwordItem> CHOCOLATE_SWORD = ITEMS.registerItem(
             "chocolate_sword",
             properties -> new ChocolateSwordItem(

@@ -11,6 +11,9 @@ public final class ModDamageTypes {
     public static final ResourceKey<DamageType> BLEED_PROC = ResourceKey.create(
             Registries.DAMAGE_TYPE,
             ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "bleed_proc"));
+    public static final ResourceKey<DamageType> FROSTBITE_PROC = ResourceKey.create(
+            Registries.DAMAGE_TYPE,
+            ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "frostbite_proc"));
     public static final ResourceKey<DamageType> ELEMENTAL_GAUNTLET_PROJECTILE = ResourceKey.create(
             Registries.DAMAGE_TYPE,
             ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "elemental_gauntlet_projectile"));
