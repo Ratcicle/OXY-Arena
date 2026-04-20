@@ -37,7 +37,7 @@ public class GhostSaberItem extends SwordItem {
         }
 
         if (level.isClientSide) {
-            return InteractionResultHolder.consume(stack);
+            return InteractionResultHolder.pass(stack);
         }
 
         if (!(player instanceof ServerPlayer serverPlayer) || !ModGameEvents.activateGhostSaber(serverPlayer)) {

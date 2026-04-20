@@ -13,9 +13,7 @@ import com.example.oxyarena.client.PlayerSlideController;
 import com.example.oxyarena.client.AmetraXrayController;
 import com.example.oxyarena.client.BridgingAssistController;
 import com.example.oxyarena.client.ToolTooltipStatsController;
-import com.example.oxyarena.client.animation.PlayerAnimationDebugCommands;
-import com.example.oxyarena.client.animation.PlayerAnimationController;
-import com.example.oxyarena.client.animation.PlayerAnimationDataManager;
+import com.example.oxyarena.client.animation.OxyPlayerAnimatorBridge;
 import com.example.oxyarena.client.particle.NevoaBorderParticle;
 import com.example.oxyarena.client.renderer.entity.AirdropCrateRenderer;
 import com.example.oxyarena.client.renderer.entity.CloneThiefRenderer;
@@ -56,7 +54,6 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
-import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
@@ -69,7 +66,6 @@ public class OXYArenaClient {
         modEventBus.addListener(this::registerKeyMappings);
         modEventBus.addListener(this::onClientSetup);
         modEventBus.addListener(this::registerShaders);
-        modEventBus.addListener(this::registerClientReloadListeners);
         ImmersiveHudController.register();
         InventoryInteractionController.register();
         PingLocationController.register();
@@ -82,13 +78,11 @@ public class OXYArenaClient {
         BridgingAssistController.register();
         ToolTooltipStatsController.register();
         OccultCamouflageController.register();
-        PlayerAnimationController.register();
-        PlayerAnimationDebugCommands.register();
         CombatStatusSyncPayload.setClientReceiver(CombatStatusHudController::handleSync);
         ItemPickupNotificationPayload.setClientReceiver(PickupNotifierController::handlePickup);
         PingLocationSyncPayload.setClientReceiver(PingLocationController::handlePing);
         OccultCamouflageSyncPayload.setClientReceiver(OccultCamouflageController::handleSync);
-        PlayerAnimationPlayPayload.setClientReceiver(PlayerAnimationController::handlePlayPayload);
+        PlayerAnimationPlayPayload.setClientReceiver(OxyPlayerAnimatorBridge::handlePlayPayload);
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
     }
 
@@ -152,10 +146,6 @@ public class OXYArenaClient {
         } catch (java.io.IOException exception) {
             throw new RuntimeException("Failed to register occult camouflage shaders", exception);
         }
-    }
-
-    private void registerClientReloadListeners(RegisterClientReloadListenersEvent event) {
-        PlayerAnimationDataManager.onRegisterClientReloadListeners(event);
     }
 
     private void onClientSetup(FMLClientSetupEvent event) {

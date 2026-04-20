@@ -34,6 +34,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 public final class GhostSaberEvents {
+    private static final boolean ECHO_TEST_DISABLED = true;
     private static final int DASH_DURATION_TICKS = 6;
     private static final int ECHO_DELAY_TICKS = GhostSaberEchoEntity.ECHO_DELAY_TICKS;
     private static final int ECHO_DURATION_TICKS = GhostSaberEchoEntity.ECHO_DURATION_TICKS;
@@ -67,13 +68,17 @@ public final class GhostSaberEvents {
         }
 
         int currentTick = player.getServer().getTickCount();
-        GhostSaberEchoEntity echoEntity = GhostSaberEchoEntity.spawn(
-                player.serverLevel(),
-                player.getUUID(),
-                origin,
-                target,
-                player.getYRot(),
-                player.getXRot());
+        UUID echoEntityId = null;
+        if (!ECHO_TEST_DISABLED) {
+            GhostSaberEchoEntity echoEntity = GhostSaberEchoEntity.spawn(
+                    player.serverLevel(),
+                    player.getUUID(),
+                    origin,
+                    target,
+                    player.getYRot(),
+                    player.getXRot());
+            echoEntityId = echoEntity.getUUID();
+        }
         DashState state = new DashState(
                 player.getUUID(),
                 player.level().dimension(),
@@ -81,19 +86,21 @@ public final class GhostSaberEvents {
                 target,
                 player.getYRot(),
                 player.getXRot(),
-                echoEntity.getUUID(),
+                echoEntityId,
                 currentTick,
                 player.isNoGravity());
         ACTIVE_DASHES.add(state);
-        PENDING_ECHOES.add(new PendingEcho(
-                player.getUUID(),
-                player.level().dimension(),
-                origin,
-                target,
-                player.getYRot(),
-                player.getXRot(),
-                echoEntity.getUUID(),
-                currentTick + ECHO_DELAY_TICKS));
+        if (!ECHO_TEST_DISABLED) {
+            PENDING_ECHOES.add(new PendingEcho(
+                    player.getUUID(),
+                    player.level().dimension(),
+                    origin,
+                    target,
+                    player.getYRot(),
+                    player.getXRot(),
+                    echoEntityId,
+                    currentTick + ECHO_DELAY_TICKS));
+        }
 
         player.setNoGravity(true);
         player.resetFallDistance();
@@ -212,7 +219,9 @@ public final class GhostSaberEvents {
             player.hurtMarked = true;
             player.resetFallDistance();
             damageAlongSegment(player, previousPosition, player.position(), DASH_DAMAGE, dash.hitTargets());
-            retargetPendingEcho(dash.entityId(), player.position(), server);
+            if (dash.entityId() != null) {
+                retargetPendingEcho(dash.entityId(), player.position(), server);
+            }
 
             if (progress >= 1.0D) {
                 restoreGravity(player, dash);
