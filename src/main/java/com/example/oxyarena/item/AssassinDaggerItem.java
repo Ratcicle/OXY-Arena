@@ -24,7 +24,7 @@ import net.minecraft.world.level.Level;
 public final class AssassinDaggerItem extends SwordItem {
     private static final double ATTACK_DAMAGE_BONUS = 3.0D;
     private static final double ATTACK_SPEED_BONUS = -2.0D;
-    private static final int ABILITY_COOLDOWN_TICKS = 40;
+    private static final int ABILITY_COOLDOWN_TICKS = 100;
 
     public AssassinDaggerItem(Tier tier, Properties properties) {
         super(tier, properties);

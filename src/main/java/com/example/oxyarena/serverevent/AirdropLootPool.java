@@ -39,6 +39,7 @@ public final class AirdropLootPool {
             AirdropLootEntry.of(ModItems.FLAMING_SCYTHE, 1, 1, 1),
             AirdropLootEntry.of(ModItems.LIFEHUNT_SCYTHE, 1, 1, 1),
             AirdropLootEntry.of(ModItems.MURASAMA, 1, 1, 1),
+            AirdropLootEntry.of(ModItems.RIVERS_OF_BLOOD, 1, 1, 1),
             AirdropLootEntry.of(ModItems.KUSABIMARU, 1, 1, 1),
             AirdropLootEntry.of(ModItems.SOUL_REAPER, 1, 1, 1),
             AirdropLootEntry.of(ModItems.EARTHBREAKER, 1, 1, 1),

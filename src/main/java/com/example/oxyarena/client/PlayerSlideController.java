@@ -23,7 +23,8 @@ public final class PlayerSlideController {
             GLFW.GLFW_KEY_C,
             "key.categories.gameplay");
 
-    private static boolean lastSentDown;
+    private static boolean lastSentSlideDown;
+    private static boolean lastSentMovementDown;
     private static int predictedSlidePoseTicks;
     private static boolean forcingLocalPose;
 
@@ -40,29 +41,39 @@ public final class PlayerSlideController {
 
     private static void onClientTickPost(ClientTickEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
-        boolean shouldSendDown = minecraft.player != null
+        boolean slideKeyDown = minecraft.player != null
                 && minecraft.level != null
                 && minecraft.screen == null
                 && SLIDE_KEY.isDown();
+        boolean movementKeyDown = slideKeyDown && isMovementKeyDown(minecraft);
         if (minecraft.player == null || minecraft.level == null) {
-            lastSentDown = false;
+            lastSentSlideDown = false;
+            lastSentMovementDown = false;
             predictedSlidePoseTicks = 0;
             forcingLocalPose = false;
             return;
         }
 
-        if (shouldSendDown == lastSentDown) {
-            tickLocalPose(minecraft.player, shouldSendDown);
+        if (slideKeyDown == lastSentSlideDown && movementKeyDown == lastSentMovementDown) {
+            tickLocalPose(minecraft.player, slideKeyDown);
             return;
         }
 
-        if (shouldSendDown && minecraft.player.isSprinting() && minecraft.player.onGround()) {
+        if (slideKeyDown && !lastSentSlideDown && minecraft.player.isSprinting() && minecraft.player.onGround()) {
             predictedSlidePoseTicks = CLIENT_SLIDE_POSE_TICKS;
         }
 
-        lastSentDown = shouldSendDown;
-        PacketDistributor.sendToServer(new PlayerSlideInputPayload(shouldSendDown));
-        tickLocalPose(minecraft.player, shouldSendDown);
+        lastSentSlideDown = slideKeyDown;
+        lastSentMovementDown = movementKeyDown;
+        PacketDistributor.sendToServer(new PlayerSlideInputPayload(slideKeyDown, movementKeyDown));
+        tickLocalPose(minecraft.player, slideKeyDown);
+    }
+
+    private static boolean isMovementKeyDown(Minecraft minecraft) {
+        return minecraft.options.keyUp.isDown()
+                || minecraft.options.keyDown.isDown()
+                || minecraft.options.keyLeft.isDown()
+                || minecraft.options.keyRight.isDown();
     }
 
     private static void tickLocalPose(LocalPlayer player, boolean keyDown) {

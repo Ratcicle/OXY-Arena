@@ -89,7 +89,7 @@
   "tooltip.oxyarena.spectral_blade.detail": "Each mark lasts 20s and deals 1 extra damage when consumed",
   "tooltip.oxyarena.assassin_dagger.passive": "Passive: backstabs deal double damage",
   "tooltip.oxyarena.assassin_dagger.ability": "Right-click: replays 50% of your last 2s of damage on your last target",
-  "tooltip.oxyarena.assassin_dagger.cooldown": "Cooldown: 2s",
+  "tooltip.oxyarena.assassin_dagger.cooldown": "Cooldown: 5s",
   "tooltip.oxyarena.assassin_dagger.detail": "The replay keeps the original spacing between hits",
   "tooltip.oxyarena.elemental_gauntlet.passive": "Hold right-click: fires elemental projectiles in bursts",
   "tooltip.oxyarena.elemental_gauntlet.detail": "Weak homing and a small splash behind the target",

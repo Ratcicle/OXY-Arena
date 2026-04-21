@@ -5,6 +5,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
+import com.example.oxyarena.animation.ModPlayerAnimations;
+import com.example.oxyarena.network.PlayerAnimationPlayPayload;
+import com.example.oxyarena.network.PlayerAnimationStopPayload;
 import com.example.oxyarena.network.PlayerMantleInputPayload;
 
 import net.minecraft.core.BlockPos;
@@ -22,6 +25,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 public final class PlayerMantleEvents {
     private static final int MAX_HANG_TICKS = 60;
@@ -31,7 +35,7 @@ public final class PlayerMantleEvents {
     private static final double WALL_SEARCH_MID_DISTANCE = 0.68D;
     private static final double WALL_SEARCH_MAX_DISTANCE = 0.94D;
     private static final double HANG_WALL_OFFSET = 0.83D;
-    private static final double HANG_Y_OFFSET = 0.72D;
+    private static final double HANG_Y_OFFSET = 0.50D;
     private static final double MAX_ANCHOR_DRIFT_SQR = 0.72D;
     private static final double CLIMB_JUMP_UP_SPEED = 0.58D;
     private static final double CLIMB_JUMP_FORWARD_SPEED = 0.34D;
@@ -82,6 +86,7 @@ public final class PlayerMantleEvents {
             ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
             if (player == null || !tickMantleState(player, entry.getValue(), currentTick)) {
                 if (player != null) {
+                    stopMantleClimbAnimation(player);
                     restoreGravity(player, entry.getValue());
                 }
                 iterator.remove();
@@ -105,6 +110,7 @@ public final class PlayerMantleEvents {
     public static void clearPlayer(ServerPlayer player) {
         MantleState state = HANGING.remove(player.getUUID());
         if (state != null) {
+            stopMantleClimbAnimation(player);
             restoreGravity(player, state);
         }
         LAST_GROUND_TICK.remove(player.getUUID());
@@ -115,6 +121,7 @@ public final class PlayerMantleEvents {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             MantleState state = HANGING.get(player.getUUID());
             if (state != null) {
+                stopMantleClimbAnimation(player);
                 restoreGravity(player, state);
             }
         }
@@ -147,6 +154,7 @@ public final class PlayerMantleEvents {
         player.setNoGravity(true);
         player.resetFallDistance();
         lockPlayerToAnchor(player, state);
+        playMantleClimbAnimation(player);
         spawnMantleFeedback(player.serverLevel(), state, 6, 0.03D, 0.7F);
     }
 
@@ -167,6 +175,7 @@ public final class PlayerMantleEvents {
         }
 
         HANGING.remove(player.getUUID());
+        stopMantleClimbAnimation(player);
         restoreGravity(player, state);
         player.resetFallDistance();
         player.setDeltaMovement(
@@ -181,6 +190,7 @@ public final class PlayerMantleEvents {
 
     private static void release(ServerPlayer player, MantleState state, boolean applyCooldown) {
         HANGING.remove(player.getUUID());
+        stopMantleClimbAnimation(player);
         restoreGravity(player, state);
         player.setDeltaMovement(Vec3.ZERO);
         player.hasImpulse = true;
@@ -309,6 +319,18 @@ public final class PlayerMantleEvents {
 
     private static void setCooldown(ServerPlayer player, int currentTick) {
         COOLDOWN_UNTIL.put(player.getUUID(), currentTick + COOLDOWN_TICKS);
+    }
+
+    private static void playMantleClimbAnimation(ServerPlayer player) {
+        PacketDistributor.sendToPlayersTrackingEntityAndSelf(
+                player,
+                new PlayerAnimationPlayPayload(player.getUUID(), ModPlayerAnimations.PLAYER_MANTLE_CLIMB));
+    }
+
+    private static void stopMantleClimbAnimation(ServerPlayer player) {
+        PacketDistributor.sendToPlayersTrackingEntityAndSelf(
+                player,
+                new PlayerAnimationStopPayload(player.getUUID()));
     }
 
     private static void spawnMantleFeedback(ServerLevel level, MantleState state, int particleCount, double speed, float pitch) {

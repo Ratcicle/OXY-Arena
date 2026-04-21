@@ -34,7 +34,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 public final class GhostSaberEvents {
-    private static final boolean ECHO_TEST_DISABLED = true;
+    private static final boolean ECHO_TEST_DISABLED = false;
     private static final int DASH_DURATION_TICKS = 6;
     private static final int ECHO_DELAY_TICKS = GhostSaberEchoEntity.ECHO_DELAY_TICKS;
     private static final int ECHO_DURATION_TICKS = GhostSaberEchoEntity.ECHO_DURATION_TICKS;

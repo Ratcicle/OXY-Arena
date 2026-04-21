@@ -11,23 +11,25 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record PlayerSlideInputPayload(int pressed) implements CustomPacketPayload {
+public record PlayerSlideInputPayload(int slideKeyDown, int movementKeyDown) implements CustomPacketPayload {
     public static final Type<PlayerSlideInputPayload> TYPE = new Type<>(
             ResourceLocation.fromNamespaceAndPath(OXYArena.MODID, "player_slide_input"));
     public static final StreamCodec<RegistryFriendlyByteBuf, PlayerSlideInputPayload> STREAM_CODEC =
             StreamCodec.composite(
                     ByteBufCodecs.INT,
-                    PlayerSlideInputPayload::pressed,
+                    PlayerSlideInputPayload::slideKeyDown,
+                    ByteBufCodecs.INT,
+                    PlayerSlideInputPayload::movementKeyDown,
                     PlayerSlideInputPayload::new);
 
-    public PlayerSlideInputPayload(boolean pressed) {
-        this(pressed ? 1 : 0);
+    public PlayerSlideInputPayload(boolean slideKeyDown, boolean movementKeyDown) {
+        this(slideKeyDown ? 1 : 0, movementKeyDown ? 1 : 0);
     }
 
     public static void handle(PlayerSlideInputPayload payload, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player) {
-                PlayerSlideEvents.handleInput(player, payload.pressed() != 0);
+                PlayerSlideEvents.handleInput(player, payload.slideKeyDown() != 0, payload.movementKeyDown() != 0);
             }
         });
     }

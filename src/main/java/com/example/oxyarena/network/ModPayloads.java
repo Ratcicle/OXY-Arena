@@ -4,7 +4,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 public final class ModPayloads {
-    private static final String NETWORK_VERSION = "6";
+    private static final String NETWORK_VERSION = "8";
 
     private ModPayloads() {
     }
@@ -31,6 +31,10 @@ public final class ModPayloads {
                 PlayerAnimationPlayPayload.TYPE,
                 PlayerAnimationPlayPayload.STREAM_CODEC,
                 PlayerAnimationPlayPayload::handle);
+        registrar.playToClient(
+                PlayerAnimationStopPayload.TYPE,
+                PlayerAnimationStopPayload.STREAM_CODEC,
+                PlayerAnimationStopPayload::handle);
         registrar.playToServer(
                 InventorySortRequestPayload.TYPE,
                 InventorySortRequestPayload.STREAM_CODEC,

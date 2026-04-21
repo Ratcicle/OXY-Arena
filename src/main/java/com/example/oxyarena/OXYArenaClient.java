@@ -33,6 +33,7 @@ import com.example.oxyarena.network.CombatStatusSyncPayload;
 import com.example.oxyarena.network.ItemPickupNotificationPayload;
 import com.example.oxyarena.network.OccultCamouflageSyncPayload;
 import com.example.oxyarena.network.PlayerAnimationPlayPayload;
+import com.example.oxyarena.network.PlayerAnimationStopPayload;
 import com.example.oxyarena.network.PingLocationSyncPayload;
 import com.example.oxyarena.registry.ModEntityTypes;
 import com.example.oxyarena.registry.ModItems;
@@ -83,6 +84,7 @@ public class OXYArenaClient {
         PingLocationSyncPayload.setClientReceiver(PingLocationController::handlePing);
         OccultCamouflageSyncPayload.setClientReceiver(OccultCamouflageController::handleSync);
         PlayerAnimationPlayPayload.setClientReceiver(OxyPlayerAnimatorBridge::handlePlayPayload);
+        PlayerAnimationStopPayload.setClientReceiver(OxyPlayerAnimatorBridge::handleStopPayload);
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
     }
 

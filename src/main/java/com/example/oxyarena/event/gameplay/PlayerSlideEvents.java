@@ -5,12 +5,18 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
+import com.example.oxyarena.animation.ModPlayerAnimations;
+import com.example.oxyarena.network.PlayerAnimationPlayPayload;
+import com.example.oxyarena.network.PlayerAnimationStopPayload;
+
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 public final class PlayerSlideEvents {
     private static final int SLIDE_DURATION_TICKS = 14;
@@ -25,18 +31,23 @@ public final class PlayerSlideEvents {
     private PlayerSlideEvents() {
     }
 
-    public static void handleInput(ServerPlayer player, boolean pressed) {
+    public static void handleInput(ServerPlayer player, boolean slideKeyDown, boolean movementKeyDown) {
         if (player.getServer() == null) {
             return;
         }
 
-        if (!pressed && !STATES.containsKey(player.getUUID())) {
+        boolean wasTracked = STATES.containsKey(player.getUUID());
+        if (!slideKeyDown && !wasTracked) {
             return;
         }
 
         SlideState state = STATES.computeIfAbsent(player.getUUID(), ignored -> new SlideState());
-        state.keyDown = pressed;
-        if (!pressed) {
+        state.keyDown = slideKeyDown;
+        state.movementKeyDown = movementKeyDown;
+        if (!slideKeyDown) {
+            if (state.mode == SlideMode.CRAWLING) {
+                stopLowMovementAnimation(player, state);
+            }
             if (state.mode == SlideMode.CRAWLING && canStandUp(player)) {
                 clearPlayer(player);
             }
@@ -45,6 +56,15 @@ public final class PlayerSlideEvents {
 
         if (!canUseLowMovement(player) || !canFitPose(player, Pose.SWIMMING)) {
             clearPlayer(player);
+            return;
+        }
+
+        if (state.mode == SlideMode.SLIDING) {
+            return;
+        }
+
+        if (wasTracked && state.mode == SlideMode.CRAWLING) {
+            startCrawling(player, state);
             return;
         }
 
@@ -78,6 +98,7 @@ public final class PlayerSlideEvents {
     public static void clearPlayer(ServerPlayer player) {
         SlideState state = STATES.remove(player.getUUID());
         if (state != null) {
+            stopLowMovementAnimation(player, state);
             clearForcedPose(player, state);
         }
     }
@@ -86,6 +107,7 @@ public final class PlayerSlideEvents {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             SlideState state = STATES.get(player.getUUID());
             if (state != null) {
+                stopLowMovementAnimation(player, state);
                 clearForcedPose(player, state);
             }
         }
@@ -98,6 +120,7 @@ public final class PlayerSlideEvents {
 
     private static boolean tickPlayer(ServerPlayer player, SlideState state, int currentTick) {
         if (!canUseLowMovement(player) || !canFitPose(player, Pose.SWIMMING)) {
+            stopLowMovementAnimation(player, state);
             clearForcedPose(player, state);
             return false;
         }
@@ -108,6 +131,7 @@ public final class PlayerSlideEvents {
         }
 
         if (state.mode == SlideMode.CRAWLING && !state.keyDown && canStandUp(player)) {
+            stopLowMovementAnimation(player, state);
             clearForcedPose(player, state);
             return false;
         }
@@ -147,6 +171,7 @@ public final class PlayerSlideEvents {
             state.mode = SlideMode.CRAWLING;
             state.slideSpeed = 0.0D;
             state.airborneTicks = 0;
+            updateCrawlAnimation(player, state);
             return;
         }
 
@@ -161,6 +186,7 @@ public final class PlayerSlideEvents {
         state.cooldownUntilTick = currentTick + SLIDE_DURATION_TICKS + SLIDE_COOLDOWN_TICKS;
         state.airborneTicks = 0;
         forceLowPose(player, state);
+        playLowMovementAnimation(player, state, ModPlayerAnimations.PLAYER_SLIDE, SlideAnimation.SLIDE);
     }
 
     private static void startCrawling(ServerPlayer player, SlideState state) {
@@ -168,6 +194,7 @@ public final class PlayerSlideEvents {
         state.slideSpeed = 0.0D;
         state.airborneTicks = 0;
         forceLowPose(player, state);
+        updateCrawlAnimation(player, state);
     }
 
     private static boolean canStartSlide(ServerPlayer player, SlideState state, int currentTick) {
@@ -237,15 +264,58 @@ public final class PlayerSlideEvents {
         state.forcedPose = false;
     }
 
+    private static void updateCrawlAnimation(ServerPlayer player, SlideState state) {
+        if (state.keyDown && state.movementKeyDown) {
+            if (state.activeAnimation != SlideAnimation.CRAWL) {
+                playLowMovementAnimation(player, state, ModPlayerAnimations.PLAYER_CRAWL, SlideAnimation.CRAWL);
+            }
+            return;
+        }
+
+        if (state.activeAnimation != SlideAnimation.NONE) {
+            stopLowMovementAnimation(player, state);
+        }
+    }
+
+    private static void playLowMovementAnimation(
+            ServerPlayer player,
+            SlideState state,
+            ResourceLocation animationId,
+            SlideAnimation activeAnimation) {
+        PacketDistributor.sendToPlayersTrackingEntityAndSelf(
+                player,
+                new PlayerAnimationPlayPayload(player.getUUID(), animationId));
+        state.activeAnimation = activeAnimation;
+    }
+
+    private static void stopLowMovementAnimation(ServerPlayer player, SlideState state) {
+        if (state.activeAnimation == SlideAnimation.NONE) {
+            return;
+        }
+
+        PacketDistributor.sendToPlayersTrackingEntityAndSelf(
+                player,
+                new PlayerAnimationStopPayload(player.getUUID()));
+        state.activeAnimation = SlideAnimation.NONE;
+    }
+
     private enum SlideMode {
         CRAWLING,
         SLIDING
     }
 
+    private enum SlideAnimation {
+        NONE,
+        SLIDE,
+        CRAWL
+    }
+
     private static final class SlideState {
         private boolean keyDown;
+        private boolean movementKeyDown;
         private boolean forcedPose;
         private SlideMode mode = SlideMode.CRAWLING;
+        private SlideAnimation activeAnimation = SlideAnimation.NONE;
         private int slideEndTick;
         private int cooldownUntilTick;
         private int airborneTicks;

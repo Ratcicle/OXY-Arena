@@ -9,6 +9,15 @@ public final class ModPlayerAnimations {
     public static final ResourceLocation GHOST_SABER_PHANTOM_SABER_SLASH = ResourceLocation.fromNamespaceAndPath(
             OXYArena.MODID,
             "phantom_saber_slash");
+    public static final ResourceLocation PLAYER_MANTLE_CLIMB = ResourceLocation.fromNamespaceAndPath(
+            OXYArena.MODID,
+            "climb");
+    public static final ResourceLocation PLAYER_SLIDE = ResourceLocation.fromNamespaceAndPath(
+            OXYArena.MODID,
+            "slide");
+    public static final ResourceLocation PLAYER_CRAWL = ResourceLocation.fromNamespaceAndPath(
+            OXYArena.MODID,
+            "crawl");
 
     private ModPlayerAnimations() {
     }

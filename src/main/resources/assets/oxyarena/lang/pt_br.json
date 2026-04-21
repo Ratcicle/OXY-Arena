@@ -89,7 +89,7 @@
   "tooltip.oxyarena.spectral_blade.detail": "Cada marca dura 20s e causa 1 de dano extra ao ser consumida",
   "tooltip.oxyarena.assassin_dagger.passive": "Passiva: golpes pelas costas causam o dobro de dano",
   "tooltip.oxyarena.assassin_dagger.ability": "Bot\u00e3o direito: repete 50% do dano dos \u00faltimos 2s no \u00faltimo alvo",
-  "tooltip.oxyarena.assassin_dagger.cooldown": "Recarga: 2s",
+  "tooltip.oxyarena.assassin_dagger.cooldown": "Recarga: 5s",
   "tooltip.oxyarena.assassin_dagger.detail": "Os hits reaplicam com o mesmo intervalo original",
   "tooltip.oxyarena.elemental_gauntlet.passive": "Segure bot\u00e3o direito: dispara proj\u00e9teis elementais em rajada",
   "tooltip.oxyarena.elemental_gauntlet.detail": "Homing fraco e pequeno splash atr\u00e1s do alvo",
