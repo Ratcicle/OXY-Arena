@@ -1,0 +1,28 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "oxyarena:item/black_blade"
+  },
+  "display": {
+    "thirdperson_righthand": {
+      "rotation": [30, 90, 20],
+      "scale": [1.5, 1.5, 1.5],
+      "translation": [0, 10, 4]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [0, 0, 0],
+      "scale": [1.5, 1.5, 1.5],
+      "translation": [0, 0, 0]
+    },
+    "firstperson_righthand": {
+      "rotation": [40, 90, 0],
+      "scale": [1.5, 1.5, 1.5],
+      "translation": [3, 8, 0]
+    },
+    "firstperson_lefthand": {
+      "rotation": [0, 0, 0],
+      "scale": [1.5, 1.5, 1.5],
+      "translation": [0, 0, 0]
+    }
+  }
+}

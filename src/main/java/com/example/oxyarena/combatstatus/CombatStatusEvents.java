@@ -74,6 +74,8 @@ public final class CombatStatusEvents {
                 || !target.isAlive()
                 || event.getSource().is(ModDamageTypes.BLEED_PROC)
                 || event.getSource().is(ModDamageTypes.FROSTBITE_PROC)
+                || event.getSource().is(ModDamageTypes.BLACK_BLADE_PULSE)
+                || event.getSource().is(ModDamageTypes.BLACK_BLADE_PROJECTILE)
                 || !(event.getSource().getEntity() instanceof Player attacker)
                 || event.getSource().getDirectEntity() != attacker) {
             return;

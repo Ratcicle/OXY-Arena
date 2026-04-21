@@ -13,12 +13,14 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.example.oxyarena.entity.effect.SpectralMarkEntity;
+import com.example.oxyarena.registry.ModDamageTypes;
 import com.example.oxyarena.registry.ModItems;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -206,6 +208,7 @@ public final class MarkReplayEvents {
     private static void handleAssassinDaggerDamagePre(LivingDamageEvent.Pre event) {
         if (!(event.getEntity() instanceof LivingEntity target)
                 || event.getNewDamage() <= 0.0F
+                || isBlackBladeDamage(event.getSource())
                 || !(event.getSource().getEntity() instanceof Player attacker)
                 || event.getSource().getDirectEntity() != attacker
                 || attacker == target
@@ -222,6 +225,7 @@ public final class MarkReplayEvents {
         if (!(event.getEntity() instanceof LivingEntity target)
                 || !(target.level() instanceof ServerLevel serverLevel)
                 || event.getNewDamage() <= 0.0F
+                || isBlackBladeDamage(event.getSource())
                 || !(event.getSource().getEntity() instanceof Player attacker)
                 || event.getSource().getDirectEntity() != attacker
                 || attacker == target
@@ -238,6 +242,7 @@ public final class MarkReplayEvents {
         if (!(event.getEntity() instanceof LivingEntity target)
                 || !(target.level() instanceof ServerLevel serverLevel)
                 || event.getNewDamage() <= 0.0F
+                || isBlackBladeDamage(event.getSource())
                 || !(event.getSource().getEntity() instanceof Player attacker)
                 || event.getSource().getDirectEntity() != attacker
                 || attacker == target
@@ -253,6 +258,11 @@ public final class MarkReplayEvents {
         history.addLast(new AssassinDamageSnapshot(currentTick, event.getNewDamage()));
         trimAssassinDaggerHistory(history, currentTick);
         ASSASSIN_DAGGER_LAST_TARGETS.put(attackerId, targetId);
+    }
+
+    private static boolean isBlackBladeDamage(DamageSource source) {
+        return source.is(ModDamageTypes.BLACK_BLADE_PULSE)
+                || source.is(ModDamageTypes.BLACK_BLADE_PROJECTILE);
     }
 
     private static boolean isAssassinDaggerBackstab(Player attacker, LivingEntity target) {

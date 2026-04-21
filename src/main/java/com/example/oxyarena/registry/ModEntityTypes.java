@@ -9,6 +9,7 @@ import com.example.oxyarena.entity.effect.SmokeCloud;
 import com.example.oxyarena.entity.effect.GhostSaberEchoEntity;
 import com.example.oxyarena.entity.effect.SpectralMarkEntity;
 import com.example.oxyarena.entity.effect.ZenithOrbitSwordEntity;
+import com.example.oxyarena.entity.projectile.BlackBladeProjectile;
 import com.example.oxyarena.entity.projectile.CitrineThrowingDagger;
 import com.example.oxyarena.entity.projectile.ElementalGauntletProjectile;
 import com.example.oxyarena.entity.projectile.GrapplingHook;
@@ -92,6 +93,15 @@ public final class ModEntityTypes {
                             .clientTrackingRange(8)
                             .updateInterval(1)
                             .build("elemental_gauntlet_projectile"));
+    public static final DeferredHolder<EntityType<?>, EntityType<BlackBladeProjectile>> BLACK_BLADE_PROJECTILE =
+            ENTITY_TYPES.register(
+                    "black_blade_projectile",
+                    () -> EntityType.Builder.<BlackBladeProjectile>of(BlackBladeProjectile::new, MobCategory.MISC)
+                            .sized(0.5F, 0.5F)
+                            .eyeHeight(0.0F)
+                            .clientTrackingRange(8)
+                            .updateInterval(1)
+                            .build("black_blade_projectile"));
     public static final DeferredHolder<EntityType<?>, EntityType<GrapplingHook>> GRAPPLING_HOOK =
             ENTITY_TYPES.register(
                     "grappling_hook",

@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "oxyarena:elemental_gauntlet_projectile"
+    "oxyarena:elemental_gauntlet_projectile",
+    "oxyarena:black_blade_projectile"
   ]
 }

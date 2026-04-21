@@ -105,6 +105,10 @@ public final class ModGameEvents {
         CombatWeaponEvents.clearFlamingScytheTracking();
     }
 
+    public static void clearBlackBladeTracking() {
+        CombatWeaponEvents.clearBlackBladeTracking();
+    }
+
     public static void clearCombatStatusState(LivingEntity target) {
         CombatStatusEvents.clearEntity(target);
     }

@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "oxyarena:bleed_proc"
+    "oxyarena:bleed_proc",
+    "oxyarena:black_blade_projectile"
   ]
 }

@@ -3,6 +3,7 @@ package com.example.oxyarena.registry;
 import com.example.oxyarena.OXYArena;
 import com.example.oxyarena.item.AmetraSwordItem;
 import com.example.oxyarena.item.AssassinDaggerItem;
+import com.example.oxyarena.item.BlackBladeItem;
 import com.example.oxyarena.item.BlackDiamondSwordItem;
 import com.example.oxyarena.item.ChocolateSwordItem;
 import com.example.oxyarena.item.CobaltSwordItem;
@@ -201,6 +202,11 @@ public final class ModItems {
             properties -> new RiversOfBloodItem(
                     ModToolTiers.AMETRA,
                     properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 1.0F, -2.4F))));
+    public static final DeferredItem<BlackBladeItem> BLACK_BLADE = ITEMS.registerItem(
+            "black_blade",
+            properties -> new BlackBladeItem(
+                    ModToolTiers.AMETRA,
+                    properties.attributes(SwordItem.createAttributes(ModToolTiers.AMETRA, 3.0F, -3.0F))));
     public static final DeferredItem<EarthbreakerItem> EARTHBREAKER = ITEMS.registerItem(
             "earthbreaker",
             properties -> new EarthbreakerItem(

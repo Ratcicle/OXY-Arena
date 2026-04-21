@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import com.example.oxyarena.event.EarthbreakerCrackHelper;
 import com.example.oxyarena.event.SoulReaperFireHelper;
+import com.example.oxyarena.registry.ModDamageTypes;
 import com.example.oxyarena.registry.ModItems;
 import com.example.oxyarena.registry.ModMobEffects;
 
@@ -87,6 +88,7 @@ public final class CombatWeaponEvents {
 
     public static void onLivingDamagePost(LivingDamageEvent.Post event) {
         handleMurasamaDamagePost(event);
+        handleBlackBladeDamagePost(event);
         handleBlackDiamondSwordDamagePost(event);
         handleFlamingScytheDamagePost(event);
         handleIncandescentDamagePost(event);
@@ -101,6 +103,7 @@ public final class CombatWeaponEvents {
 
     public static void onServerTickPost(ServerTickEvent.Post event) {
         tickIncandescentMainHandDamage(event);
+        BlackBladeDamageHelper.onServerTickPost(event);
         pruneFlamingScytheState(event);
         SoulReaperFireHelper.onServerTickPost(event);
         EarthbreakerCrackHelper.onServerTickPost(event);
@@ -128,6 +131,10 @@ public final class CombatWeaponEvents {
 
     public static void clearFlamingScytheTracking() {
         FLAMING_SCYTHE_ACTIVE_UNTIL.clear();
+    }
+
+    public static void clearBlackBladeTracking() {
+        BlackBladeDamageHelper.clearAll();
     }
 
     private static boolean isMainHandFlamingScythe(Player player) {
@@ -274,6 +281,22 @@ public final class CombatWeaponEvents {
         if (target instanceof Player defendingPlayer) {
             applyBlackDiamondWeaponDurabilityDamage(defendingPlayer);
         }
+    }
+
+    private static void handleBlackBladeDamagePost(LivingDamageEvent.Post event) {
+        if (!(event.getEntity() instanceof LivingEntity target)
+                || !(target.level() instanceof ServerLevel serverLevel)
+                || event.getNewDamage() <= 0.0F
+                || event.getSource().is(ModDamageTypes.BLACK_BLADE_PULSE)
+                || event.getSource().is(ModDamageTypes.BLACK_BLADE_PROJECTILE)
+                || !(event.getSource().getEntity() instanceof Player attacker)
+                || event.getSource().getDirectEntity() != attacker
+                || !attacker.getMainHandItem().is(ModItems.BLACK_BLADE.get())
+                || attacker == target) {
+            return;
+        }
+
+        BlackBladeDamageHelper.schedulePassiveDamage(serverLevel, target, attacker);
     }
 
     private static void handleFlamingScytheDamagePost(LivingDamageEvent.Post event) {

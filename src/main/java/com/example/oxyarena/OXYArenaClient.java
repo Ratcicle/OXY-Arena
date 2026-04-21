@@ -16,6 +16,7 @@ import com.example.oxyarena.client.ToolTooltipStatsController;
 import com.example.oxyarena.client.animation.OxyPlayerAnimatorBridge;
 import com.example.oxyarena.client.particle.NevoaBorderParticle;
 import com.example.oxyarena.client.renderer.entity.AirdropCrateRenderer;
+import com.example.oxyarena.client.renderer.entity.BlackBladeProjectileRenderer;
 import com.example.oxyarena.client.renderer.entity.CloneThiefRenderer;
 import com.example.oxyarena.client.renderer.entity.CitrineThrowingDaggerRenderer;
 import com.example.oxyarena.client.renderer.entity.ElementalGauntletProjectileRenderer;
@@ -104,6 +105,9 @@ public class OXYArenaClient {
         event.registerEntityRenderer(
                 ModEntityTypes.ELEMENTAL_GAUNTLET_PROJECTILE.get(),
                 ElementalGauntletProjectileRenderer::new);
+        event.registerEntityRenderer(
+                ModEntityTypes.BLACK_BLADE_PROJECTILE.get(),
+                BlackBladeProjectileRenderer::new);
         event.registerEntityRenderer(
                 ModEntityTypes.GRAPPLING_HOOK.get(),
                 GrapplingHookRenderer::new);

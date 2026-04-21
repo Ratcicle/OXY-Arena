@@ -243,6 +243,7 @@ public final class ModServerEventHooks {
         NecromancerStaffEvents.clearAll(event.getServer());
         ModGameEvents.clearAllCombatStatuses();
         ModGameEvents.clearFlamingScytheTracking();
+        ModGameEvents.clearBlackBladeTracking();
         ModGameEvents.clearAssassinDaggerTracking();
         ModGameEvents.clearOccultCamouflageTracking();
         ModGameEvents.clearSpectralBladeTracking();
@@ -260,6 +261,7 @@ public final class ModServerEventHooks {
         NecromancerStaffEvents.clearAll(event.getServer());
         ModGameEvents.clearAllCombatStatuses();
         ModGameEvents.clearFlamingScytheTracking();
+        ModGameEvents.clearBlackBladeTracking();
         ModGameEvents.clearAssassinDaggerTracking();
         ModGameEvents.clearOccultCamouflageTracking();
         ModGameEvents.clearSpectralBladeTracking();
