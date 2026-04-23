@@ -8,6 +8,7 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -25,7 +26,10 @@ import net.minecraft.world.level.block.entity.ContainerOpenersCounter;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 
 public class OxydropCrateBlockEntity extends RandomizableContainerBlockEntity {
+    private static final String SUPPLY_EXTRACTION_MARKER_TAG = "SupplyExtractionMarker";
+
     private NonNullList<ItemStack> items = NonNullList.withSize(27, ItemStack.EMPTY);
+    private boolean supplyExtractionMarker;
     private final ContainerOpenersCounter openersCounter = new ContainerOpenersCounter() {
         @Override
         protected void onOpen(Level level, BlockPos pos, BlockState state) {
@@ -61,6 +65,7 @@ public class OxydropCrateBlockEntity extends RandomizableContainerBlockEntity {
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
+        tag.putBoolean(SUPPLY_EXTRACTION_MARKER_TAG, this.supplyExtractionMarker);
         if (!this.trySaveLootTable(tag)) {
             ContainerHelper.saveAllItems(tag, this.items, registries);
         }
@@ -70,9 +75,22 @@ public class OxydropCrateBlockEntity extends RandomizableContainerBlockEntity {
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         this.items = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
+        this.supplyExtractionMarker = tag.getBoolean(SUPPLY_EXTRACTION_MARKER_TAG);
         if (!this.tryLoadLootTable(tag)) {
             ContainerHelper.loadAllItems(tag, this.items, registries);
         }
+    }
+
+    @Override
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        CompoundTag tag = super.getUpdateTag(registries);
+        tag.putBoolean(SUPPLY_EXTRACTION_MARKER_TAG, this.supplyExtractionMarker);
+        return tag;
+    }
+
+    @Override
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override
@@ -117,6 +135,22 @@ public class OxydropCrateBlockEntity extends RandomizableContainerBlockEntity {
     public void recheckOpen() {
         if (!this.remove) {
             this.openersCounter.recheckOpeners(this.getLevel(), this.getBlockPos(), this.getBlockState());
+        }
+    }
+
+    public boolean hasSupplyExtractionMarker() {
+        return this.supplyExtractionMarker;
+    }
+
+    public void setSupplyExtractionMarker(boolean supplyExtractionMarker) {
+        if (this.supplyExtractionMarker == supplyExtractionMarker) {
+            return;
+        }
+
+        this.supplyExtractionMarker = supplyExtractionMarker;
+        this.setChanged();
+        if (this.level != null && !this.level.isClientSide) {
+            this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 3);
         }
     }
 

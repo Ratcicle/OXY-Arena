@@ -26,6 +26,8 @@ public final class OxyServerEventRegistry {
         register("mercador", MercadorServerEvent::new, 10, ServerEventGroup.MAP_ROTATION);
         register("nevoa", NevoaServerEvent::new, 10, ServerEventGroup.MAP_ROTATION);
         register("tnt", EruptionTntServerEvent::new, 10, ServerEventGroup.MAP_ROTATION);
+        register("extracao_suprimentos", SupplyExtractionServerEvent::new, 10, ServerEventGroup.MAP_ROTATION);
+        register("reliquia_proibida", ForbiddenRelicServerEvent::new, 8, ServerEventGroup.MAP_ROTATION);
     }
 
     private OxyServerEventRegistry() {

@@ -12,7 +12,9 @@ import javax.annotation.Nullable;
 import net.minecraft.util.RandomSource;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.event.entity.item.ItemTossEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
 
 public final class OxyServerEventManager {
     private static final Map<MinecraftServer, OxyServerEventManager> INSTANCES = new WeakHashMap<>();
@@ -187,6 +189,24 @@ public final class OxyServerEventManager {
     public void onPlayerChangedDimension(ServerPlayer player) {
         if (this.activeEvent != null) {
             this.activeEvent.onPlayerChangedDimension(this.server, player);
+        }
+    }
+
+    public void onPlayerLoggedOut(ServerPlayer player) {
+        if (this.activeEvent != null) {
+            this.activeEvent.onPlayerLoggedOut(this.server, player);
+        }
+    }
+
+    public void onItemEntityPickup(ItemEntityPickupEvent.Post event) {
+        if (this.activeEvent != null) {
+            this.activeEvent.onItemEntityPickup(this.server, event);
+        }
+    }
+
+    public void onItemToss(ItemTossEvent event) {
+        if (this.activeEvent != null) {
+            this.activeEvent.onItemToss(this.server, event);
         }
     }
 

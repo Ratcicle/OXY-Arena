@@ -15,6 +15,7 @@ import com.example.oxyarena.client.BridgingAssistController;
 import com.example.oxyarena.client.ToolTooltipStatsController;
 import com.example.oxyarena.client.animation.OxyPlayerAnimatorBridge;
 import com.example.oxyarena.client.particle.NevoaBorderParticle;
+import com.example.oxyarena.client.renderer.block.OxydropCrateBlockEntityRenderer;
 import com.example.oxyarena.client.renderer.entity.AirdropCrateRenderer;
 import com.example.oxyarena.client.renderer.entity.BlackBladeProjectileRenderer;
 import com.example.oxyarena.client.renderer.entity.CloneThiefRenderer;
@@ -36,6 +37,7 @@ import com.example.oxyarena.network.OccultCamouflageSyncPayload;
 import com.example.oxyarena.network.PlayerAnimationPlayPayload;
 import com.example.oxyarena.network.PlayerAnimationStopPayload;
 import com.example.oxyarena.network.PingLocationSyncPayload;
+import com.example.oxyarena.registry.ModBlockEntityTypes;
 import com.example.oxyarena.registry.ModEntityTypes;
 import com.example.oxyarena.registry.ModItems;
 import com.example.oxyarena.registry.ModMobEffects;
@@ -132,6 +134,9 @@ public class OXYArenaClient {
         event.registerEntityRenderer(
                 ModEntityTypes.GHOST_SABER_ECHO.get(),
                 GhostSaberEchoRenderer::new);
+        event.registerBlockEntityRenderer(
+                ModBlockEntityTypes.OXYDROP_CRATE.get(),
+                OxydropCrateBlockEntityRenderer::new);
     }
 
     private void registerParticleProviders(RegisterParticleProvidersEvent event) {

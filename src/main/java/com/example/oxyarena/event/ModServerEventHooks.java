@@ -6,8 +6,10 @@ import com.example.oxyarena.event.gameplay.NecromancerStaffEvents;
 import com.example.oxyarena.event.gameplay.TwoHandedTotemEvents;
 import com.example.oxyarena.network.ItemPickupNotificationPayload;
 import com.example.oxyarena.serverevent.EruptionTntServerEvent;
+import com.example.oxyarena.serverevent.OxyServerEvent;
 import com.example.oxyarena.serverevent.OxyServerEventManager;
 import com.example.oxyarena.serverevent.PlayerHuntServerEvent;
+import com.example.oxyarena.serverevent.SupplyExtractionServerEvent;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -22,6 +24,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.event.entity.living.LivingGetProjectileEvent;
+import net.neoforged.neoforge.event.entity.item.ItemTossEvent;
 import net.neoforged.neoforge.event.entity.player.ArrowNockEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
@@ -121,6 +124,9 @@ public final class ModServerEventHooks {
 
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            if (player.getServer() != null) {
+                OxyServerEventManager.get(player.getServer()).onPlayerLoggedOut(player);
+            }
             ModGameEvents.clearZeroReverseState(player);
             ModGameEvents.clearGhostSaberState(player);
             ModGameEvents.clearPlayerSlideState(player);
@@ -145,6 +151,10 @@ public final class ModServerEventHooks {
             return;
         }
 
+        if (player.getServer() != null) {
+            OxyServerEventManager.get(player.getServer()).onItemEntityPickup(event);
+        }
+
         ItemStack originalStack = event.getOriginalStack();
         int pickedUpCount = originalStack.getCount() - event.getCurrentStack().getCount();
         if (pickedUpCount <= 0) {
@@ -156,11 +166,21 @@ public final class ModServerEventHooks {
         PacketDistributor.sendToPlayer(player, new ItemPickupNotificationPayload(pickedUpStack));
     }
 
+    public static void onItemToss(ItemTossEvent event) {
+        if (event.getPlayer() instanceof ServerPlayer player && player.getServer() != null) {
+            OxyServerEventManager.get(player.getServer()).onItemToss(event);
+        }
+    }
+
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         ModGameEvents.cancelOccultCamouflage(event.getEntity());
         if (cancelIfKusabimaruStunned(event.getEntity())) {
             event.setCancellationResult(net.minecraft.world.InteractionResult.FAIL);
             event.setCanceled(true);
+            return;
+        }
+
+        if (handleSupplyExtractionClick(event)) {
             return;
         }
 
@@ -222,6 +242,10 @@ public final class ModServerEventHooks {
         if (event.getPlayer() != null) {
             ModGameEvents.cancelOccultCamouflage(event.getPlayer());
         }
+        if (handleSupplyExtractionBreak(event)) {
+            return;
+        }
+
         FallingTreeHelper.onBlockBreak(event);
     }
 
@@ -277,6 +301,26 @@ public final class ModServerEventHooks {
                 .lookupOrThrow(Registries.ENCHANTMENT)
                 .getOrThrow(Enchantments.INFINITY);
         return weaponStack.getEnchantmentLevel(infinity) > 0;
+    }
+
+    private static boolean handleSupplyExtractionClick(PlayerInteractEvent.RightClickBlock event) {
+        if (!(event.getLevel() instanceof net.minecraft.server.level.ServerLevel serverLevel)) {
+            return false;
+        }
+
+        OxyServerEvent activeEvent = OxyServerEventManager.get(serverLevel.getServer()).getActiveEvent();
+        return activeEvent instanceof SupplyExtractionServerEvent supplyExtractionEvent
+                && supplyExtractionEvent.onRightClickBlock(event);
+    }
+
+    private static boolean handleSupplyExtractionBreak(BlockEvent.BreakEvent event) {
+        if (!(event.getLevel() instanceof net.minecraft.server.level.ServerLevel serverLevel)) {
+            return false;
+        }
+
+        OxyServerEvent activeEvent = OxyServerEventManager.get(serverLevel.getServer()).getActiveEvent();
+        return activeEvent instanceof SupplyExtractionServerEvent supplyExtractionEvent
+                && supplyExtractionEvent.onBlockBreak(event);
     }
 
     private static boolean cancelIfKusabimaruStunned(Player player) {

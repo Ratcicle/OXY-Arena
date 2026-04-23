@@ -26,7 +26,7 @@ import net.minecraft.world.level.Level;
 public final class ElementalGauntletItem extends Item {
     private static final String SHOT_INDEX_TAG = "ElementalGauntletShotIndex";
     private static final int USE_DURATION_TICKS = 72000;
-    private static final int FIRE_INTERVAL_TICKS = 5;
+    private static final int FIRE_INTERVAL_TICKS = 3;
     private static final int SHOT_PATTERN_LENGTH = 20;
     private static final float SHOOT_POWER = 2.8F;
     private static final float SHOOT_INACCURACY = 0.05F;

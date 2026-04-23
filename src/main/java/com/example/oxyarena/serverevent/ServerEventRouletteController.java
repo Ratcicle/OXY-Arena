@@ -173,13 +173,32 @@ public final class ServerEventRouletteController {
         List<OxyServerEventDefinition> candidates = new ArrayList<>(
                 OxyServerEventRegistry.getDefinitionsInGroup(ServerEventGroup.MAP_ROTATION, ServerEventRotationRole.PRIMARY));
         while (!candidates.isEmpty()) {
-            OxyServerEventDefinition candidate = candidates.remove(random.nextInt(candidates.size()));
+            OxyServerEventDefinition candidate = this.removeWeightedCandidate(candidates, random);
             if (this.tryStartEvent(candidate.id())) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private OxyServerEventDefinition removeWeightedCandidate(List<OxyServerEventDefinition> candidates, RandomSource random) {
+        int totalWeight = 0;
+        for (OxyServerEventDefinition candidate : candidates) {
+            totalWeight += candidate.selectionWeight();
+        }
+
+        int chosenWeight = random.nextInt(totalWeight);
+        int cumulativeWeight = 0;
+        for (int i = 0; i < candidates.size(); i++) {
+            OxyServerEventDefinition candidate = candidates.get(i);
+            cumulativeWeight += candidate.selectionWeight();
+            if (chosenWeight < cumulativeWeight) {
+                return candidates.remove(i);
+            }
+        }
+
+        return candidates.removeLast();
     }
 
     private boolean tryStartEvent(String eventId) {

@@ -155,6 +155,10 @@ public final class ModItems {
             "storm_charge",
             StormChargeItem::new,
             new Item.Properties());
+    public static final DeferredItem<Item> FORBIDDEN_RELIC = ITEMS.registerItem(
+            "forbidden_relic",
+            Item::new,
+            new Item.Properties().stacksTo(1));
     public static final DeferredItem<ZeusLightningItem> ZEUS_LIGHTNING = ITEMS.registerItem(
             "zeus_lightning",
             ZeusLightningItem::new,

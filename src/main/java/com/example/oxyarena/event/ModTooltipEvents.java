@@ -16,13 +16,21 @@ public final class ModTooltipEvents {
 
     public static void onItemTooltip(ItemTooltipEvent event) {
         ItemStack stack = event.getItemStack();
-        String tooltipKey = getArmorSetTooltipKey(stack);
+        String tooltipKey = getTooltipKey(stack);
         if (tooltipKey == null) {
             return;
         }
 
         List<Component> tooltip = event.getToolTip();
         tooltip.add(Component.translatable(tooltipKey).withStyle(ChatFormatting.AQUA));
+    }
+
+    private static String getTooltipKey(ItemStack stack) {
+        if (stack.is(ModItems.FORBIDDEN_RELIC.get())) {
+            return "tooltip.oxyarena.forbidden_relic";
+        }
+
+        return getArmorSetTooltipKey(stack);
     }
 
     private static String getArmorSetTooltipKey(ItemStack stack) {

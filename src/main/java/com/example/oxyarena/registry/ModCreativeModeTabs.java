@@ -59,6 +59,7 @@ public final class ModCreativeModeTabs {
                     output.accept(ModItems.SMOKE_BOMB);
                     output.accept(ModItems.ESTUS_FLASK);
                     output.accept(ModItems.STORM_CHARGE);
+                    output.accept(ModItems.FORBIDDEN_RELIC);
                     output.accept(ModItems.ZEUS_LIGHTNING);
                     output.accept(ModItems.ELEMENTAL_GAUNTLET);
                     output.accept(ModItems.FLAMING_SCYTHE);
