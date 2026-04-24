@@ -67,6 +67,7 @@ public final class ModCreativeModeTabs {
                     output.accept(ModItems.LIFEHUNT_SCYTHE);
                     output.accept(ModItems.COBALT_SWORD);
                     output.accept(ModItems.AMETRA_SWORD);
+                    output.accept(ModItems.AMETRA_WARPED_GLAIVE);
                     output.accept(ModItems.MURASAMA);
                     output.accept(ModItems.RIVERS_OF_BLOOD);
                     output.accept(ModItems.BLACK_BLADE);

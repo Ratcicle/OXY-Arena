@@ -5,12 +5,14 @@ import com.example.oxyarena.entity.event.AirdropCrateEntity;
 import com.example.oxyarena.entity.event.BobBossEntity;
 import com.example.oxyarena.entity.event.CloneThiefEntity;
 import com.example.oxyarena.entity.event.EruptionTntEntity;
+import com.example.oxyarena.entity.effect.DimensionalRiftEntity;
 import com.example.oxyarena.entity.effect.SmokeCloud;
 import com.example.oxyarena.entity.effect.GhostSaberEchoEntity;
 import com.example.oxyarena.entity.effect.SpectralMarkEntity;
 import com.example.oxyarena.entity.effect.ZenithOrbitSwordEntity;
 import com.example.oxyarena.entity.projectile.BlackBladeProjectile;
 import com.example.oxyarena.entity.projectile.CitrineThrowingDagger;
+import com.example.oxyarena.entity.projectile.DimensionalRiftProjectile;
 import com.example.oxyarena.entity.projectile.ElementalGauntletProjectile;
 import com.example.oxyarena.entity.projectile.GrapplingHook;
 import com.example.oxyarena.entity.projectile.IncandescentThrowingDagger;
@@ -102,6 +104,19 @@ public final class ModEntityTypes {
                             .clientTrackingRange(8)
                             .updateInterval(1)
                             .build("black_blade_projectile"));
+    public static final DeferredHolder<EntityType<?>, EntityType<DimensionalRiftProjectile>> DIMENSIONAL_RIFT_PROJECTILE =
+            ENTITY_TYPES.register(
+                    "dimensional_rift_projectile",
+                    () -> EntityType.Builder.<DimensionalRiftProjectile>of(
+                            DimensionalRiftProjectile::new,
+                            MobCategory.MISC)
+                            .noSave()
+                            .noSummon()
+                            .sized(0.45F, 0.45F)
+                            .eyeHeight(0.0F)
+                            .clientTrackingRange(8)
+                            .updateInterval(1)
+                            .build("dimensional_rift_projectile"));
     public static final DeferredHolder<EntityType<?>, EntityType<GrapplingHook>> GRAPPLING_HOOK =
             ENTITY_TYPES.register(
                     "grappling_hook",
@@ -162,6 +177,17 @@ public final class ModEntityTypes {
                             .clientTrackingRange(16)
                             .updateInterval(1)
                             .build("spectral_mark"));
+    public static final DeferredHolder<EntityType<?>, EntityType<DimensionalRiftEntity>> DIMENSIONAL_RIFT =
+            ENTITY_TYPES.register(
+                    "dimensional_rift",
+                    () -> EntityType.Builder.<DimensionalRiftEntity>of(DimensionalRiftEntity::new, MobCategory.MISC)
+                            .noSave()
+                            .noSummon()
+                            .sized(1.2F, 2.2F)
+                            .eyeHeight(1.1F)
+                            .clientTrackingRange(32)
+                            .updateInterval(1)
+                            .build("dimensional_rift"));
     public static final DeferredHolder<EntityType<?>, EntityType<GhostSaberEchoEntity>> GHOST_SABER_ECHO =
             ENTITY_TYPES.register(
                     "ghost_saber_echo",

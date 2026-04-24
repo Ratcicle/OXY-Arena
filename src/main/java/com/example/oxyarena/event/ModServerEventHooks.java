@@ -61,6 +61,7 @@ public final class ModServerEventHooks {
             ModGameEvents.clearCombatStatusState(livingEntity);
             ModGameEvents.clearAssassinDaggerTarget(livingEntity);
             ModGameEvents.clearSpectralBladeTarget(livingEntity);
+            ModGameEvents.clearAmetraWarpedGlaiveTarget(livingEntity);
         }
 
         GhostSaberEvents.onLivingDeath(event);
@@ -77,6 +78,7 @@ public final class ModServerEventHooks {
             ModGameEvents.clearSpectralBladeState(player);
             ModGameEvents.clearStormChargeState(player);
             ModGameEvents.clearOccultCamouflageState(player);
+            ModGameEvents.clearAmetraWarpedGlaiveState(player);
             ModGameEvents.clearPlayerSlideState(player);
             ModGameEvents.clearPlayerMantleState(player);
             ZenithOrbitSwordEntity.discardOwnedOrbitSwords(player);
@@ -92,6 +94,7 @@ public final class ModServerEventHooks {
             ModGameEvents.clearGhostSaberState(player);
             ModGameEvents.clearPlayerSlideState(player);
             ModGameEvents.clearPlayerMantleState(player);
+            ModGameEvents.clearAmetraWarpedGlaiveState(player);
             ModGameEvents.clearCitrineChainswordState(player);
             NecromancerStaffEvents.clearPlayer(player);
             OxyServerEventManager.get(player.getServer()).onPlayerLoggedIn(player);
@@ -106,6 +109,7 @@ public final class ModServerEventHooks {
             ModGameEvents.clearGhostSaberState(player);
             ModGameEvents.clearPlayerSlideState(player);
             ModGameEvents.clearPlayerMantleState(player);
+            ModGameEvents.clearAmetraWarpedGlaiveState(player);
             NecromancerStaffEvents.clearPlayer(player);
             ModGameEvents.clearCombatStatusState(player);
             ModGameEvents.clearMurasamaState(player);
@@ -134,6 +138,7 @@ public final class ModServerEventHooks {
             ModGameEvents.clearGhostSaberState(player);
             ModGameEvents.clearPlayerSlideState(player);
             ModGameEvents.clearPlayerMantleState(player);
+            ModGameEvents.clearAmetraWarpedGlaiveState(player);
             NecromancerStaffEvents.clearPlayer(player);
             ModGameEvents.clearCombatStatusState(player);
             ModGameEvents.clearMurasamaState(player);
@@ -220,6 +225,10 @@ public final class ModServerEventHooks {
             return;
         }
 
+        if (ModGameEvents.onAttackEntity(event)) {
+            return;
+        }
+
         NecromancerStaffEvents.onAttackEntity(event);
     }
 
@@ -273,6 +282,7 @@ public final class ModServerEventHooks {
         ModGameEvents.clearFlamingScytheTracking();
         ModGameEvents.clearCitrineChainswordTracking(event.getServer());
         ModGameEvents.clearBlackBladeTracking();
+        ModGameEvents.clearAmetraWarpedGlaiveTracking(event.getServer());
         ModGameEvents.clearAssassinDaggerTracking();
         ModGameEvents.clearOccultCamouflageTracking();
         ModGameEvents.clearSpectralBladeTracking();
@@ -292,6 +302,7 @@ public final class ModServerEventHooks {
         ModGameEvents.clearFlamingScytheTracking();
         ModGameEvents.clearCitrineChainswordTracking(event.getServer());
         ModGameEvents.clearBlackBladeTracking();
+        ModGameEvents.clearAmetraWarpedGlaiveTracking(event.getServer());
         ModGameEvents.clearAssassinDaggerTracking();
         ModGameEvents.clearOccultCamouflageTracking();
         ModGameEvents.clearSpectralBladeTracking();

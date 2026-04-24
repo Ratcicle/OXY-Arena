@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "A": {
+      "item": "oxyarena:ametra_gem"
+    },
+    "N": {
+      "item": "minecraft:netherite_ingot"
+    }
+  },
+  "pattern": [
+    "  A",
+    " A ",
+    "N  "
+  ],
+  "result": {
+    "count": 1,
+    "id": "oxyarena:ametra_warped_glaive"
+  }
+}

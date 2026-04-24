@@ -1,6 +1,7 @@
 package com.example.oxyarena.event;
 
 import com.example.oxyarena.combatstatus.CombatStatusEvents;
+import com.example.oxyarena.event.gameplay.AmetraWarpedGlaiveEvents;
 import com.example.oxyarena.event.gameplay.ArmorSetEvents;
 import com.example.oxyarena.event.gameplay.CombatWeaponEvents;
 import com.example.oxyarena.event.gameplay.CounterMobilityEvents;
@@ -22,6 +23,7 @@ import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
 import net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.event.entity.player.SweepAttackEvent;
 import net.neoforged.neoforge.event.level.BlockDropsEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -65,6 +67,10 @@ public final class ModGameEvents {
         ProjectileSpecialEvents.onProjectileImpact(event);
     }
 
+    public static boolean onAttackEntity(AttackEntityEvent event) {
+        return AmetraWarpedGlaiveEvents.onAttackEntity(event);
+    }
+
     public static void onSweepAttack(SweepAttackEvent event) {
         CombatWeaponEvents.onSweepAttack(event);
     }
@@ -87,6 +93,7 @@ public final class ModGameEvents {
         ArmorSetEvents.onServerTickPost(event);
         OccultCamouflageEvents.onServerTickPost(event);
         ProjectileSpecialEvents.onServerTickPost(event);
+        AmetraWarpedGlaiveEvents.onServerTickPost(event);
     }
 
     public static void clearMurasamaState(Player player) {
@@ -143,6 +150,18 @@ public final class ModGameEvents {
 
     public static void clearGhostSaberTracking(MinecraftServer server) {
         GhostSaberEvents.clearAll(server);
+    }
+
+    public static void clearAmetraWarpedGlaiveState(ServerPlayer player) {
+        AmetraWarpedGlaiveEvents.clearPlayer(player);
+    }
+
+    public static void clearAmetraWarpedGlaiveTarget(LivingEntity target) {
+        AmetraWarpedGlaiveEvents.clearTarget(target);
+    }
+
+    public static void clearAmetraWarpedGlaiveTracking(MinecraftServer server) {
+        AmetraWarpedGlaiveEvents.clearAll(server);
     }
 
     public static void clearPlayerSlideState(ServerPlayer player) {

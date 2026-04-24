@@ -20,6 +20,8 @@ import com.example.oxyarena.client.renderer.entity.AirdropCrateRenderer;
 import com.example.oxyarena.client.renderer.entity.BlackBladeProjectileRenderer;
 import com.example.oxyarena.client.renderer.entity.CloneThiefRenderer;
 import com.example.oxyarena.client.renderer.entity.CitrineThrowingDaggerRenderer;
+import com.example.oxyarena.client.renderer.entity.DimensionalRiftProjectileRenderer;
+import com.example.oxyarena.client.renderer.entity.DimensionalRiftRenderer;
 import com.example.oxyarena.client.renderer.entity.ElementalGauntletProjectileRenderer;
 import com.example.oxyarena.client.renderer.entity.EruptionTntRenderer;
 import com.example.oxyarena.client.renderer.entity.GrapplingHookRenderer;
@@ -111,6 +113,9 @@ public class OXYArenaClient {
                 ModEntityTypes.BLACK_BLADE_PROJECTILE.get(),
                 BlackBladeProjectileRenderer::new);
         event.registerEntityRenderer(
+                ModEntityTypes.DIMENSIONAL_RIFT_PROJECTILE.get(),
+                DimensionalRiftProjectileRenderer::new);
+        event.registerEntityRenderer(
                 ModEntityTypes.GRAPPLING_HOOK.get(),
                 GrapplingHookRenderer::new);
         event.registerEntityRenderer(
@@ -131,6 +136,9 @@ public class OXYArenaClient {
         event.registerEntityRenderer(
                 ModEntityTypes.SPECTRAL_MARK.get(),
                 SpectralMarkRenderer::new);
+        event.registerEntityRenderer(
+                ModEntityTypes.DIMENSIONAL_RIFT.get(),
+                DimensionalRiftRenderer::new);
         event.registerEntityRenderer(
                 ModEntityTypes.GHOST_SABER_ECHO.get(),
                 GhostSaberEchoRenderer::new);
