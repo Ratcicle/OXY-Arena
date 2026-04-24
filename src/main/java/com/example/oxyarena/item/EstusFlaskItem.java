@@ -14,7 +14,7 @@ import net.minecraft.world.level.Level;
 
 public class EstusFlaskItem extends Item {
     private static final int USE_DURATION_TICKS = 16;
-    private static final float HEAL_AMOUNT = 15.0F;
+    private static final float HEAL_AMOUNT = 12.0F;
 
     public EstusFlaskItem(Properties properties) {
         super(properties);
