@@ -40,6 +40,7 @@ public final class ModCreativeModeTabs {
                     output.accept(ModItems.COBALT_INGOT);
                     output.accept(ModItems.INCANDESCENT_INGOT);
                     output.accept(ModItems.CITRINE_SWORD);
+                    output.accept(ModItems.CITRINE_CHAINSWORD);
                     output.accept(ModItems.INCANDESCENT_SWORD);
                     output.accept(ModItems.CITRINE_PICKAXE);
                     output.accept(ModItems.INCANDESCENT_PICKAXE);

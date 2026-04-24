@@ -71,6 +71,7 @@ public final class ModServerEventHooks {
             NecromancerStaffEvents.clearPlayer(player);
             ModGameEvents.clearMurasamaState(player);
             ModGameEvents.clearFlamingScytheState(player);
+            ModGameEvents.clearCitrineChainswordState(player);
             ModGameEvents.clearKusabimaruState(player);
             ModGameEvents.clearAssassinDaggerState(player);
             ModGameEvents.clearSpectralBladeState(player);
@@ -91,6 +92,7 @@ public final class ModServerEventHooks {
             ModGameEvents.clearGhostSaberState(player);
             ModGameEvents.clearPlayerSlideState(player);
             ModGameEvents.clearPlayerMantleState(player);
+            ModGameEvents.clearCitrineChainswordState(player);
             NecromancerStaffEvents.clearPlayer(player);
             OxyServerEventManager.get(player.getServer()).onPlayerLoggedIn(player);
             PlayerHuntServerEvent.refreshPersistentPlayerState(player.getServer(), player);
@@ -108,6 +110,7 @@ public final class ModServerEventHooks {
             ModGameEvents.clearCombatStatusState(player);
             ModGameEvents.clearMurasamaState(player);
             ModGameEvents.clearFlamingScytheState(player);
+            ModGameEvents.clearCitrineChainswordState(player);
             ModGameEvents.clearKusabimaruState(player);
             ModGameEvents.clearAssassinDaggerState(player);
             ModGameEvents.clearSpectralBladeState(player);
@@ -135,6 +138,7 @@ public final class ModServerEventHooks {
             ModGameEvents.clearCombatStatusState(player);
             ModGameEvents.clearMurasamaState(player);
             ModGameEvents.clearFlamingScytheState(player);
+            ModGameEvents.clearCitrineChainswordState(player);
             ModGameEvents.clearKusabimaruState(player);
             ModGameEvents.clearAssassinDaggerState(player);
             ModGameEvents.clearSpectralBladeState(player);
@@ -267,6 +271,7 @@ public final class ModServerEventHooks {
         NecromancerStaffEvents.clearAll(event.getServer());
         ModGameEvents.clearAllCombatStatuses();
         ModGameEvents.clearFlamingScytheTracking();
+        ModGameEvents.clearCitrineChainswordTracking(event.getServer());
         ModGameEvents.clearBlackBladeTracking();
         ModGameEvents.clearAssassinDaggerTracking();
         ModGameEvents.clearOccultCamouflageTracking();
@@ -285,6 +290,7 @@ public final class ModServerEventHooks {
         NecromancerStaffEvents.clearAll(event.getServer());
         ModGameEvents.clearAllCombatStatuses();
         ModGameEvents.clearFlamingScytheTracking();
+        ModGameEvents.clearCitrineChainswordTracking(event.getServer());
         ModGameEvents.clearBlackBladeTracking();
         ModGameEvents.clearAssassinDaggerTracking();
         ModGameEvents.clearOccultCamouflageTracking();

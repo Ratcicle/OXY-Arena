@@ -6,12 +6,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import com.example.oxyarena.OXYArena;
 import com.example.oxyarena.event.EarthbreakerCrackHelper;
 import com.example.oxyarena.event.SoulReaperFireHelper;
 import com.example.oxyarena.registry.ModDamageTypes;
 import com.example.oxyarena.registry.ModItems;
 import com.example.oxyarena.registry.ModMobEffects;
 
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.DamageTypeTags;
@@ -20,6 +23,9 @@ import net.minecraft.world.damagesource.CombatRules;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
@@ -41,11 +47,21 @@ public final class CombatWeaponEvents {
     private static final int INCANDESCENT_MAINHAND_SELF_DAMAGE_INTERVAL_TICKS = 20;
     private static final float INCANDESCENT_MAINHAND_SELF_DAMAGE = 1.0F;
     private static final float INCANDESCENT_HIT_BURN_SECONDS = 4.0F;
+    private static final int CITRINE_CHAINSWORD_TOLERANCE_TICKS = 40;
+    private static final int CITRINE_CHAINSWORD_DECAY_INTERVAL_TICKS = 20;
+    private static final double CITRINE_CHAINSWORD_FIRST_STAGE_STEP = 0.2D;
+    private static final double CITRINE_CHAINSWORD_SECOND_STAGE_STEP = 0.1D;
+    private static final double CITRINE_CHAINSWORD_FIRST_STAGE_CAP = 1.0D;
+    private static final double CITRINE_CHAINSWORD_ATTACK_SPEED_CAP = 2.0D;
+    private static final ResourceLocation CITRINE_CHAINSWORD_ATTACK_SPEED_MODIFIER_ID = ResourceLocation.fromNamespaceAndPath(
+            OXYArena.MODID,
+            "weapon.citrine_chainsword_attack_speed");
 
     private static final Set<UUID> AMETRA_SWEEP_ATTACKERS = new HashSet<>();
     private static final Map<UUID, Integer> MURASAMA_COMBO_COUNTS = new HashMap<>();
     private static final Set<UUID> MURASAMA_CRIT_ATTACKERS = new HashSet<>();
     private static final Map<UUID, Integer> FLAMING_SCYTHE_ACTIVE_UNTIL = new HashMap<>();
+    private static final Map<UUID, CitrineChainswordState> CITRINE_CHAINSWORD_STATES = new HashMap<>();
 
     private CombatWeaponEvents() {
     }
@@ -88,6 +104,7 @@ public final class CombatWeaponEvents {
 
     public static void onLivingDamagePost(LivingDamageEvent.Post event) {
         handleMurasamaDamagePost(event);
+        handleCitrineChainswordDamagePost(event);
         handleBlackBladeDamagePost(event);
         handleBlackDiamondSwordDamagePost(event);
         handleFlamingScytheDamagePost(event);
@@ -102,6 +119,7 @@ public final class CombatWeaponEvents {
     }
 
     public static void onServerTickPost(ServerTickEvent.Post event) {
+        tickCitrineChainswordState(event);
         tickIncandescentMainHandDamage(event);
         BlackBladeDamageHelper.onServerTickPost(event);
         pruneFlamingScytheState(event);
@@ -131,6 +149,17 @@ public final class CombatWeaponEvents {
 
     public static void clearFlamingScytheTracking() {
         FLAMING_SCYTHE_ACTIVE_UNTIL.clear();
+    }
+
+    public static void clearCitrineChainswordState(Player player) {
+        removeCitrineChainswordState(player);
+    }
+
+    public static void clearCitrineChainswordTracking(MinecraftServer server) {
+        for (Player player : server.getPlayerList().getPlayers()) {
+            applyCitrineChainswordAttackSpeed(player, 0.0D);
+        }
+        CITRINE_CHAINSWORD_STATES.clear();
     }
 
     public static void clearBlackBladeTracking() {
@@ -205,6 +234,31 @@ public final class CombatWeaponEvents {
                     1.0F,
                     1.0F);
         }
+    }
+
+    private static void handleCitrineChainswordDamagePost(LivingDamageEvent.Post event) {
+        if (!(event.getEntity() instanceof LivingEntity target)
+                || event.getEntity() instanceof ArmorStand
+                || !(target.level() instanceof ServerLevel serverLevel)
+                || event.getNewDamage() <= 0.0F
+                || !(event.getSource().getEntity() instanceof Player attacker)
+                || event.getSource().getDirectEntity() != attacker
+                || !attacker.getMainHandItem().is(ModItems.CITRINE_CHAINSWORD.get())
+                || attacker == target) {
+            return;
+        }
+
+        int currentTick = serverLevel.getServer().getTickCount();
+        CitrineChainswordState previousState = CITRINE_CHAINSWORD_STATES.get(attacker.getUUID());
+        double currentBonus = previousState != null ? previousState.attackSpeedBonus() : 0.0D;
+        double newBonus = currentBonus < CITRINE_CHAINSWORD_FIRST_STAGE_CAP
+                ? Math.min(CITRINE_CHAINSWORD_FIRST_STAGE_CAP, currentBonus + CITRINE_CHAINSWORD_FIRST_STAGE_STEP)
+                : Math.min(CITRINE_CHAINSWORD_ATTACK_SPEED_CAP, currentBonus + CITRINE_CHAINSWORD_SECOND_STAGE_STEP);
+
+        CITRINE_CHAINSWORD_STATES.put(
+                attacker.getUUID(),
+                new CitrineChainswordState(newBonus, currentTick, currentTick));
+        applyCitrineChainswordAttackSpeed(attacker, newBonus);
     }
 
     private static boolean isAmetraSwordAwakened(Player player) {
@@ -415,6 +469,42 @@ public final class CombatWeaponEvents {
         offhandItem.hurtAndBreak(BLACK_DIAMOND_WEAPON_DURABILITY_DAMAGE, target, EquipmentSlot.OFFHAND);
     }
 
+    private static void tickCitrineChainswordState(ServerTickEvent.Post event) {
+        int currentTick = event.getServer().getTickCount();
+        for (Player player : event.getServer().getPlayerList().getPlayers()) {
+            CitrineChainswordState state = CITRINE_CHAINSWORD_STATES.get(player.getUUID());
+            if (state == null) {
+                continue;
+            }
+
+            if (player.isSpectator() || !player.isAlive() || !player.getMainHandItem().is(ModItems.CITRINE_CHAINSWORD.get())) {
+                removeCitrineChainswordState(player);
+                continue;
+            }
+
+            if (currentTick - state.lastSuccessfulHitTick() < CITRINE_CHAINSWORD_TOLERANCE_TICKS) {
+                applyCitrineChainswordAttackSpeed(player, state.attackSpeedBonus());
+                continue;
+            }
+
+            if (currentTick - state.lastDecayTick() < CITRINE_CHAINSWORD_DECAY_INTERVAL_TICKS) {
+                applyCitrineChainswordAttackSpeed(player, state.attackSpeedBonus());
+                continue;
+            }
+
+            double decayedBonus = Math.max(0.0D, state.attackSpeedBonus() - CITRINE_CHAINSWORD_SECOND_STAGE_STEP);
+            if (decayedBonus <= 0.0D) {
+                removeCitrineChainswordState(player);
+                continue;
+            }
+
+            CITRINE_CHAINSWORD_STATES.put(
+                    player.getUUID(),
+                    new CitrineChainswordState(decayedBonus, state.lastSuccessfulHitTick(), currentTick));
+            applyCitrineChainswordAttackSpeed(player, decayedBonus);
+        }
+    }
+
     private static void pruneFlamingScytheState(ServerTickEvent.Post event) {
         int currentTick = event.getServer().getTickCount();
         FLAMING_SCYTHE_ACTIVE_UNTIL.entrySet().removeIf(entry -> currentTick > entry.getValue());
@@ -447,5 +537,33 @@ public final class CombatWeaponEvents {
         return stack.is(ModItems.INCANDESCENT_SWORD.get())
                 || stack.is(ModItems.INCANDESCENT_PICKAXE.get())
                 || stack.is(ModItems.INCANDESCENT_AXE.get());
+    }
+
+    private static void applyCitrineChainswordAttackSpeed(Player player, double attackSpeedBonus) {
+        AttributeInstance attributeInstance = player.getAttribute(Attributes.ATTACK_SPEED);
+        if (attributeInstance == null) {
+            return;
+        }
+
+        if (attackSpeedBonus <= 0.0D) {
+            attributeInstance.removeModifier(CITRINE_CHAINSWORD_ATTACK_SPEED_MODIFIER_ID);
+            return;
+        }
+
+        attributeInstance.addOrUpdateTransientModifier(new AttributeModifier(
+                CITRINE_CHAINSWORD_ATTACK_SPEED_MODIFIER_ID,
+                attackSpeedBonus,
+                AttributeModifier.Operation.ADD_VALUE));
+    }
+
+    private static void removeCitrineChainswordState(Player player) {
+        CITRINE_CHAINSWORD_STATES.remove(player.getUUID());
+        applyCitrineChainswordAttackSpeed(player, 0.0D);
+    }
+
+    private record CitrineChainswordState(
+            double attackSpeedBonus,
+            int lastSuccessfulHitTick,
+            int lastDecayTick) {
     }
 }

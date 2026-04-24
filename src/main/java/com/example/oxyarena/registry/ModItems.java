@@ -8,6 +8,7 @@ import com.example.oxyarena.item.BlackDiamondSwordItem;
 import com.example.oxyarena.item.ChocolateSwordItem;
 import com.example.oxyarena.item.CobaltSwordItem;
 import com.example.oxyarena.item.CitrinePickaxeItem;
+import com.example.oxyarena.item.CitrineChainswordItem;
 import com.example.oxyarena.item.CitrineSwordItem;
 import com.example.oxyarena.item.CitrineThrowingDaggerItem;
 import com.example.oxyarena.item.CobaltBowItem;
@@ -80,6 +81,11 @@ public final class ModItems {
             properties -> new CitrineSwordItem(
                     ModToolTiers.CITRINE,
                     properties.attributes(SwordItem.createAttributes(ModToolTiers.CITRINE, 2.7F, -2.4F))));
+    public static final DeferredItem<CitrineChainswordItem> CITRINE_CHAINSWORD = ITEMS.registerItem(
+            "citrine_chainsword",
+            properties -> new CitrineChainswordItem(
+                    ModToolTiers.CITRINE_CHAINSWORD,
+                    properties.attributes(CitrineChainswordItem.createAttributes())));
     public static final DeferredItem<CitrinePickaxeItem> CITRINE_PICKAXE = ITEMS.registerItem(
             "citrine_pickaxe",
             properties -> new CitrinePickaxeItem(

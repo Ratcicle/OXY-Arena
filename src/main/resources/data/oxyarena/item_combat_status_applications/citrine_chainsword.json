@@ -1,0 +1,9 @@
+{
+  "item": "oxyarena:citrine_chainsword",
+  "applications": [
+    {
+      "status": "oxyarena:bleed",
+      "buildup_per_hit": 10.0
+    }
+  ]
+}

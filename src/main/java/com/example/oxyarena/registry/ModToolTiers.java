@@ -12,6 +12,13 @@ public final class ModToolTiers {
             1.8F,
             13,
             () -> Ingredient.of(ModItems.CITRINE_GEM.get()));
+    public static final SimpleTier CITRINE_CHAINSWORD = new SimpleTier(
+            BlockTags.INCORRECT_FOR_IRON_TOOL,
+            550,
+            5.5F,
+            1.8F,
+            13,
+            () -> Ingredient.of(ModItems.CITRINE_GEM.get()));
     public static final SimpleTier COBALT = new SimpleTier(
             BlockTags.INCORRECT_FOR_DIAMOND_TOOL,
             1400,

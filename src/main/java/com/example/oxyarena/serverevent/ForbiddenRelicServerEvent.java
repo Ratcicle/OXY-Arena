@@ -27,6 +27,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -51,6 +52,7 @@ public final class ForbiddenRelicServerEvent implements OxyServerEvent {
     private static final int POSITION_BROADCAST_INTERVAL_TICKS = 20 * 20;
     private static final int GLOW_REFRESH_DURATION_TICKS = 60;
     private static final int MAX_GROUND_SCAN_Y = 300;
+    private static final int BORDER_DROP_INSET_BLOCKS = 2;
     private static final int FINAL_MILESTONE_SECONDS = 120;
     private static final int[] MILESTONE_SECONDS = { 15, 30, 45, 60, 75, 90, 105, 120 };
     private static final String CARRIER_TAG = "oxyarena_forbidden_relic_carrier";
@@ -263,6 +265,15 @@ public final class ForbiddenRelicServerEvent implements OxyServerEvent {
             return;
         }
 
+        if (player.serverLevel().dimension() != Level.OVERWORLD
+                || !this.getEventArea(server).contains(player.getX(), player.getZ())) {
+            this.removeRelicsFromInventory(player, false);
+            if (this.carrierUuid == null) {
+                this.spawnRelicAt(server, this.findBoundaryDropPos(server, player.position()));
+            }
+            return;
+        }
+
         if (this.carrierUuid != null && !this.isCarrier(player)) {
             this.removeRelicsFromInventory(player, false);
             return;
@@ -347,7 +358,7 @@ public final class ForbiddenRelicServerEvent implements OxyServerEvent {
         if (!carrier.isAlive()
                 || carrier.serverLevel().dimension() != Level.OVERWORLD
                 || !this.getEventArea(server).contains(carrier.getX(), carrier.getZ())) {
-            Vec3 dropPos = this.getLastKnownOrPlayerPos(carrier);
+            Vec3 dropPos = this.findBoundaryDropPos(server, carrier.position());
             this.clearCarrierState(carrier, true);
             this.spawnRelicAt(server, dropPos);
             this.broadcastCarrierLost(server, "event.oxyarena.reliquia_proibida.carrier_left_area", carrier.getGameProfile().getName());
@@ -466,26 +477,57 @@ public final class ForbiddenRelicServerEvent implements OxyServerEvent {
     @Nullable
     private BlockPos findRelicSpawnPos(ServerLevel level) {
         ServerEventArea eventArea = this.getEventArea(level.getServer());
-        int startY = Math.min(MAX_GROUND_SCAN_Y, level.getMaxBuildHeight() - 1);
 
         for (int attempt = 0; attempt < 48; attempt++) {
             int x = eventArea.randomX(level.random);
             int z = eventArea.randomZ(level.random);
-
-            for (int y = startY; y > level.getMinBuildHeight(); y--) {
-                BlockPos groundPos = new BlockPos(x, y, z);
-                BlockState groundState = level.getBlockState(groundPos);
-                if (!this.isValidRelicSupport(groundState)) {
-                    continue;
-                }
-
-                BlockPos relicPos = groundPos.above();
-                if (level.getBlockState(relicPos).canBeReplaced()) {
-                    return relicPos;
-                }
-
-                break;
+            BlockPos relicPos = this.findRelicSpawnPosAt(level, x, z);
+            if (relicPos != null) {
+                return relicPos;
             }
+        }
+
+        return null;
+    }
+
+    @Nullable
+    private BlockPos findRelicSpawnPosNear(ServerLevel level, int targetX, int targetZ) {
+        ServerEventArea eventArea = this.getEventArea(level.getServer());
+        int clampedTargetX = Mth.clamp(targetX, eventArea.minX(), eventArea.maxX());
+        int clampedTargetZ = Mth.clamp(targetZ, eventArea.minZ(), eventArea.maxZ());
+
+        for (int radius = 0; radius <= 3; radius++) {
+            for (int x = clampedTargetX - radius; x <= clampedTargetX + radius; x++) {
+                int clampedX = Mth.clamp(x, eventArea.minX(), eventArea.maxX());
+                for (int z = clampedTargetZ - radius; z <= clampedTargetZ + radius; z++) {
+                    int clampedZ = Mth.clamp(z, eventArea.minZ(), eventArea.maxZ());
+                    BlockPos relicPos = this.findRelicSpawnPosAt(level, clampedX, clampedZ);
+                    if (relicPos != null) {
+                        return relicPos;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    @Nullable
+    private BlockPos findRelicSpawnPosAt(ServerLevel level, int x, int z) {
+        int startY = Math.min(MAX_GROUND_SCAN_Y, level.getMaxBuildHeight() - 1);
+        for (int y = startY; y > level.getMinBuildHeight(); y--) {
+            BlockPos groundPos = new BlockPos(x, y, z);
+            BlockState groundState = level.getBlockState(groundPos);
+            if (!this.isValidRelicSupport(groundState)) {
+                continue;
+            }
+
+            BlockPos relicPos = groundPos.above();
+            if (level.getBlockState(relicPos).canBeReplaced()) {
+                return relicPos;
+            }
+
+            break;
         }
 
         return null;
@@ -507,7 +549,17 @@ public final class ForbiddenRelicServerEvent implements OxyServerEvent {
             return null;
         }
 
-        Vec3 spawnPos = preferredPos;
+        Vec3 spawnPos = null;
+        if (preferredPos != null) {
+            BlockPos groundedPos = this.findRelicSpawnPosNear(
+                    overworld,
+                    Mth.floor(preferredPos.x),
+                    Mth.floor(preferredPos.z));
+            if (groundedPos != null) {
+                spawnPos = Vec3.atCenterOf(groundedPos);
+            }
+        }
+
         if (spawnPos == null) {
             BlockPos fallbackPos = this.findRelicSpawnPos(overworld);
             if (fallbackPos == null) {
@@ -676,6 +728,38 @@ public final class ForbiddenRelicServerEvent implements OxyServerEvent {
 
     private Vec3 getLastKnownOrPlayerPos(ServerPlayer player) {
         return this.lastKnownRelicPos != null ? this.lastKnownRelicPos : player.position();
+    }
+
+    @Nullable
+    private Vec3 findBoundaryDropPos(MinecraftServer server, Vec3 sourcePos) {
+        ServerLevel overworld = server.getLevel(Level.OVERWORLD);
+        if (overworld == null) {
+            return this.lastKnownRelicPos;
+        }
+
+        ServerEventArea eventArea = this.getEventArea(server);
+        int minX = Math.min(eventArea.minX() + BORDER_DROP_INSET_BLOCKS, eventArea.maxX());
+        int maxX = Math.max(eventArea.maxX() - BORDER_DROP_INSET_BLOCKS, eventArea.minX());
+        int minZ = Math.min(eventArea.minZ() + BORDER_DROP_INSET_BLOCKS, eventArea.maxZ());
+        int maxZ = Math.max(eventArea.maxZ() - BORDER_DROP_INSET_BLOCKS, eventArea.minZ());
+
+        int targetX = Mth.clamp(Mth.floor(sourcePos.x), minX, maxX);
+        int targetZ = Mth.clamp(Mth.floor(sourcePos.z), minZ, maxZ);
+
+        if (sourcePos.x < eventArea.minX()) {
+            targetX = minX;
+        } else if (sourcePos.x > eventArea.maxX()) {
+            targetX = maxX;
+        }
+
+        if (sourcePos.z < eventArea.minZ()) {
+            targetZ = minZ;
+        } else if (sourcePos.z > eventArea.maxZ()) {
+            targetZ = maxZ;
+        }
+
+        BlockPos groundedPos = this.findRelicSpawnPosNear(overworld, targetX, targetZ);
+        return groundedPos != null ? Vec3.atCenterOf(groundedPos) : this.lastKnownRelicPos;
     }
 
     private ServerEventArea getEventArea(MinecraftServer server) {

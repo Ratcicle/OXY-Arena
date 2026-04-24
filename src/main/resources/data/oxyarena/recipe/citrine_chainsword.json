@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "oxyarena:citrine_gem"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "S": {
+      "item": "oxyarena:citrine_sword"
+    }
+  },
+  "pattern": [
+    "CCC",
+    "ISC",
+    "RIC"
+  ],
+  "result": {
+    "count": 1,
+    "id": "oxyarena:citrine_chainsword"
+  }
+}

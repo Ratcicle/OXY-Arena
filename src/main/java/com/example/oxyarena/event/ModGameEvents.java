@@ -105,6 +105,14 @@ public final class ModGameEvents {
         CombatWeaponEvents.clearFlamingScytheTracking();
     }
 
+    public static void clearCitrineChainswordState(Player player) {
+        CombatWeaponEvents.clearCitrineChainswordState(player);
+    }
+
+    public static void clearCitrineChainswordTracking(MinecraftServer server) {
+        CombatWeaponEvents.clearCitrineChainswordTracking(server);
+    }
+
     public static void clearBlackBladeTracking() {
         CombatWeaponEvents.clearBlackBladeTracking();
     }
