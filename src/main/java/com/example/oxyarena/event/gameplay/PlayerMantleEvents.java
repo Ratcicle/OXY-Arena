@@ -19,6 +19,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -312,9 +313,10 @@ public final class PlayerMantleEvents {
         BlockState state = level.getBlockState(pos);
         return !state.isAir()
                 && state.getFluidState().isEmpty()
-                && state.isFaceSturdy(level, pos, direction.getOpposite())
-                && state.isFaceSturdy(level, pos, Direction.UP)
-                && !state.getCollisionShape(level, pos).isEmpty();
+                && !state.getCollisionShape(level, pos).isEmpty()
+                && (state.is(BlockTags.LEAVES)
+                        || (state.isFaceSturdy(level, pos, direction.getOpposite())
+                                && state.isFaceSturdy(level, pos, Direction.UP)));
     }
 
     private static boolean canFitStanding(ServerPlayer player, Vec3 center) {

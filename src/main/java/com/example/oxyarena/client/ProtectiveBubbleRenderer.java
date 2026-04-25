@@ -73,6 +73,11 @@ public final class ProtectiveBubbleRenderer {
             return;
         }
 
+        Minecraft minecraft = Minecraft.getInstance();
+        if (player == minecraft.player && minecraft.options.getCameraType().isFirstPerson()) {
+            return;
+        }
+
         ClientBubbleState state = ACTIVE_BUBBLES.get(player.getUUID());
         if (state == null) {
             return;

@@ -60,6 +60,7 @@ public final class ModCreativeModeTabs {
                     output.accept(ModItems.SMOKE_BOMB);
                     output.accept(ModItems.ESTUS_FLASK);
                     output.accept(ModItems.PROTECTIVE_BUBBLE);
+                    output.accept(ModItems.ANTI_HEAL_POTION);
                     output.accept(ModItems.STORM_CHARGE);
                     output.accept(ModItems.FORBIDDEN_RELIC);
                     output.accept(ModItems.ZEUS_LIGHTNING);

@@ -1,6 +1,7 @@
 package com.example.oxyarena.registry;
 
 import com.example.oxyarena.OXYArena;
+import com.example.oxyarena.item.AntiHealPotionItem;
 import com.example.oxyarena.item.AmetraSwordItem;
 import com.example.oxyarena.item.AmetraWarpedGlaiveItem;
 import com.example.oxyarena.item.AssassinDaggerItem;
@@ -162,6 +163,10 @@ public final class ModItems {
     public static final DeferredItem<ProtectiveBubbleItem> PROTECTIVE_BUBBLE = ITEMS.registerItem(
             "protective_bubble",
             ProtectiveBubbleItem::new,
+            new Item.Properties().stacksTo(16));
+    public static final DeferredItem<AntiHealPotionItem> ANTI_HEAL_POTION = ITEMS.registerItem(
+            "anti_heal_potion",
+            AntiHealPotionItem::new,
             new Item.Properties().stacksTo(16));
     public static final DeferredItem<StormChargeItem> STORM_CHARGE = ITEMS.registerItem(
             "storm_charge",

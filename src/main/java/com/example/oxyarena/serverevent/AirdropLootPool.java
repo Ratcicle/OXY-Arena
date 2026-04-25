@@ -32,7 +32,9 @@ public final class AirdropLootPool {
             AirdropLootEntry.of(ModItems.SMOKE_BOMB, 2, 6, 16),
             AirdropLootEntry.of(ModItems.ESTUS_FLASK, 3, 7, 12),
             AirdropLootEntry.of(ModItems.STORM_CHARGE, 2, 4, 10),
+            AirdropLootEntry.of(ModItems.PROTECTIVE_BUBBLE, 1, 2, 8),
             AirdropLootEntry.of(ModItems.CITRINE_THROWING_DAGGER, 4, 10, 16),
+            
             AirdropLootEntry.of(ModItems.GRAPPLING_GUN, 1, 1, 5),
             AirdropLootEntry.of(ModItems.CHOCOLATE_SWORD, 1, 1, 5),
             AirdropLootEntry.of(ModItems.ZEUS_LIGHTNING, 1, 1, 1),

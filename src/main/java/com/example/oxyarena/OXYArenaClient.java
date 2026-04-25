@@ -109,6 +109,7 @@ public class OXYArenaClient {
                 ModEntityTypes.INCANDESCENT_THROWING_DAGGER.get(),
                 IncandescentThrowingDaggerRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.SMOKE_BOMB.get(), ThrownItemRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.ANTI_HEAL_POTION.get(), ThrownItemRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.SMOKE_CLOUD.get(), NoopRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.STORM_CHARGE.get(), StormChargeRenderer::new);
         event.registerEntityRenderer(

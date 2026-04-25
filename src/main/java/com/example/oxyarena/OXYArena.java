@@ -56,6 +56,7 @@ public class OXYArena {
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onLivingChangeTarget);
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onLivingDamagePre);
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onLivingDamagePost);
+        NeoForge.EVENT_BUS.addListener(ModGameEvents::onLivingHeal);
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onProjectileImpact);
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onSweepAttack);
         NeoForge.EVENT_BUS.addListener(ModGameEvents::onBlockDrops);

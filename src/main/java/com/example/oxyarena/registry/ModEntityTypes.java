@@ -11,6 +11,7 @@ import com.example.oxyarena.entity.effect.GhostSaberEchoEntity;
 import com.example.oxyarena.entity.effect.SpectralMarkEntity;
 import com.example.oxyarena.entity.effect.ZenithOrbitSwordEntity;
 import com.example.oxyarena.entity.projectile.BlackBladeProjectile;
+import com.example.oxyarena.entity.projectile.AntiHealPotionProjectile;
 import com.example.oxyarena.entity.projectile.CitrineThrowingDagger;
 import com.example.oxyarena.entity.projectile.DimensionalRiftProjectile;
 import com.example.oxyarena.entity.projectile.ElementalGauntletProjectile;
@@ -58,6 +59,16 @@ public final class ModEntityTypes {
                     .clientTrackingRange(4)
                     .updateInterval(10)
                     .build("smoke_bomb"));
+    public static final DeferredHolder<EntityType<?>, EntityType<AntiHealPotionProjectile>> ANTI_HEAL_POTION =
+            ENTITY_TYPES.register(
+                    "anti_heal_potion",
+                    () -> EntityType.Builder.<AntiHealPotionProjectile>of(
+                            AntiHealPotionProjectile::new,
+                            MobCategory.MISC)
+                            .sized(0.25F, 0.25F)
+                            .clientTrackingRange(4)
+                            .updateInterval(10)
+                            .build("anti_heal_potion"));
     public static final DeferredHolder<EntityType<?>, EntityType<SmokeCloud>> SMOKE_CLOUD = ENTITY_TYPES.register(
             "smoke_cloud",
             () -> EntityType.Builder.<SmokeCloud>of(SmokeCloud::new, MobCategory.MISC)

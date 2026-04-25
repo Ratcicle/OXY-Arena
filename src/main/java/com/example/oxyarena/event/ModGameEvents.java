@@ -2,6 +2,7 @@ package com.example.oxyarena.event;
 
 import com.example.oxyarena.combatstatus.CombatStatusEvents;
 import com.example.oxyarena.event.gameplay.AmetraWarpedGlaiveEvents;
+import com.example.oxyarena.event.gameplay.AntiHealEvents;
 import com.example.oxyarena.event.gameplay.ArmorSetEvents;
 import com.example.oxyarena.event.gameplay.CombatWeaponEvents;
 import com.example.oxyarena.event.gameplay.CounterMobilityEvents;
@@ -23,6 +24,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
 import net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingHealEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.event.entity.player.SweepAttackEvent;
@@ -63,6 +65,10 @@ public final class ModGameEvents {
         CombatStatusEvents.onLivingDamagePost(event);
         NecromancerStaffEvents.onLivingDamagePost(event);
         MarkReplayEvents.onLivingDamagePost(event);
+    }
+
+    public static void onLivingHeal(LivingHealEvent event) {
+        AntiHealEvents.onLivingHeal(event);
     }
 
     public static void onProjectileImpact(ProjectileImpactEvent event) {

@@ -59,6 +59,10 @@ public final class ModMobEffects {
             "occult_camouflage",
             () -> new MobEffect(MobEffectCategory.BENEFICIAL, 0x8FE9F1) {
             });
+    public static final DeferredHolder<MobEffect, MobEffect> ANTI_HEAL = MOB_EFFECTS.register(
+            "anti_heal",
+            () -> new MobEffect(MobEffectCategory.HARMFUL, 0x4B244D) {
+            });
 
     private ModMobEffects() {
     }
