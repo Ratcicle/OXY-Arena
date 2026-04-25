@@ -10,6 +10,7 @@ import java.util.UUID;
 import com.example.oxyarena.animation.ModPlayerAnimations;
 import com.example.oxyarena.entity.effect.DimensionalRiftEntity;
 import com.example.oxyarena.entity.projectile.DimensionalRiftProjectile;
+import com.example.oxyarena.network.AmetraGlaiveCooldownSyncPayload;
 import com.example.oxyarena.network.PlayerAnimationPlayPayload;
 import com.example.oxyarena.registry.ModItems;
 
@@ -36,6 +37,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 public final class AmetraWarpedGlaiveEvents {
     private static final int MARK_DURATION_TICKS = 200;
+    private static final int RIFT_COOLDOWN_TICKS = 280;
     private static final int SLASH_DELAY_TICKS = 10;
     private static final double RIFT_DISTANCE = 2.2D;
     private static final double TELEPORT_FORWARD_DISTANCE = 1.4D;
@@ -45,6 +47,7 @@ public final class AmetraWarpedGlaiveEvents {
     private static final float PROJECTILE_INACCURACY = 0.0F;
 
     private static final Map<UUID, UUID> ACTIVE_RIFTS_BY_OWNER = new HashMap<>();
+    private static final Map<UUID, Integer> RIFT_COOLDOWNS_BY_PLAYER = new HashMap<>();
     private static final Map<UUID, MarkState> MARKS_BY_PLAYER = new HashMap<>();
     private static final List<PendingSlash> PENDING_SLASHES = new ArrayList<>();
 
@@ -57,6 +60,12 @@ public final class AmetraWarpedGlaiveEvents {
         }
 
         ServerLevel level = player.serverLevel();
+        int currentTick = level.getServer().getTickCount();
+        Integer cooldownUntil = RIFT_COOLDOWNS_BY_PLAYER.get(player.getUUID());
+        if (cooldownUntil != null && cooldownUntil > currentTick) {
+            return false;
+        }
+
         discardActiveRift(player.getServer(), player.getUUID());
 
         Vec3 direction = getHorizontalLookDirection(player);
@@ -67,6 +76,8 @@ public final class AmetraWarpedGlaiveEvents {
         }
 
         ACTIVE_RIFTS_BY_OWNER.put(player.getUUID(), rift.getUUID());
+        RIFT_COOLDOWNS_BY_PLAYER.put(player.getUUID(), currentTick + RIFT_COOLDOWN_TICKS);
+        PacketDistributor.sendToPlayer(player, new AmetraGlaiveCooldownSyncPayload(RIFT_COOLDOWN_TICKS));
         playAnimation(player, ModPlayerAnimations.AMETRA_WARPED_GLAIVE_RIFT_CUT);
         player.swing(InteractionHand.MAIN_HAND, true);
         level.sendParticles(
@@ -183,6 +194,7 @@ public final class AmetraWarpedGlaiveEvents {
         MinecraftServer server = event.getServer();
         int currentTick = server.getTickCount();
         MARKS_BY_PLAYER.entrySet().removeIf(entry -> entry.getValue().expiresAtTick() <= currentTick);
+        RIFT_COOLDOWNS_BY_PLAYER.entrySet().removeIf(entry -> entry.getValue().intValue() <= currentTick);
         tickPendingSlashes(server, currentTick);
     }
 
@@ -223,6 +235,8 @@ public final class AmetraWarpedGlaiveEvents {
     public static void clearPlayer(ServerPlayer player) {
         UUID playerId = player.getUUID();
         MARKS_BY_PLAYER.remove(playerId);
+        RIFT_COOLDOWNS_BY_PLAYER.remove(playerId);
+        PacketDistributor.sendToPlayer(player, new AmetraGlaiveCooldownSyncPayload(0));
         PENDING_SLASHES.removeIf(slash -> playerId.equals(slash.playerId()));
         discardActiveRift(player.getServer(), playerId);
     }
@@ -237,6 +251,7 @@ public final class AmetraWarpedGlaiveEvents {
             discardRift(server, riftId);
         }
         ACTIVE_RIFTS_BY_OWNER.clear();
+        RIFT_COOLDOWNS_BY_PLAYER.clear();
         MARKS_BY_PLAYER.clear();
         PENDING_SLASHES.clear();
     }

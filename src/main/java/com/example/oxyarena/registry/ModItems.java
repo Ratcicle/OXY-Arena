@@ -30,6 +30,7 @@ import com.example.oxyarena.item.KusabimaruItem;
 import com.example.oxyarena.item.LifehuntScytheItem;
 import com.example.oxyarena.item.MurasamaItem;
 import com.example.oxyarena.item.NecromancerStaffItem;
+import com.example.oxyarena.item.ProtectiveBubbleItem;
 import com.example.oxyarena.item.RiversOfBloodItem;
 import com.example.oxyarena.item.SoulReaperItem;
 import com.example.oxyarena.item.SmokeBombItem;
@@ -157,6 +158,10 @@ public final class ModItems {
     public static final DeferredItem<EstusFlaskItem> ESTUS_FLASK = ITEMS.registerItem(
             "estus_flask",
             EstusFlaskItem::new,
+            new Item.Properties().stacksTo(16));
+    public static final DeferredItem<ProtectiveBubbleItem> PROTECTIVE_BUBBLE = ITEMS.registerItem(
+            "protective_bubble",
+            ProtectiveBubbleItem::new,
             new Item.Properties().stacksTo(16));
     public static final DeferredItem<StormChargeItem> STORM_CHARGE = ITEMS.registerItem(
             "storm_charge",

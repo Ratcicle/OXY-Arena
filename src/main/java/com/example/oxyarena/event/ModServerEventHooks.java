@@ -78,6 +78,7 @@ public final class ModServerEventHooks {
             ModGameEvents.clearSpectralBladeState(player);
             ModGameEvents.clearStormChargeState(player);
             ModGameEvents.clearOccultCamouflageState(player);
+            ModGameEvents.clearProtectiveBubbleState(player);
             ModGameEvents.clearAmetraWarpedGlaiveState(player);
             ModGameEvents.clearPlayerSlideState(player);
             ModGameEvents.clearPlayerMantleState(player);
@@ -95,6 +96,7 @@ public final class ModServerEventHooks {
             ModGameEvents.clearPlayerSlideState(player);
             ModGameEvents.clearPlayerMantleState(player);
             ModGameEvents.clearAmetraWarpedGlaiveState(player);
+            ModGameEvents.clearProtectiveBubbleState(player);
             ModGameEvents.clearCitrineChainswordState(player);
             NecromancerStaffEvents.clearPlayer(player);
             OxyServerEventManager.get(player.getServer()).onPlayerLoggedIn(player);
@@ -122,6 +124,7 @@ public final class ModServerEventHooks {
             ModGameEvents.clearAssassinDaggerTarget(player);
             ModGameEvents.clearSpectralBladeTarget(player);
             ModGameEvents.clearOccultCamouflageState(player);
+            ModGameEvents.clearProtectiveBubbleState(player);
             ZenithOrbitSwordEntity.discardOwnedOrbitSwords(player);
             OxyServerEventManager.get(player.getServer()).onPlayerChangedDimension(player);
             PlayerHuntServerEvent.refreshPersistentPlayerState(player.getServer(), player);
@@ -151,6 +154,7 @@ public final class ModServerEventHooks {
             ModGameEvents.clearAssassinDaggerTarget(player);
             ModGameEvents.clearSpectralBladeTarget(player);
             ModGameEvents.clearOccultCamouflageState(player);
+            ModGameEvents.clearProtectiveBubbleState(player);
             ZenithOrbitSwordEntity.discardOwnedOrbitSwords(player);
         }
     }
@@ -266,6 +270,7 @@ public final class ModServerEventHooks {
         if (event.getEntity() instanceof ServerPlayer trackingPlayer
                 && event.getTarget() instanceof Player trackedPlayer) {
             ModGameEvents.syncOccultCamouflageStateTo(trackingPlayer, trackedPlayer);
+            ModGameEvents.syncProtectiveBubbleStateTo(trackingPlayer, trackedPlayer);
         }
     }
 
@@ -286,6 +291,7 @@ public final class ModServerEventHooks {
         ModGameEvents.clearAssassinDaggerTracking();
         ModGameEvents.clearOccultCamouflageTracking();
         ModGameEvents.clearSpectralBladeTracking();
+        ModGameEvents.clearProtectiveBubbleTracking(event.getServer());
         OxyServerEventManager.get(event.getServer()).onServerStopping();
     }
 
@@ -306,6 +312,7 @@ public final class ModServerEventHooks {
         ModGameEvents.clearAssassinDaggerTracking();
         ModGameEvents.clearOccultCamouflageTracking();
         ModGameEvents.clearSpectralBladeTracking();
+        ModGameEvents.clearProtectiveBubbleTracking(event.getServer());
         OxyServerEventManager.remove(event.getServer());
     }
 

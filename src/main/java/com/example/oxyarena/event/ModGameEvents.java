@@ -13,6 +13,7 @@ import com.example.oxyarena.event.gameplay.PlayerMantleEvents;
 import com.example.oxyarena.event.gameplay.PlayerSlideEvents;
 import com.example.oxyarena.event.gameplay.PlayerStepAssistEvents;
 import com.example.oxyarena.event.gameplay.ProjectileSpecialEvents;
+import com.example.oxyarena.event.gameplay.ProtectiveBubbleEvents;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -39,6 +40,11 @@ public final class ModGameEvents {
     }
 
     public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
+        ProtectiveBubbleEvents.onLivingIncomingDamage(event);
+        if (event.isCanceled()) {
+            return;
+        }
+
         CounterMobilityEvents.onLivingIncomingDamage(event);
         GhostSaberEvents.onLivingIncomingDamage(event);
         NecromancerStaffEvents.onLivingIncomingDamage(event);
@@ -250,5 +256,17 @@ public final class ModGameEvents {
 
     public static float getOccultCamouflageProgress(Player player) {
         return OccultCamouflageEvents.getOccultCamouflageProgress(player);
+    }
+
+    public static void clearProtectiveBubbleState(Player player) {
+        ProtectiveBubbleEvents.clearPlayer(player);
+    }
+
+    public static void clearProtectiveBubbleTracking(MinecraftServer server) {
+        ProtectiveBubbleEvents.clearAll(server);
+    }
+
+    public static void syncProtectiveBubbleStateTo(ServerPlayer recipient, Player target) {
+        ProtectiveBubbleEvents.syncStateTo(recipient, target);
     }
 }

@@ -145,6 +145,7 @@ public final class PlayerMantleEvents {
                 target.direction,
                 target.wallLowerPos,
                 target.wallUpperPos,
+                target.requiresLowerWallBlock,
                 target.landingCenter,
                 target.hangCenter,
                 target.wallState,
@@ -240,7 +241,7 @@ public final class PlayerMantleEvents {
 
     private static boolean isTargetStillValid(ServerPlayer player, MantleState state) {
         ServerLevel level = player.serverLevel();
-        return isWallBlock(level, state.wallLowerPos, state.direction, player)
+        return (!state.requiresLowerWallBlock || isWallBlock(level, state.wallLowerPos, state.direction, player))
                 && isWallBlock(level, state.wallUpperPos, state.direction, player)
                 && canFitStanding(player, state.landingCenter);
     }
@@ -277,7 +278,8 @@ public final class PlayerMantleEvents {
             return null;
         }
 
-        if (!isWallBlock(level, wallLowerPos, direction, player) || !isWallBlock(level, wallUpperPos, direction, player)) {
+        boolean hasLowerWallBlock = isWallBlock(level, wallLowerPos, direction, player);
+        if (!isWallBlock(level, wallUpperPos, direction, player)) {
             return null;
         }
 
@@ -296,7 +298,14 @@ public final class PlayerMantleEvents {
             return null;
         }
 
-        return new MantleTarget(direction, wallLowerPos.immutable(), wallUpperPos.immutable(), landingCenter, hangCenter, wallState);
+        return new MantleTarget(
+                direction,
+                wallLowerPos.immutable(),
+                wallUpperPos.immutable(),
+                hasLowerWallBlock,
+                landingCenter,
+                hangCenter,
+                wallState);
     }
 
     private static boolean isWallBlock(ServerLevel level, BlockPos pos, Direction direction, ServerPlayer player) {
@@ -355,6 +364,7 @@ public final class PlayerMantleEvents {
             Direction direction,
             BlockPos wallLowerPos,
             BlockPos wallUpperPos,
+            boolean requiresLowerWallBlock,
             Vec3 landingCenter,
             Vec3 hangCenter,
             BlockState wallState) {
@@ -364,6 +374,7 @@ public final class PlayerMantleEvents {
         private final Direction direction;
         private final BlockPos wallLowerPos;
         private final BlockPos wallUpperPos;
+        private final boolean requiresLowerWallBlock;
         private final Vec3 landingCenter;
         private final Vec3 hangCenter;
         private final BlockState wallState;
@@ -374,6 +385,7 @@ public final class PlayerMantleEvents {
                 Direction direction,
                 BlockPos wallLowerPos,
                 BlockPos wallUpperPos,
+                boolean requiresLowerWallBlock,
                 Vec3 landingCenter,
                 Vec3 hangCenter,
                 BlockState wallState,
@@ -382,6 +394,7 @@ public final class PlayerMantleEvents {
             this.direction = direction;
             this.wallLowerPos = wallLowerPos;
             this.wallUpperPos = wallUpperPos;
+            this.requiresLowerWallBlock = requiresLowerWallBlock;
             this.landingCenter = landingCenter;
             this.hangCenter = hangCenter;
             this.wallState = wallState;

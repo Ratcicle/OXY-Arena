@@ -4,13 +4,21 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 public final class ModPayloads {
-    private static final String NETWORK_VERSION = "8";
+    private static final String NETWORK_VERSION = "10";
 
     private ModPayloads() {
     }
 
     public static void register(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar(NETWORK_VERSION);
+        registrar.playToClient(
+                AmetraGlaiveCooldownSyncPayload.TYPE,
+                AmetraGlaiveCooldownSyncPayload.STREAM_CODEC,
+                AmetraGlaiveCooldownSyncPayload::handle);
+        registrar.playToClient(
+                ProtectiveBubbleSyncPayload.TYPE,
+                ProtectiveBubbleSyncPayload.STREAM_CODEC,
+                ProtectiveBubbleSyncPayload::handle);
         registrar.playToClient(
                 CombatStatusSyncPayload.TYPE,
                 CombatStatusSyncPayload.STREAM_CODEC,

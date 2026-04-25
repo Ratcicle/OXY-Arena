@@ -50,6 +50,7 @@ public final class PlayerStepAssistEvents {
                 && !player.getAbilities().flying
                 && !player.isPassenger()
                 && !player.isFallFlying()
+                && !player.isShiftKeyDown()
                 && !player.getItemBySlot(EquipmentSlot.FEET).isEmpty()
                 && !PlayerSlideEvents.isActive(player)
                 && !PlayerMantleEvents.isMantling(player);
